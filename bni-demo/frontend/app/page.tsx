@@ -323,7 +323,6 @@ export default function HomePage() {
                       <AnswerCard
                         key={message.id}
                         answer={message.content}
-                        timestampLabel="Analyst response"
                       />
                     ),
                   )}

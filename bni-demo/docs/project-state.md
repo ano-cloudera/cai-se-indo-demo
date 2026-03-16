@@ -273,6 +273,8 @@ Completed:
 - frontend bottom-left static workspace/settings card added for layout balance
 - frontend visual depth separation improved between background, sidebar, and main workspace
 - frontend hero and greeting wording aligned to use `Data Analyst Assistant` in user-facing self-introduction
+- assistant chat bubble label simplified to `Analyst Response`, with the extra side caption removed
+- assistant chat bubble width reduced slightly for better balance against the user bubble
 
 Status:
 - partially complete
@@ -339,6 +341,7 @@ Status:
 - static bottom-left workspace/settings card for visual balance
 - stronger visual depth separation for sidebar and main panel
 - top-left brand block simplified without the extra small caption line
+- assistant response card simplified with a shorter label and tighter visual proportions
 
 ### Frontend response rendering
 

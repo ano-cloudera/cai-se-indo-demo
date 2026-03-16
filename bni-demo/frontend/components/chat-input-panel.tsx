@@ -17,12 +17,24 @@ export function ChatInputPanel({
   onStarterSelect,
   onSubmit,
 }: ChatInputPanelProps) {
+  function handleKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (event.key !== "Enter" || event.shiftKey) {
+      return;
+    }
+
+    event.preventDefault();
+    if (!loading) {
+      onSubmit();
+    }
+  }
+
   return (
     <section className="rounded-[30px] border border-white/70 bg-white/85 p-4 shadow-panel backdrop-blur">
       <div className="rounded-[26px] border border-[#f6d7af] bg-[#fffaf4] p-4">
         <textarea
           value={question}
           onChange={(event) => onQuestionChange(event.target.value)}
+          onKeyDown={handleKeyDown}
           rows={4}
           placeholder="Tanyakan sesuatu tentang data tabular BNI. Contoh: Berapa total saldo deposito saat ini?"
           className="w-full resize-none bg-transparent px-2 py-1 text-sm leading-6 text-slate-900 outline-none placeholder:text-slate-400"
