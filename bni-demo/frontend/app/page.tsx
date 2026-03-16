@@ -314,8 +314,8 @@ export default function HomePage() {
                 <div className="mx-auto flex max-w-4xl flex-col gap-5">
                   {state.messages.map((message) =>
                     message.role === "user" ? (
-                      <div key={message.id} className="ml-auto max-w-2xl">
-                        <div className="rounded-[28px] bg-[#073b3a] px-5 py-4 text-sm leading-7 text-white shadow-[0_20px_40px_rgba(7,59,58,0.16)]">
+                      <div key={message.id} className="ml-auto max-w-[28rem]">
+                        <div className="rounded-[26px] bg-[#073b3a] px-4 py-3 text-sm leading-6 text-white shadow-[0_18px_36px_rgba(7,59,58,0.14)]">
                           {message.content}
                         </div>
                       </div>

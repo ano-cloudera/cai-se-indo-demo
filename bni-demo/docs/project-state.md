@@ -275,6 +275,8 @@ Completed:
 - frontend hero and greeting wording aligned to use `Data Analyst Assistant` in user-facing self-introduction
 - assistant chat bubble label simplified to `Analyst Response`, with the extra side caption removed
 - assistant chat bubble width reduced slightly for better balance against the user bubble
+- user chat bubble width and padding tightened for a more balanced conversation layout
+- chat composer now supports `Enter` to send and `Shift+Enter` for a new line
 
 Status:
 - partially complete
@@ -342,6 +344,8 @@ Status:
 - stronger visual depth separation for sidebar and main panel
 - top-left brand block simplified without the extra small caption line
 - assistant response card simplified with a shorter label and tighter visual proportions
+- user and assistant chat bubbles rebalanced to feel more symmetrical in the thread
+- chat input now supports keyboard-first sending behavior
 
 ### Frontend response rendering
 
