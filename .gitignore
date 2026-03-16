@@ -1,0 +1,14 @@
+.DS_Store
+.venv/
+__pycache__/
+*.pyc
+
+bni-demo/frontend/node_modules/
+bni-demo/frontend/.next/
+bni-demo/frontend/.next.stale.*/
+bni-demo/frontend/out/
+
+bni-demo/backend/.env
+bni-demo/frontend/.env.local
+
+*.log

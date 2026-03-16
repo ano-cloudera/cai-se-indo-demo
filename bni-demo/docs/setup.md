@@ -1,0 +1,73 @@
+# BNI Demo Setup Guide
+
+This guide summarizes the practical setup flow for testing and deployment in Cloudera AI.
+
+## Runtime model
+
+- Local development was used only for coding and file generation.
+- Runtime validation is expected to happen in Cloudera AI VS Code sessions.
+- Final hosting is expected to happen through Cloudera AI Applications.
+- Cloudera AI runtime environment variables are the source of truth.
+
+## Backend setup in a CAI session
+
+```bash
+cd backend
+pip install -r requirements.txt
+python backend_session.py
+```
+
+Notes:
+
+- This starts the backend on `0.0.0.0`.
+- It reads `APP_PORT`, then `PORT`, then falls back to `8000`.
+- It avoids `uvicorn --reload`, which can be unstable in some CAI session environments.
+
+## Backend setup as a CAI Application
+
+```bash
+cd backend
+pip install -r requirements.txt
+python backend_entry.py
+```
+
+Notes:
+
+- This launcher reads `CDSW_APP_PORT` first, then `PORT`, then `8080`.
+- It is intended for Application hosting.
+
+## Frontend setup in a CAI session
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Notes:
+
+- This binds to `0.0.0.0`.
+- It prefers `CDSW_APP_PORT`, then `PORT`, then `3000`.
+- `NEXT_PUBLIC_API_BASE_URL` must point to the backend URL.
+
+## Frontend setup as a CAI Application
+
+```bash
+cd frontend
+./frontend_entry.sh
+```
+
+Notes:
+
+- The launcher fails clearly if `NEXT_PUBLIC_API_BASE_URL` is missing.
+- It sets `PORT` from `CDSW_APP_PORT` when available.
+- It installs dependencies if needed, builds the app, and starts it.
+
+## Recommended validation order
+
+1. Start the backend in a CAI session.
+2. Call `GET /health`.
+3. Call `GET /health/db`.
+4. Test `POST /chat/query` or `POST /chat/answer`.
+5. Start the frontend and point it to the backend URL.
+6. Validate the end-to-end demo flow in the browser.
