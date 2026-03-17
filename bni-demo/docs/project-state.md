@@ -54,6 +54,7 @@ Already completed inside phase 9:
 - backend CAI Application launcher via `backend_entry.py`
 - backend CAI session launcher via `backend_session.py`
 - frontend CAI Application launcher via `frontend_entry.sh`
+- frontend CAI Application Python launcher via `frontend_entry.py`
 - backend permissive CORS for separate frontend Application calls
 - setup and environment documentation refresh for CAI usage
 
@@ -277,6 +278,10 @@ Completed:
 - assistant chat bubble width reduced slightly for better balance against the user bubble
 - user chat bubble width and padding tightened for a more balanced conversation layout
 - chat composer now supports `Enter` to send and `Shift+Enter` for a new line
+- frontend CAI Python launcher now resolves `npm` and `node` more defensively for NVM-based runtimes
+- frontend CAI Python launcher now prefers the Next.js standalone server after build
+- backend `main.py` currently has CORS middleware commented out pending final CAI access-mode decision
+- latest CAI browser testing shows request failures are currently influenced by CAI login redirect / app access behavior, not only by FastAPI CORS settings
 
 Status:
 - partially complete
@@ -296,6 +301,7 @@ Status:
 - persona-driven assistant responses via `BNI Data Analyst Assistant`
 - user-facing introduction wording aligned to `Data Analyst Assistant` for a cleaner greeting
 - CORS enabled for separate frontend Application access
+- current CAI deployment testing indicates cross-application browser access may still be gated by CAI login redirect behavior
 
 ### Main backend endpoints
 
@@ -346,6 +352,7 @@ Status:
 - assistant response card simplified with a shorter label and tighter visual proportions
 - user and assistant chat bubbles rebalanced to feel more symmetrical in the thread
 - chat input now supports keyboard-first sending behavior
+- Python-based CAI launcher available when `.sh` file selection is not supported by the CAI Application picker
 
 ### Frontend response rendering
 
@@ -429,6 +436,7 @@ Ready now:
 - refined BNI-branded answer-first frontend layout
 - aligned user-facing greeting copy between backend and frontend
 - CAI-friendly frontend hosting configuration
+- CAI-friendly Python launcher for frontend startup
 - CAI backend/frontend launcher files
 - documentation for main flow and API contract
 
@@ -454,9 +462,10 @@ Suggested next steps:
 4. Validate greeting and Bahasa Indonesia behavior in CAI.
 5. Confirm the frontend points to the deployed backend URL.
 6. Run the frontend as a Cloudera AI Application.
-7. Validate non-data conversation quality in CAI for greetings, gratitude, farewell, and out-of-domain prompts.
-8. If needed, refine answer style and prompt quality based on demo feedback.
-9. Add stronger docs for deployment, environment setup, and test scenarios.
+7. Resolve CAI cross-application access mode so browser requests to backend do not redirect to CAI login.
+8. Validate non-data conversation quality in CAI for greetings, gratitude, farewell, and out-of-domain prompts.
+9. If needed, refine answer style and prompt quality based on demo feedback.
+10. Add stronger docs for deployment, environment setup, and test scenarios.
 
 ## Handoff notes
 
@@ -464,11 +473,13 @@ Important current handoff points for the next engineer or model:
 
 - Use `backend_session.py` for CAI session backend startup instead of `uvicorn --reload`.
 - Use `backend_entry.py` for backend CAI Application startup.
-- Use `frontend_entry.sh` for frontend CAI Application startup.
+- Use `frontend_entry.py` as the preferred frontend CAI Application startup file when the CAI picker does not expose `.sh` files.
+- `frontend_entry.sh` still exists as an alternative launcher.
 - Frontend must be configured with `NEXT_PUBLIC_API_BASE_URL`.
 - `/chat/query` is the full debug endpoint.
 - `/chat/answer` is the demo-friendly minimal answer endpoint.
 - Greeting, gratitude, farewell, and non-data chat are handled before SQL generation.
 - Non-data conversation now uses Azure OpenAI as the primary response path.
 - The assistant persona remains `BNI Data Analyst Assistant`, but the user-facing intro copy now says `Data Analyst Assistant`.
+- Current CAI browser issue is likely tied to login redirect / application access policy rather than simple frontend fetch wiring.
 - Remaining work is mostly runtime validation and deployment verification inside CAI.

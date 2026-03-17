@@ -65,12 +65,18 @@ This binds to `0.0.0.0` and uses `${CDSW_APP_PORT}` when present, otherwise `POR
 
 ## Run as a Cloudera AI Application
 
-Use the launcher:
+Preferred launcher for CAI Application file picker:
+
+```bash
+python frontend_entry.py
+```
+
+Shell launcher remains available:
 
 ```bash
 ./frontend_entry.sh
 ```
 
-This validates `NEXT_PUBLIC_API_BASE_URL`, uses `${CDSW_APP_PORT}` when available, builds the app, and starts it for Application hosting.
+Both launchers validate `NEXT_PUBLIC_API_BASE_URL`, use `${CDSW_APP_PORT}` when available, build the app, and start it for Application hosting.
 
 The frontend must point to the backend Application URL through `NEXT_PUBLIC_API_BASE_URL`.
