@@ -24,4 +24,5 @@ class PromptBuilderTestCase(unittest.TestCase):
         self.assertIn("demo_db", messages[0]["content"])
         self.assertIn("customers", messages[0]["content"])
         self.assertIn("deposits", messages[0]["content"])
+        self.assertIn("credits", messages[0]["content"])
         self.assertIn("read-only SQL only", messages[0]["content"])

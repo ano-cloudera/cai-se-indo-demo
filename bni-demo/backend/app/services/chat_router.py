@@ -15,6 +15,7 @@ INDONESIAN_MARKERS = (
     "data",
     "nasabah",
     "deposito",
+    "kredit",
     "makasih",
     "terima kasih",
     "selamat pagi",
@@ -51,8 +52,15 @@ DATA_DOMAIN_MARKERS = (
     "nasabah",
     "deposito",
     "deposit",
+    "kredit",
+    "credit",
+    "loan",
+    "pinjaman",
     "saldo",
     "balance",
+    "outstanding",
+    "principal",
+    "collectibility",
     "segmen",
     "segment",
     "customer",
@@ -107,21 +115,21 @@ def build_greeting_answer(question: str) -> str:
     if is_indonesian_text(question):
         return (
             "Selamat datang. Saya Data Analyst Assistant, siap membantu Anda "
-            "membaca data nasabah dan deposito dengan cara yang lebih sederhana "
+            "membaca data nasabah, deposito, dan kredit dengan cara yang lebih sederhana "
             "dan nyaman.\n\n"
             "Kalau mau mulai, Anda bisa tanya hal seperti:\n"
             "1. Berapa total saldo deposito saat ini?\n"
-            "2. Siapa nasabah dengan saldo deposito tertinggi?\n"
-            "3. Berapa jumlah nasabah per segmen?"
+            "2. Berapa total outstanding kredit saat ini?\n"
+            "3. Siapa nasabah dengan outstanding kredit tertinggi?"
         )
 
     return (
         "Hello, it is great to meet you. I am the Data Analyst Assistant, "
-        "ready to help you explore customer and deposit data in a clear and practical way.\n\n"
+        "ready to help you explore customer, deposit, and credit data in a clear and practical way.\n\n"
         "You can start with questions like:\n"
         "1. What is the total deposit balance?\n"
-        "2. Who has the highest deposit balances?\n"
-        "3. How many customers are in each segment?"
+        "2. What is the total outstanding credit?\n"
+        "3. Who has the highest outstanding credit balances?"
     )
 
 
@@ -129,12 +137,12 @@ def build_acknowledgement_answer(question: str) -> str:
     if is_indonesian_text(question):
         return (
             "Sama-sama. Senang bisa membantu. Kalau Anda mau, lanjutkan saja "
-            "dengan pertanyaan berikutnya tentang nasabah, deposito, segmen, atau cabang."
+            "dengan pertanyaan berikutnya tentang nasabah, deposito, kredit, segmen, atau cabang."
         )
 
     return (
         "Glad to help. If you want, just continue with the next question about "
-        "deposit balances, customers, segments, or branches."
+        "deposit balances, credit exposure, customers, segments, or branches."
     )
 
 
@@ -142,13 +150,13 @@ def build_out_of_scope_answer(question: str) -> str:
     if is_indonesian_text(question):
         return (
             "Saya paling cocok membantu pertanyaan yang berhubungan dengan data "
-            "nasabah dan deposito BNI. Kalau Anda mau, coba tanyakan total saldo "
-            "deposito, jumlah nasabah per segmen, atau nasabah dengan saldo tertinggi."
+            "nasabah, deposito, dan kredit BNI. Kalau Anda mau, coba tanyakan total saldo "
+            "deposito, outstanding kredit, jumlah nasabah per segmen, atau nasabah dengan saldo tertinggi."
         )
 
     return (
-        "I can help with questions related to BNI customer and deposit data. "
-        "You can ask about total deposit balance, customer counts by segment, "
+        "I can help with questions related to BNI customer, deposit, and credit data. "
+        "You can ask about total deposit balance, total outstanding credit, customer counts by segment, "
         "or customers with the highest balances."
     )
 
@@ -168,11 +176,11 @@ def build_processing_fallback_answer(question: str) -> str:
         return (
             "Maaf, saya belum bisa memproses pertanyaan itu dengan baik saat ini. "
             "Coba tuliskan pertanyaannya lebih spesifik, misalnya tentang total saldo deposito, "
-            "jumlah nasabah, segmen, atau cabang."
+            "outstanding kredit, jumlah nasabah, segmen, atau cabang."
         )
 
     return (
         "I am sorry, I could not process that question cleanly just now. "
         "Please try asking in a more specific way, for example about total deposit balance, "
-        "customer counts, segments, or branches."
+        "outstanding credit, customer counts, segments, or branches."
     )

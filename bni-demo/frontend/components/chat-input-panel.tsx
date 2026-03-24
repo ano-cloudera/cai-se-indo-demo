@@ -36,7 +36,7 @@ export function ChatInputPanel({
           onChange={(event) => onQuestionChange(event.target.value)}
           onKeyDown={handleKeyDown}
           rows={4}
-          placeholder="Tanyakan sesuatu tentang data tabular BNI. Contoh: Berapa total saldo deposito saat ini?"
+          placeholder="Tanyakan sesuatu tentang data tabular BNI. Contoh: Berapa total saldo deposito atau outstanding kredit saat ini?"
           className="w-full resize-none bg-transparent px-2 py-1 text-sm leading-6 text-slate-900 outline-none placeholder:text-slate-400"
         />
 

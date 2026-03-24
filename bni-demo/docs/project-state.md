@@ -168,6 +168,7 @@ Completed:
 - allowed-table restriction to:
   - `customers`
   - `deposits`
+  - `credits`
 - optional default `LIMIT`
 - safe SQL executor returning preview-friendly JSON
 - endpoints:
@@ -389,10 +390,26 @@ For greeting-style responses, the UI now shows:
 - `branch_code`
 - `status`
 
+### `credits`
+
+- `credit_id`
+- `customer_id`
+- `credit_type`
+- `principal_amount`
+- `outstanding_balance`
+- `interest_rate`
+- `disbursement_date`
+- `maturity_date`
+- `collectibility`
+- `branch_code`
+- `status`
+
 ### Relationship
 
 - `customers.customer_id = deposits.customer_id`
+- `customers.customer_id = credits.customer_id`
 - one customer can have multiple deposit accounts
+- one customer can have multiple credit accounts
 
 ## Main runtime environment expectations
 

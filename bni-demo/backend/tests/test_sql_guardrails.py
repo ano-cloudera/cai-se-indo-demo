@@ -9,7 +9,7 @@ class SQLGuardrailsTestCase(unittest.TestCase):
         settings = Settings(
             DB_NAME="demo_db",
             SQL_DEFAULT_LIMIT=25,
-            SQL_ALLOWED_TABLES="customers,deposits",
+            SQL_ALLOWED_TABLES="customers,deposits,credits",
         )
 
         sql, limit_applied = validate_and_prepare_sql(
@@ -23,7 +23,7 @@ class SQLGuardrailsTestCase(unittest.TestCase):
     def test_rejects_unknown_table(self) -> None:
         settings = Settings(
             DB_NAME="demo_db",
-            SQL_ALLOWED_TABLES="customers,deposits",
+            SQL_ALLOWED_TABLES="customers,deposits,credits",
         )
 
         with self.assertRaises(SQLValidationError):

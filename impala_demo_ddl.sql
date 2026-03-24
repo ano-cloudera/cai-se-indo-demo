@@ -42,15 +42,46 @@ TBLPROPERTIES (
   'serialization.null.format'=''
 );
 
+DROP TABLE IF EXISTS credits;
+CREATE EXTERNAL TABLE credits (
+  credit_id INT,
+  customer_id INT,
+  credit_type STRING,
+  principal_amount BIGINT,
+  outstanding_balance BIGINT,
+  interest_rate DOUBLE,
+  disbursement_date STRING,
+  maturity_date STRING,
+  collectibility STRING,
+  branch_code STRING,
+  status STRING
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+STORED AS TEXTFILE
+LOCATION '/data/demo_banking/credits'
+TBLPROPERTIES (
+  'skip.header.line.count'='1',
+  'serialization.null.format'=''
+);
+
 INVALIDATE METADATA customers;
 INVALIDATE METADATA deposits;
+INVALIDATE METADATA credits;
 
 -- Optional sanity checks
 SELECT COUNT(*) AS total_customers FROM customers;
 SELECT COUNT(*) AS total_deposits FROM deposits;
+SELECT COUNT(*) AS total_credits FROM credits;
 
 SELECT COUNT(*) AS orphan_deposits
 FROM deposits d
 LEFT JOIN customers c
   ON d.customer_id = c.customer_id
+WHERE c.customer_id IS NULL;
+
+SELECT COUNT(*) AS orphan_credits
+FROM credits cr
+LEFT JOIN customers c
+  ON cr.customer_id = c.customer_id
 WHERE c.customer_id IS NULL;

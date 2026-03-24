@@ -43,14 +43,14 @@ const starterPrompts = [
     prompt: "Berapa total saldo deposito saat ini?",
   },
   {
-    title: "Nasabah teratas",
-    description: "Temukan nasabah dengan saldo deposito tertinggi pada data saat ini.",
-    prompt: "Siapa nasabah dengan saldo deposito tertinggi?",
+    title: "Outstanding kredit",
+    description: "Ringkas total outstanding kredit untuk melihat eksposur pembiayaan saat ini.",
+    prompt: "Berapa total outstanding kredit saat ini?",
   },
   {
-    title: "Komposisi segmen",
-    description: "Cek distribusi jumlah nasabah berdasarkan segmen yang tersedia.",
-    prompt: "Berapa jumlah nasabah per segmen?",
+    title: "Top debitur",
+    description: "Temukan nasabah dengan outstanding kredit tertinggi pada data saat ini.",
+    prompt: "Siapa nasabah dengan outstanding kredit tertinggi?",
   },
 ];
 
@@ -111,10 +111,10 @@ export default function HomePage() {
   function toFriendlyErrorMessage(message: string) {
     const lowered = message.toLowerCase();
     if (lowered.includes("only select queries are allowed")) {
-      return "Saya belum bisa memproses pesan itu sebagai pertanyaan data. Coba tanyakan hal yang terkait data nasabah atau deposito BNI.";
+      return "Saya belum bisa memproses pesan itu sebagai pertanyaan data. Coba tanyakan hal yang terkait data nasabah, deposito, atau kredit BNI.";
     }
     if (lowered.includes("table access is not allowed")) {
-      return "Pertanyaan itu mengarah ke data di luar cakupan demo ini. Coba fokus ke data nasabah dan deposito BNI.";
+      return "Pertanyaan itu mengarah ke data di luar cakupan demo ini. Coba fokus ke data nasabah, deposito, dan kredit BNI.";
     }
     if (lowered.includes("request failed with status 500")) {
       return "Permintaan belum bisa diproses saat ini. Silakan coba lagi dengan pertanyaan yang lebih spesifik.";
@@ -282,8 +282,8 @@ export default function HomePage() {
                       Halo, saya Data Analyst Assistant.
                     </h3>
                     <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-slate-600">
-                      Saya di sini untuk membantu Anda memahami data nasabah dan
-                      deposito BNI dengan cara yang lebih mudah. Cukup ajukan
+                      Saya di sini untuk membantu Anda memahami data nasabah,
+                      deposito, dan kredit BNI dengan cara yang lebih mudah. Cukup ajukan
                       pertanyaan dalam bahasa natural, lalu saya bantu rangkum
                       jawabannya dengan jelas dan rapi.
                     </p>

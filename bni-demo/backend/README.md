@@ -85,8 +85,8 @@ For demo deployment, the backend enables permissive CORS so a separate frontend 
 This phase adds a reusable Azure OpenAI client and a SQL generation service that converts a natural language question into read-only SQL for the configured database.
 
 - SQL generation is separate from SQL execution.
-- The prompt now includes business-aware schema context for a banking customer and deposit analytics demo.
-- Current prompt constraints only allow the `customers` and `deposits` tables.
+- The prompt now includes business-aware schema context for a banking customer, deposit, and credit analytics demo.
+- Current prompt constraints only allow the `customers`, `deposits`, and `credits` tables.
 - Execution guardrails and stronger allowlisting can be tightened further in later phases.
 - Runtime validation for this flow is expected to happen inside Cloudera AI VS Code.
 
@@ -115,7 +115,7 @@ This phase adds an in-memory-only session layer intended for demo use and early 
 This phase adds validation and execution guardrails before SQL is sent to Impala.
 
 - Only read-only `SELECT` and `WITH ... SELECT` queries are allowed.
-- Allowed tables are limited to `customers` and `deposits`.
+- Allowed tables are limited to `customers`, `deposits`, and `credits`.
 - Generated SQL is validated again before execution.
 - Multi-statement SQL and dangerous keywords are blocked.
 - Broad listing queries may receive an automatic `LIMIT`.
