@@ -1,4 +1,5 @@
 .DS_Store
+**/.DS_Store
 .venv/
 __pycache__/
 *.pyc
@@ -10,5 +11,24 @@ bni-demo/frontend/out/
 
 bni-demo/backend/.env
 bni-demo/frontend/.env.local
+
+ask-data/frontend/node_modules/
+ask-data/frontend/.next/
+ask-data/frontend/.next.stale.*/
+ask-data/frontend/out/
+ask-data/backend/.env
+ask-data/frontend/.env.local
+
+fraud-ai-assistant/frontend/node_modules/
+fraud-ai-assistant/frontend/.next/
+fraud-ai-assistant/frontend/.next.stale.*/
+fraud-ai-assistant/frontend/out/
+fraud-ai-assistant/backend/.env
+fraud-ai-assistant/frontend/.env.local
+
+ml-templates/
+rules/
+skills/
+system_instructions.md
 
 *.log
