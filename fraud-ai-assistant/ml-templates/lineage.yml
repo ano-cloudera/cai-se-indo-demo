@@ -1,0 +1,9 @@
+"FraudDetectionBaseline":
+  hive_table_qualified_names:
+    - "local.sample.fraud_transactions@file"
+  metadata:
+    dataset_file: "../../sample/fraud_transactions.csv"
+    training_file: "1_train_fraud_job.py"
+    packaging_file: "2_package_model.py"
+    target_column: "fraud_flag"
+    model_type: "binary_classification"

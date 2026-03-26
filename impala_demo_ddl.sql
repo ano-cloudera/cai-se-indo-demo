@@ -65,14 +65,76 @@ TBLPROPERTIES (
   'serialization.null.format'=''
 );
 
+DROP TABLE IF EXISTS fraud_transactions;
+CREATE EXTERNAL TABLE fraud_transactions (
+  transaction_id INT,
+  customer_id INT,
+  account_id INT,
+  transaction_timestamp STRING,
+  transaction_date STRING,
+  transaction_type STRING,
+  channel STRING,
+  amount BIGINT,
+  currency_code STRING,
+  merchant_category STRING,
+  merchant_name STRING,
+  origin_city STRING,
+  destination_city STRING,
+  origin_branch_code STRING,
+  device_id STRING,
+  device_os STRING,
+  ip_address STRING,
+  network_type STRING,
+  is_new_device INT,
+  is_foreign_ip INT,
+  customer_segment STRING,
+  customer_age INT,
+  account_tenure_days INT,
+  days_since_last_txn INT,
+  txn_count_1d INT,
+  txn_count_7d INT,
+  txn_amount_1d BIGINT,
+  txn_amount_7d BIGINT,
+  avg_txn_amount_30d DOUBLE,
+  amount_vs_avg_30d_ratio DOUBLE,
+  is_round_amount INT,
+  is_night_txn INT,
+  is_weekend_txn INT,
+  failed_login_count_24h INT,
+  beneficiary_bank STRING,
+  beneficiary_account_age_days INT,
+  is_new_beneficiary INT,
+  distance_from_home_km DOUBLE,
+  velocity_risk_score DOUBLE,
+  behavioral_risk_score DOUBLE,
+  fraud_flag INT,
+  fraud_reason STRING
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+STORED AS TEXTFILE
+LOCATION '/data/demo_banking/fraud_transactions'
+TBLPROPERTIES (
+  'skip.header.line.count'='1',
+  'serialization.null.format'=''
+);
+
 INVALIDATE METADATA customers;
 INVALIDATE METADATA deposits;
 INVALIDATE METADATA credits;
+INVALIDATE METADATA fraud_transactions;
 
 -- Optional sanity checks
 SELECT COUNT(*) AS total_customers FROM customers;
 SELECT COUNT(*) AS total_deposits FROM deposits;
 SELECT COUNT(*) AS total_credits FROM credits;
+
+SELECT COUNT(*) AS total_fraud_transactions FROM fraud_transactions;
+
+SELECT fraud_flag, COUNT(*) AS total_transactions
+FROM fraud_transactions
+GROUP BY fraud_flag
+ORDER BY fraud_flag;
 
 SELECT COUNT(*) AS orphan_deposits
 FROM deposits d
@@ -85,3 +147,14 @@ FROM credits cr
 LEFT JOIN customers c
   ON cr.customer_id = c.customer_id
 WHERE c.customer_id IS NULL;
+
+SELECT COUNT(*) AS orphan_fraud_transactions
+FROM fraud_transactions ft
+LEFT JOIN customers c
+  ON ft.customer_id = c.customer_id
+WHERE c.customer_id IS NULL;
+
+SELECT channel, transaction_type, COUNT(*) AS total_transactions
+FROM fraud_transactions
+GROUP BY channel, transaction_type
+ORDER BY total_transactions DESC, channel, transaction_type;

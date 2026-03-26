@@ -1,0 +1,8 @@
+.venv/
+.cache/
+artifacts/mlruns/
+artifacts/mlflow-artifacts/
+artifacts/runs/*
+!artifacts/runs/.gitkeep
+artifacts/champion/*
+!artifacts/champion/.gitkeep
