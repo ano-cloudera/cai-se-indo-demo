@@ -13,6 +13,8 @@ status: active
 priority: primary
 current_focus: Fraud analytics assistant plus traditional fraud ML workflow for Cloudera AI.
 portable_reading: true
+deployment_database: se_indo_demo
+impala_external_data_location: s3a://goes-se-sandbox/data/user/triano/sample/
 ---
 
 # Fraud AI Assistant Project State
@@ -26,6 +28,8 @@ Current interpretation:
 - `fraud-ai-assistant` is the primary focus of the workspace
 - the project now covers both assistant behavior and traditional fraud ML preparation
 - the current implementation is demo-oriented, explainable, and aligned to later Cloudera AI workflows
+- the currently validated Impala database is `se_indo_demo`
+- the currently validated external table location is `s3a://goes-se-sandbox/data/user/triano/sample/`
 
 ## Current Status
 
@@ -170,6 +174,8 @@ Implemented:
 
 - `impala_demo_ddl.sql` includes `CREATE EXTERNAL TABLE fraud_transactions`
 - metadata invalidation includes the fraud table
+- current CAI validation uses database `se_indo_demo`
+- current CAI validation uses external table location `s3a://goes-se-sandbox/data/user/triano/sample/`
 - sanity checks cover:
   - total row count
   - fraud vs non-fraud split
