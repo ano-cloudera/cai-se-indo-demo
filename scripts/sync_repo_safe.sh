@@ -15,11 +15,13 @@ if [ ! -d ".git" ]; then
   exit 1
 fi
 
-echo "[INFO] Checking working tree status"
-if [ -n "$(git status --porcelain)" ]; then
-  echo "[ERROR] Working tree is not clean. Aborting sync."
-  echo "[INFO] Pending changes:"
-  git status --short
+echo "[INFO] Checking tracked changes only"
+TRACKED_CHANGES="$(git status --porcelain --untracked-files=no)"
+
+if [ -n "${TRACKED_CHANGES}" ]; then
+  echo "[ERROR] Tracked changes detected. Aborting sync."
+  echo "[INFO] Pending tracked changes:"
+  echo "${TRACKED_CHANGES}"
   exit 2
 fi
 
