@@ -1,6 +1,6 @@
-# BNI Demo
+# Ask Data
 
-BNI Demo is a Cloudera AI project for a banking analytics text-to-SQL use case.
+Ask Data is a Cloudera AI project for analytics text-to-SQL and answer generation.
 
 The solution combines:
 
@@ -15,7 +15,7 @@ The solution combines:
 
 ## Project Goal
 
-The goal of this project is to provide a demo-ready banking analytics assistant that can:
+The goal of this project is to provide a demo-ready analytics assistant that can:
 
 - accept natural language questions
 - generate safe read-only SQL
@@ -62,7 +62,7 @@ The primary demo flow is:
 ## Folder Structure
 
 ```text
-bni-demo/
+ask-data/
 ├── backend/
 │   ├── app/
 │   │   ├── api/
@@ -86,3 +86,18 @@ bni-demo/
 │   ├── README.md
 │   └── package.json
 └── README.md
+```
+
+## Cloudera AI Application Readiness
+
+This project is structured to run as two separate Cloudera AI Applications:
+
+- backend application via `ask-data/backend/backend_entry.py`
+- frontend application via `ask-data/frontend/frontend_entry.py`
+
+Deployment assumptions:
+
+- backend and frontend are deployed as separate Applications
+- frontend points to the backend through `NEXT_PUBLIC_API_BASE_URL`
+- Cloudera AI provides `CDSW_APP_PORT` at runtime
+- backend secrets and connection settings are injected through Application environment variables

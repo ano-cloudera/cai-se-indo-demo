@@ -44,7 +44,7 @@ answer_generator = AnswerGeneratorService(settings=settings)
 conversation_generator = ConversationGeneratorService(settings=settings)
 
 app = FastAPI(
-    title="BNI Demo Backend",
+    title="Ask Data Backend",
     debug=settings.app_debug,
 )
 
@@ -59,13 +59,14 @@ app = FastAPI(
 
 @app.on_event("startup")
 def on_startup() -> None:
-    logger.info("BNI Demo backend startup complete")
+    logger.info("ask-data backend startup complete")
 
 
 @app.get("/")
 def read_root() -> dict[str, object]:
     return {
         "message": "BNI demo backend is running.",
+        "app": "ask-data",
         "environment": settings.app_env,
         "database": settings.impala_db,
         "docs": "/docs",
@@ -76,7 +77,7 @@ def read_root() -> dict[str, object]:
 def health() -> dict[str, object]:
     return {
         "status": "ok",
-        "service": "bni-demo-backend",
+        "service": "ask-data-backend",
         "environment": settings.app_env,
         "debug": settings.app_debug,
     }

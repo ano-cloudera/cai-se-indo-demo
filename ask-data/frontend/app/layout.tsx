@@ -4,8 +4,8 @@ import type { ReactNode } from "react";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "BNI Demo Frontend",
-  description: "Cloudera AI-ready frontend for the BNI banking text-to-SQL demo.",
+  title: "Ask Data Frontend",
+  description: "Cloudera AI-ready frontend for the ask-data analytics assistant.",
 };
 
 export default function RootLayout({

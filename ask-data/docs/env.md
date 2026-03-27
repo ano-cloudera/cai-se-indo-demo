@@ -1,4 +1,4 @@
-# BNI Demo Environment Reference
+# Ask Data Environment Reference
 
 This document lists the main runtime environment variables expected by the project.
 
@@ -60,4 +60,5 @@ Important:
 
 - The frontend must point to the backend URL using `NEXT_PUBLIC_API_BASE_URL`.
 - For CAI Application hosting, `CDSW_APP_PORT` should be preferred when present.
+- Recommended `SQL_ALLOWED_TABLES` value is `customers,deposits,credits,fraud_transactions`.
 - No secrets should be hardcoded into source files.

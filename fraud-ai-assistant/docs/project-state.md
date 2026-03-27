@@ -1,31 +1,78 @@
+---
+project: fraud-ai-assistant
+document: project-state
+version: 3
+last_modified: 2026-03-26
+workspace_root: /Users/trianonurhikmat/Documents/Works/cloudera/cai-demo
+project_root: /Users/trianonurhikmat/Documents/Works/cloudera/cai-demo/fraud-ai-assistant
+repository_branch: main
+latest_workspace_commits:
+  - 5eaf14ea Restructure demo apps and clean repository layout
+  - b598a5a8 Add fraud analytics data and traditional ML template
+status: active
+priority: primary
+current_focus: Fraud analytics assistant plus traditional fraud ML workflow for Cloudera AI.
+portable_reading: true
+---
+
 # Fraud AI Assistant Project State
 
-## Current Direction
+## Resume Context
 
-`fraud-ai-assistant` is now the primary focus of the workspace.
+Use this file as the primary handoff document for resuming the fraud work from another laptop, browser session, or AI coding tool.
 
-The goal is no longer a generic banking analytics assistant only. The active direction is a fraud analytics and investigation assistant that can:
+Current interpretation:
+
+- `fraud-ai-assistant` is the primary focus of the workspace
+- the project now covers both assistant behavior and traditional fraud ML preparation
+- the current implementation is demo-oriented, explainable, and aligned to later Cloudera AI workflows
+
+## Current Status
+
+Project status summary:
+
+- fraud-focused assistant direction: active
+- fraud dataset generation: implemented
+- Impala DDL for fraud table: implemented
+- backend schema and business context: implemented
+- frontend inherited from previous analytics stack: usable
+- traditional ML baseline workflow: implemented
+- local ML workflow verification: completed
+- shared ask-data deployment readiness review: completed
+- runtime validation in real Cloudera AI / Impala: pending
+- full backend test run in dependency-complete environment: pending
+
+## Purpose
+
+`fraud-ai-assistant` is intended to become a fraud investigation and fraud analytics assistant that can:
 
 - answer fraud-related questions in natural language
-- generate safe read-only Impala SQL
-- analyze suspicious transactions, fraud rate, risky channels, and customer/device anomalies
-- use synthetic demo data that is explainable enough for demos and model experimentation
+- generate safe read-only SQL against fraud demo data
+- help investigate suspicious transactions and behavioral anomalies
+- provide a foundation for later Cloudera AI fraud scoring workflows
 
-## Current Scope
+## Active Scope
 
-The project currently includes:
+The current scope includes:
 
 - FastAPI backend
 - Next.js frontend
-- Azure OpenAI-based text-to-SQL flow
+- fraud-aware text-to-SQL prompting
 - natural-language answer generation
-- Impala guardrails and allowlisted tables
-- in-memory session and conversation memory
-- domain-aware schema and business context for fraud analysis
+- allowlisted Impala access
+- in-memory session and conversation support
+- traditional fraud ML workflow in `ml-templates`
 
-## Dataset and Schema Status
+Out of scope for the current phase:
 
-The demo dataset now includes four core tables:
+- FastAPI scoring service for the ML model
+- streaming or real-time fraud orchestration
+- NiFi, Kafka, Iceberg, and Airflow integration
+- production-hard online serving logic
+
+## Shared Dataset and Schema State
+
+The shared demo dataset currently includes:
 
 1. `customers`
 2. `deposits`
@@ -35,199 +82,210 @@ The demo dataset now includes four core tables:
 ### `fraud_transactions`
 
 Business purpose:
-- transaction-level fraud monitoring, investigation, and demo modeling
+
+- transaction-level fraud monitoring
+- fraud investigation demos
+- traditional ML experimentation
 
 Grain:
+
 - one row per transaction
 
-Key fields available:
-- transaction identity: `transaction_id`, `customer_id`, `account_id`
-- time and behavior: `transaction_timestamp`, `transaction_date`, `transaction_type`, `channel`, `amount`
+Key column groups:
+
+- identity: `transaction_id`, `customer_id`, `account_id`
+- behavior: `transaction_timestamp`, `transaction_date`, `transaction_type`, `channel`, `amount`
 - merchant and geography: `merchant_category`, `merchant_name`, `origin_city`, `destination_city`, `origin_branch_code`
 - device and network: `device_id`, `device_os`, `ip_address`, `network_type`, `is_new_device`, `is_foreign_ip`
-- customer profile features: `customer_segment`, `customer_age`, `account_tenure_days`
-- velocity features: `days_since_last_txn`, `txn_count_1d`, `txn_count_7d`, `txn_amount_1d`, `txn_amount_7d`
-- anomaly features: `avg_txn_amount_30d`, `amount_vs_avg_30d_ratio`, `is_round_amount`, `is_night_txn`, `is_weekend_txn`
-- access and beneficiary features: `failed_login_count_24h`, `beneficiary_bank`, `beneficiary_account_age_days`, `is_new_beneficiary`
+- profile and tenure: `customer_segment`, `customer_age`, `account_tenure_days`
+- velocity: `days_since_last_txn`, `txn_count_1d`, `txn_count_7d`, `txn_amount_1d`, `txn_amount_7d`
+- anomaly: `avg_txn_amount_30d`, `amount_vs_avg_30d_ratio`, `is_round_amount`, `is_night_txn`, `is_weekend_txn`
+- access and beneficiary: `failed_login_count_24h`, `beneficiary_bank`, `beneficiary_account_age_days`, `is_new_beneficiary`
 - explainability and scoring: `distance_from_home_km`, `velocity_risk_score`, `behavioral_risk_score`, `fraud_flag`, `fraud_reason`
 
-Current generation target:
-- synthetic but explainable
-- balanced for demo use
-- fraud label ratio around `40%`
+Current generated output:
 
-## What Is Already Implemented
+- file: `/Users/trianonurhikmat/Documents/Works/cloudera/cai-demo/sample/fraud_transactions.csv`
+- rows: `24000`
+- fraud rows: `9600`
+- fraud ratio: `0.40`
+
+Important ML note:
+
+- `fraud_flag` is the label
+- `fraud_reason` is explainability metadata and should not be used as a training feature
 
 ## Historical Plan and Implementation Log
 
-### Plan history
+### Initial direction
 
-Initial project direction:
+The workspace originally started from a generic banking analytics assistant pattern.
 
-- generic banking analytics assistant
-- customer, deposit, and credit querying
-- text-to-SQL and natural-language answers
+### Direction shift
 
-Shift in direction:
+The active workspace direction later changed to:
 
-- the workspace focus moved from generic banking analytics to fraud analytics
-- the main assistant target became `fraud-ai-assistant`
-- fraud transaction analysis and fraud ML preparation became the active delivery path
+- fraud analytics first
+- explainable fraud dataset generation
+- fraud-aware SQL assistance
+- traditional ML baseline development for Cloudera AI
 
-### Implementation log
+### Delivery log
 
 Completed in order:
 
-1. Fraud-oriented project state created for `fraud-ai-assistant`.
-2. Synthetic fraud dataset design was defined with balanced `fraud_flag`.
-3. `generate_demo_data.py` was extended to generate `sample/fraud_transactions.csv`.
-4. `impala_demo_ddl.sql` was updated to add `fraud_transactions`.
-5. Fraud-aware schema context, business context, and assistant prompts were updated.
-6. `fraud-ai-assistant/ml-templates` was created as a traditional ML workflow adapted from the legacy root template.
-7. Baseline fraud model training, MLflow logging, artifact packaging, and serving preparation were validated locally in the new ML folder.
+1. Fraud-oriented project-state and scope definition were created.
+2. Fraud feature brainstorming was defined for synthetic transaction-level data.
+3. `generate_demo_data.py` was extended to produce `sample/fraud_transactions.csv`.
+4. `impala_demo_ddl.sql` was extended with the `fraud_transactions` table and validation queries.
+5. Fraud-aware allowlists, schema context, business context, and prompts were added.
+6. `fraud-ai-assistant/ml-templates` was built as a traditional fraud ML workflow adapted from the legacy template idea.
+7. Local training, MLflow logging, packaging, and serving smoke checks were completed.
+8. Repository structure was cleaned so the project is easier to reopen from different devices and tools.
+9. `ask-data` deployment readiness was reviewed and documented while preserving the previously working launcher behavior.
 
-Current latest milestone:
+## What Is Implemented
 
-- traditional fraud ML template is now implemented and runnable inside `fraud-ai-assistant/ml-templates`
+### Backend and SQL Layer
 
-### Backend and SQL layer
+Implemented:
 
-Completed:
+- read-only SQL generation and execution
+- fraud-aware allowlisted table access
+- fraud-focused schema context
+- fraud-focused business context
+- conversation and chat routing support for fraud use cases
 
-- read-only SQL generation and execution flow
-- allowed-table config includes `fraud_transactions`
-- schema context includes fraud table grain, columns, and join guidance
-- business context includes fraud-focused question patterns
-- chat fallbacks and conversation prompts now mention fraud analysis use cases
+Examples of supported analysis:
 
-Status:
-- complete for current local demo scope
+- fraud rate by channel
+- suspicious transaction review
+- repeated new-device fraud by customer
+- fraud amount by city
+- transaction trend analysis by date
 
-### Impala schema
+### Impala Schema
 
-Completed:
+Implemented:
 
 - `impala_demo_ddl.sql` includes `CREATE EXTERNAL TABLE fraud_transactions`
-- metadata invalidation includes `fraud_transactions`
-- sanity-check queries added for:
-  - total fraud transaction count
+- metadata invalidation includes the fraud table
+- sanity checks cover:
+  - total row count
   - fraud vs non-fraud split
   - orphan `customer_id`
-  - distribution by `channel` and `transaction_type`
+  - distribution by `channel`
+  - distribution by `transaction_type`
 
-Status:
-- ready for Impala submission
+Helper script available:
 
-### Synthetic data generation
+- `/Users/trianonurhikmat/Documents/Works/cloudera/cai-demo/submit_impala_schema.py`
 
-Completed:
+### Synthetic Data Generation
 
-- `generate_demo_data.py` generates `sample/fraud_transactions.csv`
-- customer join integrity validation for fraud data
-- rule-based fraud pattern injection such as:
-  - `new_device_high_amount`
-  - `impossible_travel`
-  - `burst_transfer`
-  - `mule_pattern`
-  - `account_takeover`
+Implemented:
 
-Current observed output:
-- `24000` fraud transaction rows
-- `9600` fraud rows
-- fraud ratio `0.40`
+- fraud transaction generation under `sample/`
+- controlled fraud-pattern injection
+- customer join integrity validation
+- explainability via `fraud_reason`
 
-Status:
-- complete for v1 demo dataset
+Current fraud-pattern examples:
 
-### Frontend and assistant experience
+- `new_device_high_amount`
+- `impossible_travel`
+- `burst_transfer`
+- `mule_pattern`
+- `account_takeover`
 
-Completed:
+### Frontend and Assistant Layer
 
-- existing frontend and assistant stack remains usable
-- prompt context now supports fraud-related SQL and conversational guidance
+Implemented:
 
-Status:
-- functional, but still visually and experientially inherited from the earlier banking analytics setup
+- frontend remains functional for demo exploration
+- prompt context supports fraud-oriented question patterns
+- fraud-specific backend behavior is already wired into the assistant stack
 
-### Traditional ML template
+Current limitation:
 
-Completed:
+- the overall visual and conversational experience still inherits part of the older banking analytics style
 
-- new `fraud-ai-assistant/ml-templates` folder created from the legacy root template concept
-- bootstrap entrypoint added for local and CAI-friendly setup
-- modular fraud ML package added under `src/fraud_ml`
-- baseline training compares logistic regression and random forest
-- MLflow-compatible tracking added with local file-based tracking as default
-- champion packaging flow added for later CML model serving
-- `model_serving.py` added with a `predict(args)` entrypoint
-- local end-to-end verification completed for:
-  - bootstrap
-  - training
-  - champion packaging
-  - serving smoke test
+### Traditional ML Workflow
 
-Current observed ML result:
+Implemented in `/Users/trianonurhikmat/Documents/Works/cloudera/cai-demo/fraud-ai-assistant/ml-templates`:
+
+- bootstrap entrypoint
+- fraud training entrypoint
+- champion packaging entrypoint
+- model-serving preparation entrypoint
+- modular fraud ML package under `src/fraud_ml`
+- MLflow-compatible experiment logging
+- artifact packaging for later CML serving
+
+Baseline modeling choices:
+
+- binary classification on `fraud_flag`
+- leakage exclusion for `fraud_reason` and `transaction_id`
+- categorical and numeric preprocessing
+- probability output enabled
+- baseline candidate models:
+  - logistic regression
+  - random forest
+
+Current observed local result:
 
 - champion model: `random_forest`
 - champion run id: `ed082ff0151d4c7c910a5b7c26c32d28`
-- packaged champion metrics:
+- metrics:
   - accuracy `0.9975`
   - precision `0.99722`
   - recall `0.996528`
   - f1 `0.996874`
   - roc_auc `0.99996`
 
-Status:
-- complete for v1 traditional fraud ML scope
+## Constraints
 
-## Current Constraints
+Current known constraints:
 
-- local backend unit tests could not be fully executed in the current environment because `pydantic_settings` is not installed locally
-- runtime validation in actual Cloudera AI / Impala environment is still pending
-- fraud dataset is intentionally synthetic and balanced for demo value, not for production realism
-- the ML template uses `mlflow-skinny` instead of full `mlflow` in the current environment because full `mlflow` pulled `pyarrow` and required `cmake`, which was unnecessary for the CSV-first baseline flow
+- the dataset is synthetic and intentionally balanced for demo value
+- production realism is not the target of the current data generator
+- runtime validation against a live Cloudera AI and Impala environment is still pending
+- cross-project deployment work should avoid changing `ask-data` launcher files unless there is a clear runtime failure to fix
+- local backend tests could not be fully executed in environments missing required Python packages such as `pydantic_settings`
+- the ML workflow currently uses `mlflow-skinny` rather than full `mlflow` because the baseline CSV-first workflow did not need the heavier dependency chain
 
-## Next Recommended Work
+## Recommended Next Actions
 
 Priority order:
 
-1. Validate the new Impala table end-to-end using the generated CSV and DDL.
-2. Add sample CAI job definitions or runbook steps for the new ML template.
-3. Add MLflow model signature and input example during model logging.
-4. Add fraud-specific example prompts and starter questions in the frontend.
-5. Tune answer phrasing so the assistant sounds explicitly like a fraud investigation assistant.
-6. Add a few ready-to-demo SQL patterns:
-   - fraud rate by channel
-   - top suspicious transactions
-   - repeated new-device fraud by customer
-   - fraud amount by city
-   - fraud trend by transaction date
-7. Run backend tests again in an environment with required Python dependencies installed.
+1. Validate the fraud table end-to-end in Impala using the generated CSV and DDL.
+2. Add explicit CAI job or runbook examples for the traditional ML workflow.
+3. Log MLflow model signature and input example during training.
+4. Add fraud-first starter prompts and UX copy in the frontend.
+5. Improve the assistant tone so it reads clearly as a fraud investigation assistant.
+6. Re-run backend tests in a dependency-complete environment.
 
-## Source of Truth Files
+## Key Files
 
-For the current fraud-focused direction, the main files are:
+Primary files to inspect first:
 
-- `generate_demo_data.py`
-- `sample/fraud_transactions.csv`
-- `impala_demo_ddl.sql`
-- `fraud-ai-assistant/backend/app/services/schema_context.py`
-- `fraud-ai-assistant/backend/app/services/business_context.py`
-- `fraud-ai-assistant/backend/app/core/config.py`
-- `fraud-ai-assistant/ml-templates/1_train_fraud_job.py`
-- `fraud-ai-assistant/ml-templates/2_package_model.py`
-- `fraud-ai-assistant/ml-templates/model_serving.py`
+- `/Users/trianonurhikmat/Documents/Works/cloudera/cai-demo/generate_demo_data.py`
+- `/Users/trianonurhikmat/Documents/Works/cloudera/cai-demo/sample/fraud_transactions.csv`
+- `/Users/trianonurhikmat/Documents/Works/cloudera/cai-demo/impala_demo_ddl.sql`
+- `/Users/trianonurhikmat/Documents/Works/cloudera/cai-demo/submit_impala_schema.py`
+- `/Users/trianonurhikmat/Documents/Works/cloudera/cai-demo/fraud-ai-assistant/backend/app/core/config.py`
+- `/Users/trianonurhikmat/Documents/Works/cloudera/cai-demo/fraud-ai-assistant/backend/app/services/schema_context.py`
+- `/Users/trianonurhikmat/Documents/Works/cloudera/cai-demo/fraud-ai-assistant/backend/app/services/business_context.py`
+- `/Users/trianonurhikmat/Documents/Works/cloudera/cai-demo/fraud-ai-assistant/ml-templates/1_train_fraud_job.py`
+- `/Users/trianonurhikmat/Documents/Works/cloudera/cai-demo/fraud-ai-assistant/ml-templates/2_package_model.py`
+- `/Users/trianonurhikmat/Documents/Works/cloudera/cai-demo/fraud-ai-assistant/ml-templates/model_serving.py`
 
-## Status Summary
+## Handoff Notes
 
-Current project status:
+If another AI tool resumes from this file, the safe assumption is:
 
-- fraud-focused direction: active
-- fraud dataset and schema: implemented
-- assistant schema context: updated
-- Impala DDL: updated
-- traditional fraud ML template: implemented
-- local syntax verification: passed
-- local ML dependency-complete verification: passed for the new ML template
-- local backend dependency-complete test run: pending
-- Cloudera AI runtime validation: pending
+- `fraud-ai-assistant` is the highest-priority project in the workspace
+- shared schema and data generation are already fraud-aware
+- traditional ML work should happen inside `fraud-ai-assistant/ml-templates`
+- `ask-data` launcher behavior is intentionally preserved because it previously worked for CAI deployment
+- any schema change in shared data likely needs updates in both `fraud-ai-assistant` and `ask-data`

@@ -1,6 +1,6 @@
-# BNI Demo Backend
+# Ask Data Backend
 
-This backend is intended to be edited locally and validated at runtime inside Cloudera AI VS Code or a Cloudera AI application.
+This backend is intended to be edited locally and validated at runtime inside Cloudera AI VS Code or a Cloudera AI Application.
 
 ## Runtime model
 
@@ -77,8 +77,9 @@ python backend_entry.py
 ```
 
 The launcher reads `CDSW_APP_PORT` first, then `PORT`, then falls back to `8080`.
+It binds to `APP_HOST` when provided, otherwise `0.0.0.0`.
 
-For demo deployment, the backend enables permissive CORS so a separate frontend Application can call it from the browser.
+Cross-application browser access is expected to be handled by the Cloudera AI Application proxy layer.
 
 ## LLM SQL generation
 
@@ -119,7 +120,7 @@ This phase adds validation and execution guardrails before SQL is sent to Impala
 - Generated SQL is validated again before execution.
 - Multi-statement SQL and dangerous keywords are blocked.
 - Broad listing queries may receive an automatic `LIMIT`.
-- Runtime validation should still happen later in Cloudera AI VS Code.
+- Runtime validation should still happen later in Cloudera AI VS Code and Cloudera AI Applications.
 
 ## API endpoints
 

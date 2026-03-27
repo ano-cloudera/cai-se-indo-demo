@@ -1,4 +1,4 @@
-# BNI Demo Setup Guide
+# Ask Data Setup Guide
 
 This guide summarizes the practical setup flow for testing and deployment in Cloudera AI.
 
@@ -28,8 +28,8 @@ Notes:
 From a CAI session or any terminal that already has the Impala environment variables set:
 
 ```bash
-cd /path/to/BNI\ Preparation
-pip install -r bni-demo/backend/requirements.txt
+cd /Users/trianonurhikmat/Documents/Works/cloudera/cai-demo
+pip install -r ask-data/backend/requirements.txt
 python submit_impala_schema.py
 ```
 
@@ -51,6 +51,7 @@ Notes:
 
 - This launcher reads `CDSW_APP_PORT` first, then `PORT`, then `8080`.
 - It is intended for Application hosting.
+- It binds to `APP_HOST` when provided, otherwise `0.0.0.0`.
 
 ## Frontend setup in a CAI session
 
@@ -70,14 +71,14 @@ Notes:
 
 ```bash
 cd frontend
-./frontend_entry.sh
+python frontend_entry.py
 ```
 
 Notes:
 
 - The launcher fails clearly if `NEXT_PUBLIC_API_BASE_URL` is missing.
 - It sets `PORT` from `CDSW_APP_PORT` when available.
-- It installs dependencies if needed, builds the app, and starts it.
+- It installs dependencies if needed, builds the app, and starts it on `0.0.0.0`.
 
 ## Recommended validation order
 
@@ -87,3 +88,41 @@ Notes:
 4. Test `POST /chat/query` or `POST /chat/answer`.
 5. Start the frontend and point it to the backend URL.
 6. Validate the end-to-end demo flow in the browser.
+
+## Recommended Cloudera AI Application entrypoints
+
+Backend Application:
+
+- working directory: `ask-data/backend`
+- script: `backend_entry.py`
+- install command: `pip install -r requirements.txt`
+
+Frontend Application:
+
+- working directory: `ask-data/frontend`
+- script: `frontend_entry.py`
+- install command: `npm install`
+
+## Minimum backend Application environment variables
+
+- `IMPALA_HOST`
+- `IMPALA_PORT`
+- `IMPALA_HTTP_PATH`
+- `CDP_USER`
+- `CDP_PASS`
+- `DB_NAME`
+- `AZURE_OPENAI_ENDPOINT`
+- `AZURE_OPENAI_API_KEY`
+- `AZURE_OPENAI_API_VERSION`
+- `AZURE_OPENAI_DEPLOYMENT`
+- `AZURE_OPENAI_MODEL`
+
+Recommended:
+
+- `APP_ENV=production`
+- `APP_HOST=0.0.0.0`
+- `SQL_ALLOWED_TABLES=customers,deposits,credits,fraud_transactions`
+
+## Minimum frontend Application environment variables
+
+- `NEXT_PUBLIC_API_BASE_URL`

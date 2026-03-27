@@ -1,4 +1,4 @@
-# BNI Demo Frontend
+# Ask Data Frontend
 
 This frontend is intended to be developed locally, tested in a Cloudera AI session, and then hosted as a long-running Cloudera AI Application.
 
@@ -77,6 +77,6 @@ Shell launcher remains available:
 ./frontend_entry.sh
 ```
 
-Both launchers validate `NEXT_PUBLIC_API_BASE_URL`, use `${CDSW_APP_PORT}` when available, build the app, and start it for Application hosting.
+Both launchers validate `NEXT_PUBLIC_API_BASE_URL`, use `${CDSW_APP_PORT}` when available, build the app, and start it on `0.0.0.0` for Application hosting.
 
 The frontend must point to the backend Application URL through `NEXT_PUBLIC_API_BASE_URL`.
