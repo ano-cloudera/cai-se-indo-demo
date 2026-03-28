@@ -10,7 +10,10 @@ import joblib
 import pandas as pd
 
 
-PROJECT_ROOT = Path(__file__).resolve().parent
+if "__file__" in globals():
+    PROJECT_ROOT = Path(__file__).resolve().parent
+else:  # pragma: no cover - used by CAI model runtime execution contexts
+    PROJECT_ROOT = Path.cwd()
 SRC_ROOT = PROJECT_ROOT / "src"
 if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
