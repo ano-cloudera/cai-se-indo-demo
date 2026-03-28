@@ -209,7 +209,15 @@ python3 2_package_model.py --artifact-root ./artifacts
 
 ## MLflow Tracking
 
-If no tracking URI is provided, training uses a local file-based MLflow store under:
+In CAI, training now defaults to the platform-managed MLflow tracking backend so runs can appear in the CAI Experiments UI.
+
+If you explicitly want local file-based tracking, set:
+
+```bash
+export MLFLOW_TRACKING_MODE=local
+```
+
+Then training uses a local file-based MLflow store under:
 
 ```text
 artifacts/mlruns/
@@ -219,6 +227,12 @@ Model and evaluation artifacts are also written to local run folders under:
 
 ```text
 artifacts/runs/
+```
+
+You can also provide an explicit MLflow tracking backend with:
+
+```bash
+export MLFLOW_TRACKING_URI=<your-tracking-uri>
 ```
 
 ## Deployment Preparation
