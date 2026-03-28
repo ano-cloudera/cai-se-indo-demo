@@ -1,8 +1,9 @@
 "FraudDetectionBaseline":
   hive_table_qualified_names:
-    - "local.sample.fraud_transactions@file"
+    - "cai_sdx_se_indonesia.fraud_transactions@impala"
   metadata:
-    dataset_file: "../../sample/fraud_transactions.csv"
+    dataset_source: "impala"
+    dataset_table: "cai_sdx_se_indonesia.fraud_transactions"
     training_file: "1_train_fraud_job.py"
     packaging_file: "2_package_model.py"
     target_column: "fraud_flag"

@@ -3,8 +3,9 @@ from __future__ import annotations
 from pathlib import Path
 
 import pandas as pd
+from impala.dbapi import connect
 
-from fraud_ml.config import TARGET_COLUMN
+from fraud_ml.config import ImpalaConfig, TARGET_COLUMN
 
 
 def load_dataset(data_path: Path) -> pd.DataFrame:
@@ -12,6 +13,35 @@ def load_dataset(data_path: Path) -> pd.DataFrame:
         raise FileNotFoundError(f"Fraud dataset not found: {data_path}")
     frame = pd.read_csv(data_path, low_memory=False)
     validate_dataset(frame, data_path)
+    return frame
+
+
+def load_dataset_from_impala(config: ImpalaConfig) -> pd.DataFrame:
+    if not config.is_configured:
+        raise RuntimeError(
+            "Impala training source is not fully configured. "
+            "Set IMPALA_HOST, IMPALA_HTTP_PATH, DB_NAME, CDP_USER, and CDP_PASS."
+        )
+
+    query = f"SELECT * FROM {config.database}.{config.source_table}"
+    connection = connect(
+        host=config.host,
+        port=config.port,
+        database=config.database,
+        user=config.user,
+        password=config.password,
+        use_ssl=True,
+        auth_mechanism="PLAIN",
+        http_path=config.http_path,
+        use_http_transport=True,
+    )
+
+    try:
+        frame = pd.read_sql(query, connection)
+    finally:
+        connection.close()
+
+    validate_dataset(frame, Path(f"impala://{config.database}/{config.source_table}"))
     return frame
 
 

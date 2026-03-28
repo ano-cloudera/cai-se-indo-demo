@@ -1,8 +1,8 @@
 ---
 project: fraud-ai-assistant
 document: project-state
-version: 3
-last_modified: 2026-03-26
+version: 4
+last_modified: 2026-03-29
 workspace_root: /Users/trianonurhikmat/Documents/Works/cloudera/cai-demo
 project_root: /Users/trianonurhikmat/Documents/Works/cloudera/cai-demo/fraud-ai-assistant
 repository_branch: main
@@ -13,8 +13,8 @@ status: active
 priority: primary
 current_focus: Fraud analytics assistant plus traditional fraud ML workflow for Cloudera AI.
 portable_reading: true
-deployment_database: se_indo_demo
-impala_external_data_location: s3a://goes-se-sandbox/data/user/triano/sample/
+deployment_database: cai_sdx_se_indonesia
+impala_external_data_location: s3a://go01-demo/user/cai-demo-se-indonesia/data/
 ---
 
 # Fraud AI Assistant Project State
@@ -28,8 +28,8 @@ Current interpretation:
 - `fraud-ai-assistant` is the primary focus of the workspace
 - the project now covers both assistant behavior and traditional fraud ML preparation
 - the current implementation is demo-oriented, explainable, and aligned to later Cloudera AI workflows
-- the currently validated Impala database is `se_indo_demo`
-- the currently validated external table location is `s3a://goes-se-sandbox/data/user/triano/sample/`
+- the currently validated Impala database is `cai_sdx_se_indonesia`
+- the currently validated external table location is `s3a://go01-demo/user/cai-demo-se-indonesia/data/`
 
 ## Current Status
 
@@ -41,6 +41,7 @@ Project status summary:
 - backend schema and business context: implemented
 - frontend inherited from previous analytics stack: usable
 - traditional ML baseline workflow: implemented
+- Impala-backed fraud ML training flow: implemented
 - local ML workflow verification: completed
 - shared ask-data deployment readiness review: completed
 - runtime validation in real Cloudera AI / Impala: pending
@@ -66,6 +67,7 @@ The current scope includes:
 - allowlisted Impala access
 - in-memory session and conversation support
 - traditional fraud ML workflow in `ml-templates`
+- Impala-backed baseline fraud training in `ml-templates`
 
 Out of scope for the current phase:
 
@@ -174,8 +176,8 @@ Implemented:
 
 - `impala_demo_ddl.sql` includes `CREATE EXTERNAL TABLE fraud_transactions`
 - metadata invalidation includes the fraud table
-- current CAI validation uses database `se_indo_demo`
-- current CAI validation uses external table location `s3a://goes-se-sandbox/data/user/triano/sample/`
+- current CAI validation uses database `cai_sdx_se_indonesia`
+- current CAI validation uses external table location `s3a://go01-demo/user/cai-demo-se-indonesia/data/`
 - sanity checks cover:
   - total row count
   - fraud vs non-fraud split
@@ -227,6 +229,7 @@ Implemented in `/Users/trianonurhikmat/Documents/Works/cloudera/cai-demo/fraud-a
 - modular fraud ML package under `src/fraud_ml`
 - MLflow-compatible experiment logging
 - artifact packaging for later CML serving
+- Impala training source support using CAI environment variables with CSV fallback
 
 Baseline modeling choices:
 
@@ -256,6 +259,7 @@ Current known constraints:
 - the dataset is synthetic and intentionally balanced for demo value
 - production realism is not the target of the current data generator
 - runtime validation against a live Cloudera AI and Impala environment is still pending
+- Impala-backed ML training now depends on CAI runtime connectivity plus `impyla` availability
 - cross-project deployment work should avoid changing `ask-data` launcher files unless there is a clear runtime failure to fix
 - local backend tests could not be fully executed in environments missing required Python packages such as `pydantic_settings`
 - the ML workflow currently uses `mlflow-skinny` rather than full `mlflow` because the baseline CSV-first workflow did not need the heavier dependency chain
@@ -270,6 +274,7 @@ Priority order:
 4. Add fraud-first starter prompts and UX copy in the frontend.
 5. Improve the assistant tone so it reads clearly as a fraud investigation assistant.
 6. Re-run backend tests in a dependency-complete environment.
+7. Validate the new Impala-backed ML training job inside CAI.
 
 ## Key Files
 

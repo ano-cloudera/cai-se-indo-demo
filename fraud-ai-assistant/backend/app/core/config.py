@@ -30,7 +30,7 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("IMPALA_HTTP_PATH"),
     )
     impala_db: str = Field(
-        default="default",
+        default="cai_sdx_se_indonesia",
         validation_alias=AliasChoices("DB_NAME", "IMPALA_DB"),
     )
     impala_user: str = Field(

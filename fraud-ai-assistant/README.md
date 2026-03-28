@@ -1,88 +1,94 @@
-# BNI Demo
+# Fraud AI Assistant
 
-BNI Demo is a Cloudera AI project for a banking analytics text-to-SQL use case.
+`fraud-ai-assistant` is the primary project in this workspace.
 
-The solution combines:
+It is built for a CAI demo where a user can investigate suspicious transactions, ask fraud-focused business questions, and train a traditional baseline fraud model using the same shared Impala data foundation.
 
-- **FastAPI backend**
-- **Impala / Cloudera Data Warehouse connectivity**
-- **Azure OpenAI for SQL generation**
-- **Azure OpenAI answer synthesis**
-- **Session and memory support**
-- **Safe SQL validation and execution**
-- **Next.js + Tailwind frontend**
-- **Cloudera AI session testing and Application-ready hosting**
+## Current Role In This Workspace
 
-## Project Goal
+- primary demo track for fraud analytics and investigation
+- fraud-specific assistant with stronger domain framing than `ask-data`
+- home of the traditional fraud ML workflow in `ml-templates`
+- aligned to current CAI deployment and shared Impala configuration
 
-The goal of this project is to provide a demo-ready banking analytics assistant that can:
+## Current Shared Data Configuration
 
-- accept natural language questions
-- generate safe read-only SQL
-- validate and execute SQL against Impala
-- return a natural human-readable business answer
-- return structured results
-- preserve session context across interactions
-- provide a clean web frontend for demo users
+The project is aligned to the current CAI demo configuration:
 
-## High-Level Architecture
+- Impala database: `cai_sdx_se_indonesia`
+- shared data root: `s3a://go01-demo/user/cai-demo-se-indonesia/data/`
+- expected tables:
+  - `customers`
+  - `deposits`
+  - `credits`
+  - `fraud_transactions`
 
-### Backend
-The backend is built with FastAPI and provides:
+The main fraud label is:
 
-- health endpoints
-- Impala connectivity
-- Azure OpenAI SQL generation
-- natural-language answer generation grounded in query previews
-- SQL guardrails
-- SQL execution
-- in-memory session and memory handling
+- `fraud_flag`
 
-### Frontend
-The frontend is built with Next.js and Tailwind CSS and provides:
+The explainability-only field is:
 
-- query input
-- backend health visibility
-- natural-language answer display
-- generated SQL preview
-- executed SQL preview
-- result table rendering
-- client-side session continuity
+- `fraud_reason`
 
-## Main Demo Flow
+## What The Project Includes
 
-The primary demo flow is:
+### Fraud assistant application
 
-1. User submits a business question from the frontend.
-2. Backend generates safe read-only SQL.
-3. Backend validates and executes the SQL against Impala.
-4. Backend synthesizes a concise human-readable answer from the preview result.
-5. Frontend displays the answer first, followed by SQL and result details.
+- FastAPI backend
+- Next.js frontend
+- fraud-aware text-to-SQL prompting
+- read-only Impala execution
+- natural-language investigation responses
+- in-memory session and conversation support
+
+### Traditional ML workflow
+
+The `ml-templates` folder provides:
+
+- bootstrap workflow
+- baseline training workflow
+- MLflow experiment logging
+- champion packaging
+- serving preparation assets
+
+The current training workflow now supports:
+
+- Impala as the default CAI data source
+- local CSV as a fallback for local-only runs
 
 ## Folder Structure
 
 ```text
-bni-demo/
+fraud-ai-assistant/
 ├── backend/
-│   ├── app/
-│   │   ├── api/
-│   │   ├── core/
-│   │   ├── db/
-│   │   ├── schemas/
-│   │   └── services/
-│   ├── tests/
-│   ├── .env.example
-│   ├── README.md
-│   └── requirements.txt
 ├── docs/
-│   ├── api-contract.md
-│   ├── env.md
-│   └── setup.md
 ├── frontend/
-│   ├── app/
-│   ├── components/
-│   ├── lib/
-│   ├── public/
-│   ├── README.md
-│   └── package.json
+├── ml-templates/
 └── README.md
+```
+
+## CAI Deployment Model
+
+The assistant portion is designed to run in CAI as separate backend and frontend Applications:
+
+- backend application via `fraud-ai-assistant/backend/backend_entry.py`
+- frontend application via `fraud-ai-assistant/frontend/frontend_entry.py`
+
+The ML workflow is designed for CAI sessions or Jobs, using shared Impala access and environment variables for runtime configuration.
+
+## Typical Questions It Should Support
+
+- fraud rate by channel, type, city, branch, or segment
+- suspicious transaction review
+- new-device and foreign-IP patterns
+- velocity and burst-transfer anomalies
+- fraud distribution by time, geography, or beneficiary behavior
+
+## Key Documentation
+
+- backend guide: [`backend/README.md`](/Users/triano/Documents/Cloudera/cai-se-indo-demo/fraud-ai-assistant/backend/README.md)
+- frontend guide: [`frontend/README.md`](/Users/triano/Documents/Cloudera/cai-se-indo-demo/fraud-ai-assistant/frontend/README.md)
+- ML template guide: [`ml-templates/README.md`](/Users/triano/Documents/Cloudera/cai-se-indo-demo/fraud-ai-assistant/ml-templates/README.md)
+- project status and handoff: [`docs/project-state.md`](/Users/triano/Documents/Cloudera/cai-se-indo-demo/fraud-ai-assistant/docs/project-state.md)
+- environment variables: [`docs/env.md`](/Users/triano/Documents/Cloudera/cai-se-indo-demo/fraud-ai-assistant/docs/env.md)

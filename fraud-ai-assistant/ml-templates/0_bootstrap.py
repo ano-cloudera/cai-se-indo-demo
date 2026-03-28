@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -12,6 +13,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--data",
         default="../../sample/fraud_transactions.csv",
         help="Path to the fraud transactions CSV.",
+    )
+    parser.add_argument(
+        "--data-source",
+        choices=("impala", "csv"),
+        default="impala",
+        help="Bootstrap validation source. Use 'impala' in CAI and 'csv' for local fallback.",
     )
     parser.add_argument(
         "--artifact-root",
@@ -48,14 +55,20 @@ def main() -> None:
     if not args.skip_install:
         install_requirements(requirements_path)
 
-    if not data_path.exists():
+    if args.data_source == "csv" and not data_path.exists():
         raise FileNotFoundError(f"Fraud dataset not found: {data_path}")
 
     ensure_directories(artifact_root)
 
     print("Fraud ML bootstrap completed.")
     print(f"- project root: {project_root}")
-    print(f"- data path: {data_path}")
+    print(f"- data source: {args.data_source}")
+    if args.data_source == "impala":
+        print(f"- impala host: {os.getenv('IMPALA_HOST', '')}")
+        print(f"- impala db: {os.getenv('DB_NAME') or os.getenv('IMPALA_DB') or 'cai_sdx_se_indonesia'}")
+        print(f"- source table: {os.getenv('FRAUD_SOURCE_TABLE', 'fraud_transactions')}")
+    else:
+        print(f"- data path: {data_path}")
     print(f"- artifact root: {artifact_root}")
     print(f"- mlflow tracking root: {artifact_root / 'mlruns'}")
     print(f"- champion bundle directory: {artifact_root / 'champion'}")

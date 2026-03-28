@@ -60,5 +60,7 @@ Important:
 
 - The frontend must point to the backend URL using `NEXT_PUBLIC_API_BASE_URL`.
 - For CAI Application hosting, `CDSW_APP_PORT` should be preferred when present.
+- Recommended `DB_NAME` for the current CAI demo is `cai_sdx_se_indonesia`.
+- Current shared external data location is `s3a://go01-demo/user/cai-demo-se-indonesia/data/`.
 - Recommended `SQL_ALLOWED_TABLES` value is `customers,deposits,credits,fraud_transactions`.
 - No secrets should be hardcoded into source files.

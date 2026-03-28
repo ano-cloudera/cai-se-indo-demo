@@ -1,82 +1,55 @@
-# BNI Demo Frontend
+# Fraud AI Assistant Frontend
 
-This frontend is intended to be developed locally, tested in a Cloudera AI session, and then hosted as a long-running Cloudera AI Application.
+This frontend is the web UI for the fraud-focused assistant in the CAI demo workspace.
 
-## Runtime model
+It is designed for local development, CAI session validation, and CAI Application hosting.
 
-- Runtime validation is expected to happen later inside Cloudera AI VS Code or a Cloudera AI Application.
-- Frontend runtime configuration should come from environment variables.
-- `.env.local.example` is documentation only and can be copied for optional local fallback.
-- Backend connectivity is explicit through `NEXT_PUBLIC_API_BASE_URL`.
+## Frontend Responsibilities
 
-## Required environment variables
+- collect fraud investigation and fraud analytics questions
+- keep lightweight client session continuity
+- call the backend through `NEXT_PUBLIC_API_BASE_URL`
+- display backend and database health state
+- present a concise answer first, with generated SQL and preview data visible for trust and debugging
+
+## Required Environment Variables
 
 - `NEXT_PUBLIC_API_BASE_URL`
 - `PORT`
 - `CDSW_APP_PORT`
 
-`CDSW_APP_PORT` should be preferred when the frontend is hosted as a Cloudera AI Application. The npm scripts already fall back to `PORT` and then `3000`.
+`CDSW_APP_PORT` should be preferred in CAI Application hosting. The app falls back to `PORT`, then `3000`.
 
-## Frontend capabilities in this phase
-
-- Next.js App Router with TypeScript
-- Tailwind CSS styling
-- Shared API client for backend requests
-- Backend health and database health checks
-- Client-side `session_id` generation and persistence
-- Natural language query flow via `/chat/query`
-- Natural-language answer display from `/chat/query`
-- SQL preview and result table rendering
-
-## Pointing the frontend to the backend
-
-Set:
-
-```bash
-NEXT_PUBLIC_API_BASE_URL=http://your-backend-host:8000
-```
-
-Do not hardcode localhost-only assumptions. The frontend expects the backend URL to come from the environment.
-
-## Main demo response flow
-
-When the user runs a question through `/chat/query`, the UI now shows:
-
-- a human-readable business answer
-- generated SQL
-- executed SQL
-- result preview table
-
-The answer is intended to be the primary user-facing output, while SQL and result details remain visible for transparency.
-
-## Install dependencies
+## Install And Run
 
 ```bash
 npm install
-```
-
-## Run in a Cloudera AI session
-
-```bash
 npm run dev
 ```
 
-This binds to `0.0.0.0` and uses `${CDSW_APP_PORT}` when present, otherwise `PORT`, then `3000`.
+## Run As A CAI Application
 
-## Run as a Cloudera AI Application
-
-Preferred launcher for CAI Application file picker:
+Preferred launcher:
 
 ```bash
 python frontend_entry.py
 ```
 
-Shell launcher remains available:
+Alternative launcher:
 
 ```bash
 ./frontend_entry.sh
 ```
 
-Both launchers validate `NEXT_PUBLIC_API_BASE_URL`, use `${CDSW_APP_PORT}` when available, build the app, and start it for Application hosting.
+Both launchers validate `NEXT_PUBLIC_API_BASE_URL`, use CAI port conventions, and start the app for Application hosting.
 
-The frontend must point to the backend Application URL through `NEXT_PUBLIC_API_BASE_URL`.
+## UI Expectations
+
+When a user submits a question through `/chat/query`, the UI should show:
+
+- a concise fraud-oriented answer
+- generated SQL
+- executed SQL
+- result preview rows
+
+The experience should feel more investigation-oriented than the generic `ask-data` app, even though both share the same core architecture.

@@ -17,6 +17,7 @@ if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
 from fraud_ml.config import TemplatePaths, build_training_config
+from fraud_ml.config import build_impala_config_from_env
 from fraud_ml.train import train_baselines
 
 
@@ -26,6 +27,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--data",
         default="../../sample/fraud_transactions.csv",
         help="Path to the fraud transactions CSV.",
+    )
+    parser.add_argument(
+        "--data-source",
+        choices=("impala", "csv"),
+        default="impala",
+        help="Training data source. Use 'impala' in CAI and 'csv' for local fallback.",
     )
     parser.add_argument(
         "--artifact-root",
@@ -54,6 +61,8 @@ def main() -> None:
         artifact_root=paths.artifact_root,
         experiment_name=args.experiment_name,
         random_seed=args.random_seed,
+        data_source=args.data_source,
+        impala=build_impala_config_from_env(),
     )
     summary = train_baselines(config)
     print("Fraud model training completed.")

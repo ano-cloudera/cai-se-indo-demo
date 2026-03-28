@@ -18,9 +18,20 @@ It does not include:
 - Kafka, NiFi, Iceberg, or Airflow integration
 - real-time serving infrastructure
 
-Optional later extension:
+Current supported sources:
 
-- parquet support via `pyarrow` if the dataset source moves beyond CSV
+- Impala via Cloudera AI environment variables
+- local CSV fallback for local development
+
+## Current CAI Default
+
+The current default CAI training source is:
+
+- `cai_sdx_se_indonesia.fraud_transactions`
+
+The training entrypoint now defaults to:
+
+- `--data-source impala`
 
 ## Project Structure
 
@@ -52,7 +63,11 @@ fraud-ai-assistant/ml-templates/
 
 ## Dataset Assumptions
 
-Default input:
+Default CAI input:
+
+- Impala table `cai_sdx_se_indonesia.fraud_transactions`
+
+Local fallback input:
 
 ```bash
 ../../sample/fraud_transactions.csv
@@ -85,7 +100,7 @@ cd fraud-ai-assistant/ml-templates
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-python3 0_bootstrap.py --data ../../sample/fraud_transactions.csv
+python3 0_bootstrap.py --data-source csv --data ../../sample/fraud_transactions.csv
 ```
 
 ## Local Training
@@ -94,6 +109,7 @@ python3 0_bootstrap.py --data ../../sample/fraud_transactions.csv
 cd fraud-ai-assistant/ml-templates
 source .venv/bin/activate
 python3 1_train_fraud_job.py \
+  --data-source csv \
   --data ../../sample/fraud_transactions.csv \
   --experiment-name fraud_detection_baseline \
   --artifact-root ./artifacts
@@ -101,7 +117,7 @@ python3 1_train_fraud_job.py \
 
 What the training job does:
 
-- loads and validates the fraud CSV
+- loads and validates fraud training data from Impala or CSV
 - derives time-based features
 - preprocesses numeric and categorical columns
 - trains two baseline models:
@@ -151,7 +167,7 @@ Bootstrap:
 ```bash
 cd fraud-ai-assistant/ml-templates
 pip3 install -r requirements.txt
-python3 0_bootstrap.py --data ../../sample/fraud_transactions.csv
+python3 0_bootstrap.py --data-source impala
 ```
 
 Training job:
@@ -159,6 +175,26 @@ Training job:
 ```bash
 cd fraud-ai-assistant/ml-templates
 python3 1_train_fraud_job.py \
+  --data-source impala \
+  --experiment-name fraud_detection_baseline \
+  --artifact-root ./artifacts
+```
+
+Expected CAI environment variables:
+
+- `IMPALA_HOST`
+- `IMPALA_PORT`
+- `IMPALA_HTTP_PATH`
+- `CDP_USER`
+- `CDP_PASS`
+- `DB_NAME=cai_sdx_se_indonesia`
+- optional `FRAUD_SOURCE_TABLE=fraud_transactions`
+
+If Impala is not available, you can still run the local fallback path with:
+
+```bash
+python3 1_train_fraud_job.py \
+  --data-source csv \
   --data ../../sample/fraud_transactions.csv \
   --experiment-name fraud_detection_baseline \
   --artifact-root ./artifacts

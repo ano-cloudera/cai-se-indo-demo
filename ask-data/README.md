@@ -1,103 +1,102 @@
 # Ask Data
 
-Ask Data is a Cloudera AI project for analytics text-to-SQL and answer generation.
+`ask-data` is the general-purpose analytics assistant in this workspace.
 
-The solution combines:
+It is designed for CAI demos where a user asks business questions in natural language and the application turns them into safe read-only SQL against Impala, executes the query, and returns a concise answer plus transparent SQL and preview data.
 
-- **FastAPI backend**
-- **Impala / Cloudera Data Warehouse connectivity**
-- **Azure OpenAI for SQL generation**
-- **Azure OpenAI answer synthesis**
-- **Session and memory support**
-- **Safe SQL validation and execution**
-- **Next.js + Tailwind frontend**
-- **Cloudera AI session testing and Application-ready hosting**
+## Current Role In This Workspace
 
-## Project Goal
+- reusable analytics assistant for banking and fraud-adjacent analysis
+- secondary project in priority compared with `fraud-ai-assistant`
+- shared consumer of the common Impala demo schema
+- CAI-ready app split into backend and frontend applications
 
-The goal of this project is to provide a demo-ready analytics assistant that can:
+## Current Shared Data Configuration
 
-- accept natural language questions
-- generate safe read-only SQL
-- validate and execute SQL against Impala
-- return a natural human-readable business answer
-- return structured results
-- preserve session context across interactions
-- provide a clean web frontend for demo users
+The app is aligned to the current CAI demo configuration:
 
-## High-Level Architecture
+- Impala database: `cai_sdx_se_indonesia`
+- shared data root: `s3a://go01-demo/user/cai-demo-se-indonesia/data/`
+- expected tables:
+  - `customers`
+  - `deposits`
+  - `credits`
+  - `fraud_transactions`
+
+## What The App Does
+
+- accepts natural language business questions
+- generates safe read-only SQL with table allowlisting
+- executes SQL against Impala
+- summarizes preview results in natural language
+- preserves lightweight session context during a conversation
+- supports both banking and fraud-adjacent demo questions
+
+## Architecture
 
 ### Backend
-The backend is built with FastAPI and provides:
 
-- health endpoints
+The backend is a FastAPI service that handles:
+
+- runtime configuration from CAI environment variables
 - Impala connectivity
-- Azure OpenAI SQL generation
-- natural-language answer generation grounded in query previews
-- SQL guardrails
-- SQL execution
-- in-memory session and memory handling
+- Azure OpenAI-powered SQL generation
+- SQL validation and execution guardrails
+- answer generation grounded in query results
+- in-memory session and conversation state
+
+Primary backend guide:
+
+- [`backend/README.md`](/Users/triano/Documents/Cloudera/cai-se-indo-demo/ask-data/backend/README.md)
 
 ### Frontend
-The frontend is built with Next.js and Tailwind CSS and provides:
 
-- query input
-- backend health visibility
-- natural-language answer display
-- generated SQL preview
-- executed SQL preview
-- result table rendering
-- client-side session continuity
+The frontend is a Next.js application that handles:
 
-## Main Demo Flow
+- question input and session continuity
+- backend and database health display
+- answer-first result presentation
+- generated SQL visibility
+- query result preview rendering
 
-The primary demo flow is:
+Primary frontend guide:
 
-1. User submits a business question from the frontend.
-2. Backend generates safe read-only SQL.
-3. Backend validates and executes the SQL against Impala.
-4. Backend synthesizes a concise human-readable answer from the preview result.
-5. Frontend displays the answer first, followed by SQL and result details.
+- [`frontend/README.md`](/Users/triano/Documents/Cloudera/cai-se-indo-demo/ask-data/frontend/README.md)
 
 ## Folder Structure
 
 ```text
 ask-data/
 ├── backend/
-│   ├── app/
-│   │   ├── api/
-│   │   ├── core/
-│   │   ├── db/
-│   │   ├── schemas/
-│   │   └── services/
-│   ├── tests/
-│   ├── .env.example
-│   ├── README.md
-│   └── requirements.txt
 ├── docs/
-│   ├── api-contract.md
-│   ├── env.md
-│   └── setup.md
 ├── frontend/
-│   ├── app/
-│   ├── components/
-│   ├── lib/
-│   ├── public/
-│   ├── README.md
-│   └── package.json
 └── README.md
 ```
 
-## Cloudera AI Application Readiness
+## CAI Deployment Model
 
-This project is structured to run as two separate Cloudera AI Applications:
+This project is intended to run in Cloudera AI as two separate Applications:
 
 - backend application via `ask-data/backend/backend_entry.py`
 - frontend application via `ask-data/frontend/frontend_entry.py`
 
-Deployment assumptions:
+Recommended runtime assumptions:
 
-- backend and frontend are deployed as separate Applications
-- frontend points to the backend through `NEXT_PUBLIC_API_BASE_URL`
-- Cloudera AI provides `CDSW_APP_PORT` at runtime
-- backend secrets and connection settings are injected through Application environment variables
+- configuration is injected through CAI environment variables
+- frontend points to the backend with `NEXT_PUBLIC_API_BASE_URL`
+- the backend uses `DB_NAME=cai_sdx_se_indonesia`
+- both apps are synced from GitHub and validated in CAI
+
+## Typical Questions It Should Support
+
+- customer balance and product mix questions
+- deposit and credit summaries
+- trend analysis by date or branch
+- high-level fraud rate or suspicious activity exploration
+- fraud distribution by channel, city, device, or segment
+
+## Key Documentation
+
+- project status and handoff: [`docs/project-state.md`](/Users/triano/Documents/Cloudera/cai-se-indo-demo/ask-data/docs/project-state.md)
+- environment variables: [`docs/env.md`](/Users/triano/Documents/Cloudera/cai-se-indo-demo/ask-data/docs/env.md)
+- setup guidance: [`docs/setup.md`](/Users/triano/Documents/Cloudera/cai-se-indo-demo/ask-data/docs/setup.md)

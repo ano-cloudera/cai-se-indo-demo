@@ -14,7 +14,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 
 from fraud_ml.config import MODEL_CANDIDATES, TrainingConfig
-from fraud_ml.data import load_dataset
+from fraud_ml.data import load_dataset, load_dataset_from_impala
 from fraud_ml.evaluate import compute_binary_metrics, save_confusion_matrix, save_roc_curve
 from fraud_ml.features import prepare_training_frame
 from fraud_ml.mlflow_utils import flatten_metrics, initialize_mlflow, log_json_artifact
@@ -122,7 +122,14 @@ def train_baselines(config: TrainingConfig) -> dict[str, Any]:
     (config.artifact_root / "champion").mkdir(parents=True, exist_ok=True)
 
     mlflow_state = initialize_mlflow(config.artifact_root, config.experiment_name)
-    dataset = load_dataset(config.data_path)
+    if config.data_source == "impala":
+        if config.impala is None:
+            raise RuntimeError("Impala config is required when data_source='impala'.")
+        dataset = load_dataset_from_impala(config.impala)
+        dataset_reference = f"{config.impala.database}.{config.impala.source_table}"
+    else:
+        dataset = load_dataset(config.data_path)
+        dataset_reference = str(config.data_path)
     features, target, feature_metadata = prepare_training_frame(dataset)
     event_timestamp = pd.to_datetime(dataset["transaction_timestamp"], errors="coerce")
     if event_timestamp.isna().all():
@@ -201,7 +208,8 @@ def train_baselines(config: TrainingConfig) -> dict[str, Any]:
                     "target_column": config.target_column,
                     "primary_metric": config.primary_metric,
                     "secondary_metric": config.secondary_metric,
-                    "data_path": str(config.data_path),
+                    "data_source": config.data_source,
+                    "dataset_reference": dataset_reference,
                     "with_scaling": with_scaling,
                 }
             )

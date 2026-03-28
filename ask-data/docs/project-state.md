@@ -1,8 +1,8 @@
 ---
 project: ask-data
 document: project-state
-version: 3
-last_modified: 2026-03-26
+version: 4
+last_modified: 2026-03-29
 workspace_root: /Users/trianonurhikmat/Documents/Works/cloudera/cai-demo
 project_root: /Users/trianonurhikmat/Documents/Works/cloudera/cai-demo/ask-data
 repository_branch: main
@@ -13,6 +13,8 @@ status: active
 priority: secondary
 current_focus: Maintain a reusable analytics assistant that can query banking and fraud demo data.
 portable_reading: true
+deployment_database: cai_sdx_se_indonesia
+impala_external_data_location: s3a://go01-demo/user/cai-demo-se-indonesia/data/
 ---
 
 # Ask Data Project State
@@ -27,6 +29,9 @@ Current interpretation:
 - It is no longer the primary innovation track.
 - It remains important as the generic SQL and analytics interface that can query the shared demo data.
 - It now understands `fraud_transactions` in addition to the original banking tables.
+- the currently validated Impala database is `cai_sdx_se_indonesia`
+- the currently validated external table location is `s3a://go01-demo/user/cai-demo-se-indonesia/data/`
+- the current assistant behavior is aligned with the shared CAI demo schema used by `fraud-ai-assistant`
 
 ## Current Status
 
@@ -42,6 +47,7 @@ Project status summary:
 - CAI Application deployment review: completed
 - CAI launcher logic preservation: confirmed
 - frontend production build verification: completed
+- shared CAI database alignment with `fraud-ai-assistant`: completed
 - full runtime validation in Cloudera AI: pending
 - full backend test run in dependency-complete environment: pending
 
