@@ -55,7 +55,28 @@ def _payload_to_frame(args: dict[str, Any]) -> pd.DataFrame:
     if rows and isinstance(rows[0], dict):
         return pd.DataFrame(rows)
 
-    raise ValueError("Unsupported payload format. Use {'data': {'colnames': ..., 'rows': ...}} or {'rows': [...]} .")
+    if rows and isinstance(rows[0], list):
+        return pd.DataFrame(rows)
+
+    if "records" in args and isinstance(args["records"], list) and args["records"]:
+        records = args["records"]
+        if isinstance(records[0], dict):
+            return pd.DataFrame(records)
+
+    # Allow direct single-row payloads from CAI model test UIs where the body is
+    # the feature object itself rather than {"rows": [...]}.
+    reserved_keys = {"data", "rows", "records"}
+    direct_payload = {key: value for key, value in args.items() if key not in reserved_keys}
+    if direct_payload:
+        return pd.DataFrame([direct_payload])
+
+    raise ValueError(
+        "Unsupported payload format. Use one of: "
+        "{'rows': [{...}]}, "
+        "{'records': [{...}]}, "
+        "{'data': {'colnames': [...], 'rows': [[...]]}}, "
+        "or a direct single-record JSON object."
+    )
 
 
 @_model_decorator()
