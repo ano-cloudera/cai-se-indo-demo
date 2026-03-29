@@ -92,19 +92,15 @@ def predict(args: dict[str, Any]) -> dict[str, Any]:
         rows = []
         for probability, label in zip(probabilities, labels):
             rows.append(
-                [
-                    round(float(probability), 6),
-                    int(label),
-                    metadata.get("model_name", "unknown"),
-                ]
+                {
+                    "fraud_probability": round(float(probability), 6),
+                    "predicted_label": int(label),
+                    "model_name": metadata.get("model_name", "unknown"),
+                }
             )
 
         return {
-            "data": {
-                "colnames": ["fraud_probability", "predicted_label", "model_name"],
-                "coltypes": ["DOUBLE", "INT", "STRING"],
-                "rows": rows,
-            }
+            "predictions": rows
         }
     except Exception as exc:  # pragma: no cover - debug-friendly CAI response path
         return {
