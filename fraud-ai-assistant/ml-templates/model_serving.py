@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import sys
+import traceback
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -81,26 +82,35 @@ def _payload_to_frame(args: dict[str, Any]) -> pd.DataFrame:
 
 @_model_decorator()
 def predict(args: dict[str, Any]) -> dict[str, Any]:
-    pipeline, metadata = _load_bundle()
-    raw_frame = _payload_to_frame(args)
-    feature_frame = prepare_inference_features(raw_frame, metadata)
-    probabilities = pipeline.predict_proba(feature_frame)[:, 1]
-    labels = (probabilities >= 0.5).astype(int)
+    try:
+        pipeline, metadata = _load_bundle()
+        raw_frame = _payload_to_frame(args)
+        feature_frame = prepare_inference_features(raw_frame, metadata)
+        probabilities = pipeline.predict_proba(feature_frame)[:, 1]
+        labels = (probabilities >= 0.5).astype(int)
 
-    rows = []
-    for probability, label in zip(probabilities, labels):
-        rows.append(
-            [
-                round(float(probability), 6),
-                int(label),
-                metadata.get("model_name", "unknown"),
-            ]
-        )
+        rows = []
+        for probability, label in zip(probabilities, labels):
+            rows.append(
+                [
+                    round(float(probability), 6),
+                    int(label),
+                    metadata.get("model_name", "unknown"),
+                ]
+            )
 
-    return {
-        "data": {
-            "colnames": ["fraud_probability", "predicted_label", "model_name"],
-            "coltypes": ["DOUBLE", "INT", "STRING"],
-            "rows": rows,
+        return {
+            "data": {
+                "colnames": ["fraud_probability", "predicted_label", "model_name"],
+                "coltypes": ["DOUBLE", "INT", "STRING"],
+                "rows": rows,
+            }
         }
-    }
+    except Exception as exc:  # pragma: no cover - debug-friendly CAI response path
+        return {
+            "error": {
+                "type": exc.__class__.__name__,
+                "message": str(exc),
+                "traceback": traceback.format_exc(limit=5),
+            }
+        }
