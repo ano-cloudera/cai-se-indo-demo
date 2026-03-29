@@ -160,6 +160,24 @@ artifacts/champion/
 └── champion_run.json
 ```
 
+For CAI model deployment from code, the serving script looks for artifacts in this order:
+
+```text
+deployment_artifacts/champion/
+artifacts/champion/
+```
+
+Recommended deployment preparation for CAI:
+
+```bash
+cd fraud-ai-assistant/ml-templates
+python3 2_package_model.py --artifact-root ./artifacts
+mkdir -p deployment_artifacts/champion
+cp artifacts/champion/* deployment_artifacts/champion/
+```
+
+This makes the packaged model files available in a deploy-safe path for CAI model builds.
+
 ## CAI Session Commands
 
 Bootstrap:

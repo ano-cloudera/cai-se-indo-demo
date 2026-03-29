@@ -39,10 +39,27 @@ def _model_decorator():
 
 @lru_cache(maxsize=1)
 def _load_bundle() -> tuple[Any, dict[str, Any]]:
-    champion_dir = PROJECT_ROOT / "artifacts" / "champion"
-    pipeline = joblib.load(champion_dir / "pipeline.joblib")
-    metadata = json.loads((champion_dir / "feature_metadata.json").read_text(encoding="utf-8"))
-    return pipeline, metadata
+    candidate_dirs = [
+        PROJECT_ROOT / "deployment_artifacts" / "champion",
+        PROJECT_ROOT / "artifacts" / "champion",
+    ]
+
+    last_missing: FileNotFoundError | None = None
+    for champion_dir in candidate_dirs:
+        pipeline_path = champion_dir / "pipeline.joblib"
+        metadata_path = champion_dir / "feature_metadata.json"
+        if pipeline_path.exists() and metadata_path.exists():
+            pipeline = joblib.load(pipeline_path)
+            metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+            return pipeline, metadata
+        last_missing = FileNotFoundError(
+            f"Champion bundle not found in {champion_dir}. "
+            "Expected pipeline.joblib and feature_metadata.json."
+        )
+
+    if last_missing is not None:
+        raise last_missing
+    raise FileNotFoundError("No champion bundle directory is available.")
 
 
 def _payload_to_frame(args: dict[str, Any]) -> pd.DataFrame:
