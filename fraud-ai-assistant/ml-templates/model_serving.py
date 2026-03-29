@@ -42,7 +42,22 @@ def _load_bundle() -> tuple[Any, dict[str, Any]]:
     candidate_dirs = [
         PROJECT_ROOT / "deployment_artifacts" / "champion",
         PROJECT_ROOT / "artifacts" / "champion",
+        PROJECT_ROOT / "fraud-ai-assistant" / "ml-templates" / "deployment_artifacts" / "champion",
+        PROJECT_ROOT / "fraud-ai-assistant" / "ml-templates" / "artifacts" / "champion",
     ]
+
+    # In CAI model runtimes, code can execute from /home/cdsw rather than the
+    # model file directory. Search a few levels down for the deploy-safe path.
+    for root in [PROJECT_ROOT, Path.cwd()]:
+        try:
+            for path in root.glob("**/deployment_artifacts/champion"):
+                if path not in candidate_dirs:
+                    candidate_dirs.append(path)
+            for path in root.glob("**/artifacts/champion"):
+                if path not in candidate_dirs:
+                    candidate_dirs.append(path)
+        except Exception:
+            pass
 
     last_missing: FileNotFoundError | None = None
     for champion_dir in candidate_dirs:
