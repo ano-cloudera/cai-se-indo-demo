@@ -59,10 +59,16 @@ Generic analytics assistant for banking and fraud-adjacent questions.
 Fraud-specific demo track with both assistant behavior and traditional ML.
 
 - FastAPI backend tuned for fraud analysis
-- Next.js frontend for fraud investigation conversations
+- Next.js frontend aligned to the Stitch fraud console design
+- four core UI surfaces:
+  - Dashboard
+  - AI Assistant
+  - Investigations
+  - Model Management
 - fraud-aware schema and business context
 - `ml-templates` for baseline fraud model training and packaging
 - training workflow now supports Impala as the primary CAI data source
+- deployed fraud model API validated in CAI
 
 ### Shared files
 
@@ -86,6 +92,7 @@ Fraud-specific demo track with both assistant behavior and traditional ML.
 
 - use the repo for editing, review, and documentation
 - use `sample/` CSV data for local fallback when Impala is not available
+- use the `fraud-ai-assistant` frontend in preview mode when the backend is offline
 - validate final runtime behavior in CAI, especially for networking and authentication
 
 ## Where To Start

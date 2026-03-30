@@ -1,4 +1,4 @@
-const SESSION_STORAGE_KEY = "bni-demo-session-id";
+const SESSION_STORAGE_KEY = "fraud-ai-assistant-session-id";
 
 export function getOrCreateSessionId(): string {
   const existingSessionId = window.localStorage.getItem(SESSION_STORAGE_KEY);

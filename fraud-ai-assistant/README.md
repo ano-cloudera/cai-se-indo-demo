@@ -37,6 +37,8 @@ The explainability-only field is:
 
 - FastAPI backend
 - Next.js frontend
+- Stitch-aligned fraud console layout
+- dashboard-first analytics experience using `fraud_transactions`
 - fraud-aware text-to-SQL prompting
 - read-only Impala execution
 - natural-language investigation responses
@@ -76,6 +78,32 @@ The assistant portion is designed to run in CAI as separate backend and frontend
 - frontend application via `fraud-ai-assistant/frontend/frontend_entry.py`
 
 The ML workflow is designed for CAI sessions or Jobs, using shared Impala access and environment variables for runtime configuration.
+
+## Frontend Product Shape
+
+The active frontend target is the `fraud-ai-assistant` app only.
+
+The current UI is organized around four surfaces:
+
+- `Dashboard`
+- `AI Assistant`
+- `Investigations`
+- `Model Management`
+
+Current frontend direction:
+
+- follows the Stitch design system and screen structure
+- treats `fraud_transactions` as the primary analytics source for v1
+- uses preview fallback data when the backend is offline
+- preserves room for later additions such as `investigation_cases` and `model_inference_log`
+
+The dashboard is currently the main contract-defining screen. It should establish:
+
+- fraud overview KPIs
+- fraud trend and channel breakdown
+- top suspicious transaction queue
+- drill-in path to investigations
+- lightweight model visibility
 
 ## Typical Questions It Should Support
 

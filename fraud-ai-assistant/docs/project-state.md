@@ -1,17 +1,17 @@
 ---
 project: fraud-ai-assistant
 document: project-state
-version: 4
-last_modified: 2026-03-29
-workspace_root: /Users/trianonurhikmat/Documents/Works/cloudera/cai-demo
-project_root: /Users/trianonurhikmat/Documents/Works/cloudera/cai-demo/fraud-ai-assistant
+version: 5
+last_modified: 2026-03-30
+workspace_root: /Users/triano/Documents/Cloudera/cai-se-indo-demo
+project_root: /Users/triano/Documents/Cloudera/cai-se-indo-demo/fraud-ai-assistant
 repository_branch: main
 latest_workspace_commits:
   - 5eaf14ea Restructure demo apps and clean repository layout
   - b598a5a8 Add fraud analytics data and traditional ML template
 status: active
 priority: primary
-current_focus: Fraud analytics assistant plus traditional fraud ML workflow for Cloudera AI.
+current_focus: Stitch-aligned fraud frontend plus fraud analytics assistant and traditional fraud ML workflow for Cloudera AI.
 portable_reading: true
 deployment_database: cai_sdx_se_indonesia
 impala_external_data_location: s3a://go01-demo/user/cai-demo-se-indonesia/data/
@@ -39,10 +39,13 @@ Project status summary:
 - fraud dataset generation: implemented
 - Impala DDL for fraud table: implemented
 - backend schema and business context: implemented
-- frontend inherited from previous analytics stack: usable
+- Stitch-based frontend shell and screens: implemented
+- frontend local build validation: completed
+- frontend preview fallback mode: implemented
 - traditional ML baseline workflow: implemented
 - Impala-backed fraud ML training flow: implemented
 - local ML workflow verification: completed
+- CAI fraud model deployment: validated
 - shared ask-data deployment readiness review: completed
 - runtime validation in real Cloudera AI / Impala: pending
 - full backend test run in dependency-complete environment: pending
@@ -62,6 +65,9 @@ The current scope includes:
 
 - FastAPI backend
 - Next.js frontend
+- Stitch-aligned fraud console UX
+- dashboard-first analytics UI using `fraud_transactions`
+- investigations, assistant, and model-management surfaces
 - fraud-aware text-to-SQL prompting
 - natural-language answer generation
 - allowlisted Impala access
@@ -75,6 +81,7 @@ Out of scope for the current phase:
 - streaming or real-time fraud orchestration
 - NiFi, Kafka, Iceberg, and Airflow integration
 - production-hard online serving logic
+- richer analytics datasets beyond `fraud_transactions` for the first frontend slice
 
 ## Shared Dataset and Schema State
 
@@ -111,7 +118,7 @@ Key column groups:
 
 Current generated output:
 
-- file: `/Users/trianonurhikmat/Documents/Works/cloudera/cai-demo/sample/fraud_transactions.csv`
+- file: `/Users/triano/Documents/Cloudera/cai-se-indo-demo/sample/fraud_transactions.csv`
 - rows: `24000`
 - fraud rows: `9600`
 - fraud ratio: `0.40`
@@ -187,7 +194,7 @@ Implemented:
 
 Helper script available:
 
-- `/Users/trianonurhikmat/Documents/Works/cloudera/cai-demo/submit_impala_schema.py`
+- `/Users/triano/Documents/Cloudera/cai-se-indo-demo/submit_impala_schema.py`
 
 ### Synthetic Data Generation
 
@@ -210,17 +217,21 @@ Current fraud-pattern examples:
 
 Implemented:
 
-- frontend remains functional for demo exploration
+- frontend now follows the Stitch fraud console direction
+- dashboard, AI assistant, investigations, and model management are all present in the app shell
+- dashboard uses `fraud_transactions` as the primary analytics source
+- frontend can render in preview mode when the backend is offline
 - prompt context supports fraud-oriented question patterns
 - fraud-specific backend behavior is already wired into the assistant stack
 
 Current limitation:
 
-- the overall visual and conversational experience still inherits part of the older banking analytics style
+- some feature blocks still use preview or fallback data when backend endpoints are unavailable
+- richer operational analytics still need additional datasets such as `investigation_cases`
 
 ### Traditional ML Workflow
 
-Implemented in `/Users/trianonurhikmat/Documents/Works/cloudera/cai-demo/fraud-ai-assistant/ml-templates`:
+Implemented in `/Users/triano/Documents/Cloudera/cai-se-indo-demo/fraud-ai-assistant/ml-templates`:
 
 - bootstrap entrypoint
 - fraud training entrypoint
@@ -252,12 +263,31 @@ Current observed local result:
   - f1 `0.996874`
   - roc_auc `0.99996`
 
+### CAI Fraud Model Deployment
+
+Implemented and validated:
+
+- champion packaging into `artifacts/champion`
+- deploy-safe artifact copy into `deployment_artifacts/champion`
+- CAI model deployment from `model_serving.py`
+- CAI-compatible serving path resolution
+- CAI-compatible response shape:
+  - `predictions`
+  - `fraud_probability`
+  - `predicted_label`
+  - `model_name`
+
+Current known manual step:
+
+- before redeploying in CAI, the packaged champion bundle still needs to be copied into `deployment_artifacts/champion`
+
 ## Constraints
 
 Current known constraints:
 
 - the dataset is synthetic and intentionally balanced for demo value
 - production realism is not the target of the current data generator
+- the frontend currently assumes `fraud_transactions` is the main analytics source for v1
 - runtime validation against a live Cloudera AI and Impala environment is still pending
 - Impala-backed ML training now depends on CAI runtime connectivity plus `impyla` availability
 - cross-project deployment work should avoid changing `ask-data` launcher files unless there is a clear runtime failure to fix

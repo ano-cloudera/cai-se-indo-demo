@@ -36,7 +36,7 @@ export function ChatInputPanel({
           onChange={(event) => onQuestionChange(event.target.value)}
           onKeyDown={handleKeyDown}
           rows={4}
-          placeholder="Tanyakan sesuatu tentang data tabular BNI. Contoh: Berapa total saldo deposito atau outstanding kredit saat ini?"
+          placeholder="Ask about suspicious activity, fraud trends, risky customers, or explain a flagged transaction."
           className="w-full resize-none bg-transparent px-2 py-1 text-sm leading-6 text-slate-900 outline-none placeholder:text-slate-400"
         />
 
@@ -61,7 +61,7 @@ export function ChatInputPanel({
             onClick={onSubmit}
             className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#f97316] to-[#f59e0b] px-5 py-3 text-sm font-semibold text-white shadow-[0_14px_24px_rgba(249,115,22,0.25)] transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {loading ? "Menganalisis..." : "Kirim Pertanyaan"}
+            {loading ? "Analyzing..." : "Ask Assistant"}
             <span className="text-base">➜</span>
           </button>
         </div>

@@ -6,11 +6,18 @@ It is designed for local development, CAI session validation, and CAI Applicatio
 
 ## Frontend Responsibilities
 
+- render the Stitch-aligned fraud console layout
+- provide four main surfaces:
+  - `Dashboard`
+  - `AI Assistant`
+  - `Investigations`
+  - `Model Management`
 - collect fraud investigation and fraud analytics questions
 - keep lightweight client session continuity
 - call the backend through `NEXT_PUBLIC_API_BASE_URL`
 - display backend and database health state
-- present a concise answer first, with generated SQL and preview data visible for trust and debugging
+- fall back to preview data when the backend is unavailable
+- keep the dashboard usable even during frontend-only local work
 
 ## Required Environment Variables
 
@@ -26,6 +33,8 @@ It is designed for local development, CAI session validation, and CAI Applicatio
 npm install
 npm run dev
 ```
+
+If the backend is not running, the frontend should still render in preview mode using fallback dashboard, investigations, and assistant content.
 
 ## Run As A CAI Application
 
@@ -43,13 +52,46 @@ Alternative launcher:
 
 Both launchers validate `NEXT_PUBLIC_API_BASE_URL`, use CAI port conventions, and start the app for Application hosting.
 
-## UI Expectations
+## Current UI Expectations
+
+### Dashboard
+
+The dashboard should show:
+
+- fraud overview KPI cards
+- fraud signal velocity panel
+- channel surface panel
+- risk modalities panel
+- regional risk panel
+- critical intelligence log
+- analyst workload summary
+
+### AI Assistant
 
 When a user submits a question through `/chat/query`, the UI should show:
 
 - a concise fraud-oriented answer
-- generated SQL
-- executed SQL
-- result preview rows
+- optional evidence or high-risk transaction table
+- contextual right-rail metrics
+
+### Investigations
+
+The investigations surface should show:
+
+- suspicious transaction queue
+- selected case profile
+- linked entity view
+- transaction timeline
+- analyst notes
+
+### Model Management
+
+The model management surface should stay lightweight and truthful:
+
+- current active model
+- deployment health
+- deployment bundle visibility
+- endpoint contract
+- recent pipeline runs
 
 The experience should feel more investigation-oriented than the generic `ask-data` app, even though both share the same core architecture.
