@@ -1,8 +1,8 @@
 ---
 project: fraud-ai-assistant
 document: project-state
-version: 5
-last_modified: 2026-03-30
+version: 6
+last_modified: 2026-04-06
 workspace_root: /Users/triano/Documents/Cloudera/cai-se-indo-demo
 project_root: /Users/triano/Documents/Cloudera/cai-se-indo-demo/fraud-ai-assistant
 repository_branch: main
@@ -11,7 +11,7 @@ latest_workspace_commits:
   - b598a5a8 Add fraud analytics data and traditional ML template
 status: active
 priority: primary
-current_focus: Stitch-aligned fraud frontend plus fraud analytics assistant and traditional fraud ML workflow for Cloudera AI.
+current_focus: Stitch-aligned fraud frontend foundation refinement plus fraud analytics assistant and traditional fraud ML workflow for Cloudera AI.
 portable_reading: true
 deployment_database: cai_sdx_se_indonesia
 impala_external_data_location: s3a://go01-demo/user/cai-demo-se-indonesia/data/
@@ -42,6 +42,9 @@ Project status summary:
 - Stitch-based frontend shell and screens: implemented
 - frontend local build validation: completed
 - frontend preview fallback mode: implemented
+- frontend design-system primitives: implemented
+- frontend typography foundation: implemented
+- frontend spacing and layout rhythm refinement: implemented
 - traditional ML baseline workflow: implemented
 - Impala-backed fraud ML training flow: implemented
 - local ML workflow verification: completed
@@ -68,6 +71,7 @@ The current scope includes:
 - Stitch-aligned fraud console UX
 - dashboard-first analytics UI using `fraud_transactions`
 - investigations, assistant, and model-management surfaces
+- shared UI primitives under `frontend/components/ui`
 - fraud-aware text-to-SQL prompting
 - natural-language answer generation
 - allowlisted Impala access
@@ -228,6 +232,49 @@ Current limitation:
 
 - some feature blocks still use preview or fallback data when backend endpoints are unavailable
 - richer operational analytics still need additional datasets such as `investigation_cases`
+- `frontend/app/page.tsx` is still a large page-level composition file and should be split into page-specific sections over time
+
+### Frontend Foundation State
+
+Implemented:
+
+- shared card, button, input, table, badge, icon, and shell primitives under `frontend/components/ui`
+- standardized typography with `Inter` as the app-wide primary font
+- reusable type hierarchy for:
+  - page titles
+  - page subtitles
+  - section titles
+  - KPI values
+  - helper/meta text
+  - tables
+  - badges
+- reusable spacing and layout tokens in `frontend/app/globals.css`
+- shared layout wrappers for:
+  - page canvas
+  - page header block
+  - page section
+  - filter bar
+  - filter group
+  - KPI/metric grid
+  - sticky right rail
+- more consistent shell spacing between:
+  - sidebar
+  - fixed top header
+  - page content
+  - section blocks
+  - tables
+  - assistant workspace panels
+
+Current frontend asset direction:
+
+- sidebar brand uses `frontend/public/Cloudera_logo.svg.png`
+- previous `frontend/public/logo.png` asset is no longer the active sidebar logo
+
+Latest local validation:
+
+- local frontend production build completed successfully after the design-system, typography, and spacing/layout refinements
+- validated command:
+  - `PATH="/Users/triano/Documents/Cloudera/cai-se-indo-demo/.local/node/bin:$PATH" npm run build`
 
 ### Traditional ML Workflow
 

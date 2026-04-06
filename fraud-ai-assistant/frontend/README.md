@@ -18,6 +18,8 @@ It is designed for local development, CAI session validation, and CAI Applicatio
 - display backend and database health state
 - fall back to preview data when the backend is unavailable
 - keep the dashboard usable even during frontend-only local work
+- use a shared UI foundation for cards, tables, buttons, badges, inputs, icons, and shell layout
+- use a normalized typography and spacing system for the fraud operations console
 
 ## Required Environment Variables
 
@@ -32,6 +34,13 @@ It is designed for local development, CAI session validation, and CAI Applicatio
 ```bash
 npm install
 npm run dev
+```
+
+If you are using the local Node runtime already set up in this workspace, run:
+
+```bash
+PATH="/Users/triano/Documents/Cloudera/cai-se-indo-demo/.local/node/bin:$PATH" npm install
+PATH="/Users/triano/Documents/Cloudera/cai-se-indo-demo/.local/node/bin:$PATH" npm run dev
 ```
 
 If the backend is not running, the frontend should still render in preview mode using fallback dashboard, investigations, and assistant content.
@@ -95,3 +104,31 @@ The model management surface should stay lightweight and truthful:
 - recent pipeline runs
 
 The experience should feel more investigation-oriented than the generic `ask-data` app, even though both share the same core architecture.
+
+## Current Frontend Foundation
+
+The current frontend foundation now includes:
+
+- shared UI primitives in `components/ui/`
+- `Inter` as the app-wide primary font
+- reusable typography classes and tokens in `app/globals.css`
+- reusable spacing and shell/layout wrappers for:
+  - page canvas
+  - page header block
+  - page section
+  - filter bar
+  - filter group
+  - KPI grid
+  - sticky right rail
+- standardized table spacing and card padding
+- standardized button hierarchy and input sizing
+
+Current sidebar branding uses:
+
+- `public/Cloudera_logo.svg.png`
+
+Latest local validation:
+
+```bash
+PATH="/Users/triano/Documents/Cloudera/cai-se-indo-demo/.local/node/bin:$PATH" npm run build
+```

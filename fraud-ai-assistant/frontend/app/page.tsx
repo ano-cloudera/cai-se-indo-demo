@@ -1,9 +1,27 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { PanelCard, PanelHeader, StatCard } from "@/components/ui/card";
+import { TextInput } from "@/components/ui/input";
+import { AppIcon } from "@/components/ui/icon";
+import {
+  FilterBar,
+  FilterGroup,
+  MetricGrid,
+  PageCanvas,
+  PageHeaderBlock,
+  PageSection,
+  SidebarNavButton,
+  StickyRail,
+} from "@/components/ui/shell";
+import { DataTable, TableCard, TableCell, TableHeadCell } from "@/components/ui/table";
 import type { ChatQueryResponse, HealthResponse, SQLExecuteResponse } from "@/lib/api";
 import { apiClient } from "@/lib/api";
+import { cn } from "@/lib/cn";
 import { createNewSessionId, getOrCreateSessionId } from "@/lib/session";
 
 type ViewKey = "dashboard" | "assistant" | "investigations" | "models";
@@ -437,16 +455,6 @@ function getRiskLabel(level: RiskLevel) {
   return "Medium";
 }
 
-function getRiskBadgeClasses(level: RiskLevel) {
-  if (level === "critical") {
-    return "bg-[#ba1a1a] text-white";
-  }
-  if (level === "high") {
-    return "bg-[#ff7a2f] text-white";
-  }
-  return "bg-[#d9dade] text-[#191c1f]";
-}
-
 function parseSummary(response: SQLExecuteResponse): DashboardSummary {
   const row = response.rows[0] ?? {};
   return {
@@ -571,20 +579,7 @@ function KpiCard({
   detail: string;
   barColor: string;
 }) {
-  return (
-    <div className="relative overflow-hidden rounded-xl bg-[#ffffff] p-5 shadow-sm">
-      <div className={`absolute left-0 top-0 h-1 w-full ${barColor}`} />
-      <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-[#777681]">
-        {label}
-      </p>
-      <div className="flex items-baseline gap-2">
-        <h3 className="font-headline text-2xl font-bold text-[#191c1f]">{value}</h3>
-        <span className="text-[10px] font-bold text-[#777681]">
-          {detail}
-        </span>
-      </div>
-    </div>
-  );
+  return <StatCard label={label} value={value} detail={detail} accentClassName={barColor} />;
 }
 
 function SectionTitle({
@@ -597,19 +592,11 @@ function SectionTitle({
   icon?: string;
 }) {
   return (
-    <div className="flex items-start justify-between gap-4">
-      <div>
-        <h3 className="font-headline text-xl font-bold text-[#191c1f]">{title}</h3>
-        <p className="mt-1 text-[10px] font-bold uppercase tracking-widest text-[#777681]">
-          {subtitle}
-        </p>
-      </div>
-      {icon ? (
-        <span className="material-symbols-outlined text-[20px] text-[#4a4cd2]">
-          {icon}
-        </span>
-      ) : null}
-    </div>
+    <PanelHeader
+      title={title}
+      subtitle={subtitle}
+      icon={icon ? <AppIcon name={icon} className="h-4.5 w-4.5" /> : undefined}
+    />
   );
 }
 
@@ -622,16 +609,11 @@ function MiniStatus({
   value: string;
   tone?: "neutral" | "good" | "warn";
 }) {
-  const toneClass =
-    tone === "good"
-      ? "bg-emerald-100 text-emerald-700"
-      : tone === "warn"
-        ? "bg-orange-100 text-orange-700"
-        : "bg-[#edeef2] text-[#474650]";
+  const variant = tone === "good" ? "deployed" : tone === "warn" ? "training" : "neutral";
   return (
-    <div className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] ${toneClass}`}>
+    <Badge variant={variant} className="px-3 py-1">
       {label}: {value}
-    </div>
+    </Badge>
   );
 }
 
@@ -647,18 +629,12 @@ function NavigationButton({
   onClick: () => void;
 }) {
   return (
-    <button
-      type="button"
+    <SidebarNavButton
+      active={active}
+      label={label}
       onClick={onClick}
-      className={`mx-2 flex w-[calc(100%-1rem)] items-center gap-3 rounded-lg px-4 py-3 text-left transition-all ${
-        active
-          ? "scale-[0.98] bg-[#5C63F2] text-white"
-          : "text-[#6C6FF5] hover:bg-white/10"
-      }`}
-    >
-      <span className="material-symbols-outlined text-[18px]">{icon}</span>
-      <span className="font-headline text-sm font-medium tracking-wide">{label}</span>
-    </button>
+      icon={<AppIcon name={icon} className="h-[17px] w-[17px]" />}
+    />
   );
 }
 
@@ -671,20 +647,20 @@ function SurfaceChip({
   label: string;
   tone?: "neutral" | "orange" | "indigo";
 }) {
-  const toneClass =
-    tone === "orange"
-      ? "bg-[#ffdbcc] text-[#7a3000]"
-      : tone === "indigo"
-        ? "bg-[#e1e0ff] text-[#3030ba]"
-        : "bg-[#edeef2] text-[#474650]";
+  const variant = tone === "orange" ? "high" : tone === "indigo" ? "info" : "neutral";
 
   return (
-    <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] ${toneClass}`}
+    <Badge
+      variant={variant}
+      className="gap-2 px-3 py-1.5"
+      icon={
+        <span className="flex h-4.5 w-4.5 items-center justify-center rounded-full bg-black/5">
+          <AppIcon name={icon} className="h-3 w-3" />
+        </span>
+      }
     >
-      <span className="material-symbols-outlined text-[12px]">{icon}</span>
       {label}
-    </span>
+    </Badge>
   );
 }
 
@@ -884,13 +860,24 @@ export default function HomePage() {
   const requestVolumeBars = dashboard.trend.length > 0 ? dashboard.trend : FALLBACK_TREND;
 
   return (
-    <div className="min-h-screen bg-[#f8f9fd] text-[#191c1f]">
-      <aside className="fixed left-0 top-0 z-50 flex h-full w-64 flex-col overflow-hidden bg-[#08004D] py-6 shadow-2xl">
-        <div className="px-6">
-          <div className="text-2xl font-black tracking-tighter text-[#FF7A2F]">CLOUDERA</div>
-          <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.22em] text-[#6C6FF5]">
-            Fraud AI Intelligence
-          </p>
+    <div className="app-shell text-[var(--color-ink-strong)]">
+      <aside className="fixed left-0 top-0 z-50 flex h-full w-[var(--shell-sidebar-w)] flex-col overflow-hidden bg-[#08004D] py-6 shadow-2xl">
+        <div className="px-5">
+          <div className="rounded-[26px] border border-white/10 bg-white/[0.04] px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+            <div className="relative h-9 w-[188px]">
+              <Image
+                src="/Cloudera_logo.svg.png"
+                alt="Cloudera Fraud AI Intelligence"
+                fill
+                className="object-contain object-left"
+                sizes="188px"
+                priority
+              />
+            </div>
+            <p className="meta-kicker mt-4 text-[#8f91ff]">
+              Fraud AI Intelligence
+            </p>
+          </div>
         </div>
 
         <nav className="mt-10 flex-1 space-y-1">
@@ -915,60 +902,64 @@ export default function HomePage() {
         </div>
       </aside>
 
-      <header className="fixed left-64 right-0 top-0 z-40 flex h-16 items-center justify-between border-b-2 border-[#5F67F6] bg-white px-8 shadow-sm">
+      <header className="fixed left-[var(--shell-sidebar-w)] right-0 top-0 z-40 flex h-[var(--shell-header-h)] items-center justify-between border-b-2 border-[#5F67F6] bg-white px-8 shadow-sm">
         <div className="flex items-center gap-4">
-          <span className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[#474650]">
+          <span className="meta-kicker text-[#474650]">
             Fraud AI Intelligence
           </span>
           <span className="h-4 w-px bg-[#c8c5d2]" />
-          <span className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[#191c1f]">
+          <span className="meta-kicker text-[#191c1f]">
             Latest update {new Date().toLocaleString("en-US", { month: "short", day: "2-digit", hour: "2-digit", minute: "2-digit" })}
           </span>
         </div>
 
         <div className="flex items-center gap-6">
-          <button
+          <Button
             type="button"
-            className="flex items-center gap-2 text-[#1F2430] transition-colors hover:text-[#5F67F6]"
+            variant="tertiary"
+            size="sm"
+            className="rounded-full px-2 py-1 text-[#1F2430] hover:bg-[#f2f3f7] hover:text-[#5F67F6]"
           >
-            <span className="material-symbols-outlined text-[18px]">group</span>
-            <span className="text-[10px] font-semibold uppercase tracking-[0.24em]">Users</span>
-          </button>
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#edeef2] text-xs font-bold text-[#08004D]">
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f2f3f7] text-[#5F67F6]">
+              <AppIcon name="group" className="h-4 w-4" />
+            </span>
+            <span className="meta-kicker text-[#1f2430]">Users</span>
+          </Button>
+          <div className="numeric flex h-8 w-8 items-center justify-center rounded-full bg-[#edeef2] text-[13px] font-semibold text-[#08004D]">
             TD
           </div>
         </div>
       </header>
 
-      <main className="ml-64 min-h-screen bg-[#f2f3f7] pt-16">
-        <div className="mx-auto max-w-[1600px] space-y-8 px-8 pb-8 pt-8">
-          <div className="mb-8">
-            <h1 className="font-headline text-[2.2rem] font-extrabold tracking-tight text-[#191c1f]">
+      <main className="ml-[var(--shell-sidebar-w)] min-h-screen bg-[var(--color-page-bg)] pt-[var(--shell-header-h)]">
+        <PageCanvas className="space-y-8">
+          <PageHeaderBlock>
+            <h1 className="page-title">
               {activePage.title}
             </h1>
-            <p className="mt-2 max-w-3xl text-sm text-[#474650]">{activePage.subtitle}</p>
-          </div>
+            <p className="page-subtitle">{activePage.subtitle}</p>
+          </PageHeaderBlock>
 
           {activeView === "dashboard" ? (
-            <section className="space-y-6">
-              <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-                <div className="flex flex-wrap items-center gap-3 rounded-xl bg-[#f2f3f7] p-2">
+            <PageSection>
+              <FilterBar className="lg:items-end">
+                <FilterGroup>
                   {["Last 24 Hours", "All Channels", "Risk: All Levels"].map((item) => (
                     <div
                       key={item}
-                      className="rounded-lg bg-[#ffffff] px-4 py-2 text-[10px] font-semibold uppercase tracking-widest text-[#191c1f]"
+                      className="rounded-[14px] border border-[var(--color-border-soft)] bg-[var(--color-surface)] px-4 py-2.5 text-[var(--font-size-filter)] font-semibold tracking-[0.01em] text-[var(--color-ink-strong)]"
                     >
                       {item}
                     </div>
                   ))}
-                  <button
-                    type="button"
-                    className="flex items-center gap-2 rounded-lg bg-[#ff7a2f] px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-white"
+                  <Button
+                    variant="primary"
+                    size="md"
+                    leadingIcon={<AppIcon name="filter_list" className="h-3.5 w-3.5" />}
                   >
-                    <span className="material-symbols-outlined text-[14px]">filter_list</span>
                     Apply
-                  </button>
-                </div>
+                  </Button>
+                </FilterGroup>
                 <div className="flex flex-wrap items-center gap-2">
                   <MiniStatus
                     label="Mode"
@@ -981,9 +972,9 @@ export default function HomePage() {
                     tone={health.usingFallback ? "warn" : "good"}
                   />
                 </div>
-              </div>
+              </FilterBar>
 
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-6">
+              <MetricGrid>
                 <KpiCard
                   label="Total Transactions"
                   value={formatInteger(dashboard.summary.totalTransactions)}
@@ -1020,10 +1011,10 @@ export default function HomePage() {
                   detail={`New: ${Math.min(dashboard.summary.activeAlerts, 12)}`}
                   barColor="bg-[#ff7a2f]"
                 />
-              </div>
+              </MetricGrid>
 
-              <div className="grid grid-cols-12 gap-6">
-                <div className="col-span-12 overflow-hidden rounded-xl bg-white p-8 shadow-sm lg:col-span-8">
+              <div className="grid grid-cols-12 gap-5 xl:gap-6">
+                <PanelCard className="col-span-12 overflow-hidden p-8 lg:col-span-8">
                   <div className="mb-8 flex items-center justify-between gap-4">
                     <SectionTitle
                       title="Fraud Signal Velocity"
@@ -1031,11 +1022,11 @@ export default function HomePage() {
                       icon="monitoring"
                     />
                     <div className="flex gap-4">
-                      <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-[#777681]">
+                      <span className="meta-label flex items-center gap-1.5">
                         <span className="h-2 w-2 rounded-full bg-[#ff7a2f]" />
                         Alerts
                       </span>
-                      <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-[#777681]">
+                      <span className="meta-label flex items-center gap-1.5">
                         <span className="h-2 w-2 rounded-full bg-[#7174fa]" />
                         Volume
                       </span>
@@ -1064,14 +1055,14 @@ export default function HomePage() {
                       </div>
                     ))}
                   </div>
-                  <div className="mt-4 flex justify-between px-4 text-[10px] font-bold uppercase tracking-[0.18em] text-[#777681]">
+                  <div className="mt-4 flex justify-between px-4 text-[var(--font-size-meta)] font-semibold tracking-[0.04em] text-[#777681]">
                     {dashboard.trend.map((point) => (
                       <span key={point.label}>{point.label}</span>
                     ))}
                   </div>
-                </div>
+                </PanelCard>
 
-                <div className="col-span-12 flex flex-col justify-between rounded-xl bg-white p-8 shadow-sm lg:col-span-4">
+                <PanelCard className="col-span-12 flex flex-col justify-between p-8 lg:col-span-4">
                   <SectionTitle
                     title="Channel Surface"
                     subtitle="Exposure by medium"
@@ -1087,10 +1078,10 @@ export default function HomePage() {
                         }}
                       />
                       <div className="text-center">
-                        <span className="block font-headline text-3xl font-extrabold">
+                        <span className="metric-value block text-[var(--color-ink-strong)]">
                           {dominantChannel ? `${dominantChannel.pct.toFixed(0)}%` : "--"}
                         </span>
-                        <span className="block text-[8px] font-bold uppercase tracking-[0.18em] text-[#777681]">
+                        <span className="section-subtitle block text-[11px]">
                           {dominantChannel ? `${dominantChannel.label} Dominated` : "Awaiting data"}
                         </span>
                       </div>
@@ -1108,18 +1099,18 @@ export default function HomePage() {
                         <div key={item.label} className="flex items-center gap-2">
                           <span className={`h-2 w-2 rounded-full ${colors[index % colors.length]}`} />
                           <div>
-                            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#777681]">
+                            <p className="meta-label">
                               {item.label}
                             </p>
-                            <p className="text-sm font-bold text-[#191c1f]">{pct.toFixed(1)}%</p>
+                            <p className="body-strong numeric">{pct.toFixed(1)}%</p>
                           </div>
                         </div>
                       );
                     })}
                   </div>
-                </div>
+                </PanelCard>
 
-                <div className="col-span-12 rounded-xl bg-white p-8 shadow-sm lg:col-span-4">
+                <PanelCard className="col-span-12 p-8 lg:col-span-4">
                   <SectionTitle
                     title="Risk Modalities"
                     subtitle="Primary drivers"
@@ -1128,7 +1119,7 @@ export default function HomePage() {
                   <div className="mt-8 space-y-6">
                     {dashboard.modalities.map((item) => (
                       <div key={item.label} className="space-y-2">
-                        <div className="flex items-center justify-between text-xs font-bold uppercase tracking-[0.18em]">
+                        <div className="flex items-center justify-between text-[13px] font-semibold tracking-[0.01em]">
                           <span>{item.label}</span>
                           <span className="text-[#ff7a2f]">{item.sharePct.toFixed(1)}%</span>
                         </div>
@@ -1141,9 +1132,9 @@ export default function HomePage() {
                       </div>
                     ))}
                   </div>
-                </div>
+                </PanelCard>
 
-                <div className="col-span-12 overflow-hidden rounded-xl bg-white shadow-sm lg:col-span-8 lg:flex">
+                <PanelCard className="col-span-12 overflow-hidden lg:col-span-8 lg:flex">
                   <div className="w-full p-8 lg:w-1/3">
                     <SectionTitle
                       title="Regional Risk"
@@ -1159,7 +1150,7 @@ export default function HomePage() {
                               <span className={`h-2 w-2 rounded-full ${colors[index % colors.length]}`} />
                               <span className="text-sm font-semibold">{item.label}</span>
                             </div>
-                            <span className="text-xs font-bold text-[#777681]">
+                            <span className="numeric text-[13px] font-semibold text-[#777681]">
                               {item.totalTransactions > 0
                                 ? formatPercent(
                                     (item.fraudTransactions / item.totalTransactions) * 100,
@@ -1177,75 +1168,73 @@ export default function HomePage() {
                     <div className="absolute left-[56%] top-[52%] h-3 w-3 animate-pulse rounded-full bg-[#ff7a2f]" />
                     <div className="absolute right-[24%] top-[24%] h-5 w-5 animate-pulse rounded-full bg-[#ba1a1a]/80" />
                   </div>
-                </div>
+                </PanelCard>
 
-                <div className="col-span-12 flex flex-col justify-between rounded-xl bg-[#7174fa] p-8 text-white shadow-sm lg:col-span-4">
+                <PanelCard tone="indigo" className="col-span-12 flex flex-col justify-between p-8 lg:col-span-4">
                   <div>
                     <div className="flex items-start justify-between">
                       <div>
                         <h3 className="font-headline text-xl font-bold">Sentinel Force</h3>
-                        <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.18em] text-white/60">
+                        <p className="section-subtitle mt-1 text-white/60">
                           Live team capacity
                         </p>
                       </div>
-                      <span className="material-symbols-outlined text-white/70">groups</span>
+                      <AppIcon name="groups" className="h-5 w-5 text-white/70" />
                     </div>
                   </div>
                   <div className="my-8 space-y-6">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium">Open Alerts</span>
-                      <span className="text-3xl font-black">
+                      <span className="metric-value text-white">
                         {formatInteger(dashboard.summary.activeAlerts)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium">Team Load</span>
-                      <span className="rounded bg-[#ff7a2f] px-2 py-0.5 text-[10px] font-black uppercase">
+                      <Badge variant="high" className="rounded-md px-2 py-0.5">
                         Heavy
-                      </span>
+                      </Badge>
                     </div>
                     <div className="h-2 rounded-full bg-white/10">
                       <div className="h-full w-[88%] rounded-full bg-[#ff7a2f]" />
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    className="flex items-center justify-center gap-2 rounded-lg bg-white/10 py-3 text-[10px] font-bold uppercase tracking-[0.18em] transition-colors hover:bg-white/20"
+                  <Button
+                    variant="ghost"
+                    size="lg"
+                    className="w-full"
+                    trailingIcon={<AppIcon name="arrow_forward" className="h-[14px] w-[14px]" />}
                   >
                     Adjust Routing
-                    <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
-                  </button>
-                </div>
+                  </Button>
+                </PanelCard>
 
-                <div className="col-span-12 overflow-hidden rounded-xl bg-white shadow-sm lg:col-span-8">
+                <TableCard className="col-span-12 lg:col-span-8">
                   <div className="flex items-center justify-between border-b border-[#f2f3f7] px-8 py-6">
                     <div className="flex items-center gap-3">
-                      <span className="material-symbols-outlined text-[#4a4cd2]">
-                        crisis_alert
-                      </span>
+                      <AppIcon name="crisis_alert" className="h-5 w-5 text-[#4a4cd2]" />
                       <h3 className="font-headline text-xl font-bold text-[#191c1f]">
                         Critical Intelligence Log
                       </h3>
                     </div>
-                    <button
+                    <Button
                       type="button"
-                      className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#4a4cd2] hover:underline"
+                      variant="tertiary"
+                      size="sm"
+                      className="px-0 text-[var(--color-action-primary)]"
                       onClick={() => setActiveView("investigations")}
                     >
                       View All Records
-                    </button>
+                    </Button>
                   </div>
                   <div className="overflow-x-auto">
-                    <table className="w-full border-collapse text-left">
+                    <DataTable>
                       <thead>
-                        <tr className="bg-[#f2f3f7]/60">
+                        <tr>
                           {["TX ID", "Amount", "Risk Level", "Probability", "Scored At"].map((label) => (
-                            <th
-                              key={label}
-                              className="px-8 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-[#777681]"
-                            >
+                            <TableHeadCell key={label} numeric={label === "Scored At"}>
                               {label}
-                            </th>
+                            </TableHeadCell>
                           ))}
                         </tr>
                       </thead>
@@ -1261,79 +1250,72 @@ export default function HomePage() {
                                 setActiveView("investigations");
                               }}
                             >
-                              <td className="px-8 py-5">
-                                <p className="text-sm font-bold">#TX-{item.transactionId}</p>
-                                <p className="text-[10px] font-medium text-[#777681]">
+                              <TableCell>
+                                <p className="body-strong">#TX-{item.transactionId}</p>
+                                <p className="table-meta">
                                   CUST_{item.customerId}
                                 </p>
-                              </td>
-                              <td className="px-8 py-5 text-sm font-bold">
+                              </TableCell>
+                              <TableCell className="text-sm font-bold">
                                 {formatCurrency(item.amount)}
-                              </td>
-                              <td className="px-8 py-5">
-                                <span
-                                  className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.16em] ${getRiskBadgeClasses(
-                                    riskLevel,
-                                  )}`}
+                              </TableCell>
+                              <TableCell>
+                                <Badge
+                                  variant={riskLevel}
+                                  className="rounded-md px-2.5 py-1"
+                                  icon={
+                                    riskLevel === "critical" ? (
+                                      <AppIcon name="priority_high" className="h-[10px] w-[10px]" />
+                                    ) : undefined
+                                  }
                                 >
-                                  {riskLevel === "critical" ? (
-                                    <span className="material-symbols-outlined text-[10px]">
-                                      priority_high
-                                    </span>
-                                  ) : null}
                                   {getRiskLabel(riskLevel)}
-                                </span>
-                              </td>
-                              <td className="px-8 py-5 text-sm font-bold text-[#ff7a2f]">
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-sm font-bold text-[#ff7a2f]">
                                 {formatProbability(item.combinedRiskScore)}
-                              </td>
-                              <td className="px-8 py-5 text-right text-[10px] font-bold text-[#777681]">
+                              </TableCell>
+                              <TableCell numeric className="table-meta">
                                 {item.transactionTimestamp.slice(11, 19)}
-                              </td>
+                              </TableCell>
                             </tr>
                           );
                         })}
                       </tbody>
-                    </table>
+                    </DataTable>
                   </div>
-                </div>
+                </TableCard>
               </div>
-            </section>
+            </PageSection>
           ) : null}
 
           {activeView === "investigations" ? (
-            <section className="space-y-6">
-              <div className="grid grid-cols-12 gap-6">
-                <div className="col-span-12 rounded-xl bg-white p-6 shadow-sm lg:col-span-8">
-                  <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <PageSection>
+              <div className="grid grid-cols-12 gap-5 xl:gap-6">
+                <PanelCard className="col-span-12 p-6 lg:col-span-8">
+                  <div className="mb-7 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <SectionTitle
                       title="Investigations Queue"
                       subtitle="Review suspicious transactions, linked entities, and case status"
                       icon="policy"
                     />
                     <div className="flex gap-3">
-                      <button
-                        type="button"
-                        className="rounded-lg bg-[#f2f3f7] px-4 py-2 text-[10px] font-bold uppercase tracking-[0.18em] text-[#474650]"
-                      >
+                      <Button type="button" variant="secondary" size="md">
                         Export CSV
-                      </button>
-                      <button
-                        type="button"
-                        className="rounded-lg bg-[#ff7a2f] px-4 py-2 text-[10px] font-bold uppercase tracking-[0.18em] text-white"
-                      >
+                      </Button>
+                      <Button type="button" variant="primary" size="md">
                         Filter Results
-                      </button>
+                      </Button>
                     </div>
                   </div>
                   <div className="overflow-x-auto">
-                    <table className="w-full text-left">
+                    <DataTable>
                       <thead>
-                        <tr className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#777681]">
+                        <tr>
                           {["Case ID", "Transaction", "Risk Level", "Probability", "Status", "Action"].map((item) => (
-                            <th key={item} className="px-4 py-3">
+                            <TableHeadCell key={item} className="px-4 py-3">
                               {item}
-                            </th>
+                            </TableHeadCell>
                           ))}
                         </tr>
                       </thead>
@@ -1349,63 +1331,60 @@ export default function HomePage() {
                               }`}
                               onClick={() => setSelectedTransactionId(item.transactionId)}
                             >
-                              <td className="px-4 py-4">
-                                <p className="text-xs font-bold text-[#08004D]">
+                              <TableCell className="px-4 py-4">
+                                <p className="text-[13px] font-semibold text-[#08004D]">
                                   #FR-{item.customerId}
                                 </p>
-                                <p className="text-[10px] text-[#777681]">Open case</p>
-                              </td>
-                              <td className="px-4 py-4 text-sm font-semibold">
+                                <p className="table-meta">Open case</p>
+                              </TableCell>
+                              <TableCell className="px-4 py-4 text-sm font-semibold">
                                 TXN-{item.transactionId}
-                              </td>
-                              <td className="px-4 py-4">
-                                <span
-                                  className={`inline-flex rounded px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.16em] ${getRiskBadgeClasses(
-                                    riskLevel,
-                                  )}`}
-                                >
+                              </TableCell>
+                              <TableCell className="px-4 py-4">
+                                <Badge variant={riskLevel} className="rounded-md px-2.5 py-1">
                                   {getRiskLabel(riskLevel)}
-                                </span>
-                              </td>
-                              <td className="px-4 py-4 text-sm font-bold text-[#ff7a2f]">
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="px-4 py-4 text-sm font-bold text-[#ff7a2f]">
                                 {formatProbability(item.combinedRiskScore)}
-                              </td>
-                              <td className="px-4 py-4 text-[10px] font-bold uppercase tracking-[0.14em] text-[#777681]">
-                                {item.fraudFlag === 1 ? "Open" : "Pending"}
-                              </td>
-                              <td className="px-4 py-4">
-                                <button
-                                  type="button"
-                                  className="rounded bg-[#edeef2] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-[#474650]"
-                                >
+                              </TableCell>
+                              <TableCell className="px-4 py-4">
+                                <Badge variant={item.fraudFlag === 1 ? "open" : "pending"}>
+                                  {item.fraudFlag === 1 ? "Open" : "Pending"}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="px-4 py-4">
+                                <Button type="button" variant="secondary" size="sm">
                                   Review
-                                </button>
-                              </td>
+                                </Button>
+                              </TableCell>
                             </tr>
                           );
                         })}
                       </tbody>
-                    </table>
+                    </DataTable>
                   </div>
-                </div>
+                </PanelCard>
 
-                <div className="col-span-12 rounded-xl bg-white p-6 shadow-sm lg:col-span-4">
-                  <div className="mb-6 flex items-start justify-between">
+                <PanelCard className="col-span-12 p-6 lg:col-span-4">
+                  <div className="mb-7 flex items-start justify-between gap-4">
                     <div>
-                      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#777681]">
+                      <p className="meta-label">
                         Case Profile
                       </p>
-                      <h3 className="mt-1 font-headline text-2xl font-extrabold text-[#08004D]">
+                      <h3 className="mt-1 font-headline text-[26px] font-bold tracking-[-0.03em] text-[#08004D]">
                         #FR-{selectedTransaction?.customerId ?? "----"}
                       </h3>
                     </div>
-                    <button
+                    <Button
                       type="button"
-                      className="text-[#ff7a2f]"
+                      variant="secondary"
+                      size="md"
+                      className="h-10 w-10 px-0"
                       aria-label="Share case"
                     >
-                      <span className="material-symbols-outlined">share</span>
-                    </button>
+                      <AppIcon name="share" className="h-4.5 w-4.5" />
+                    </Button>
                   </div>
 
                   {selectedTransaction ? (
@@ -1423,7 +1402,7 @@ export default function HomePage() {
                       </div>
 
                       <div className="mt-5 rounded-lg bg-[#f2f3f7] p-4">
-                        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#777681]">
+                        <p className="meta-label">
                           Account Profile
                         </p>
                         <div className="mt-4 flex items-start gap-3">
@@ -1431,10 +1410,10 @@ export default function HomePage() {
                             {String(selectedTransaction.customerId).slice(-2)}
                           </div>
                           <div>
-                            <p className="text-sm font-semibold text-[#191c1f]">
+                            <p className="body-strong">
                               Customer {selectedTransaction.customerId}
                             </p>
-                            <p className="text-xs text-[#777681]">
+                            <p className="table-meta">
                               {selectedTransaction.originCity} • {selectedTransaction.channel} • {selectedTransaction.deviceOs}
                             </p>
                           </div>
@@ -1463,24 +1442,18 @@ export default function HomePage() {
                       </div>
 
                       <div className="mt-6 grid grid-cols-2 gap-3">
-                        <button
-                          type="button"
-                          className="rounded-lg bg-[#08004D] px-4 py-3 text-[10px] font-bold uppercase tracking-[0.18em] text-white"
-                        >
+                        <Button type="button" variant="secondary" size="lg" className="bg-[#08004D] text-white hover:bg-[#12006f]">
                           Freeze Account
-                        </button>
-                        <button
-                          type="button"
-                          className="rounded-lg bg-[#ffdad6] px-4 py-3 text-[10px] font-bold uppercase tracking-[0.18em] text-[#93000a]"
-                        >
+                        </Button>
+                        <Button type="button" variant="destructive" size="lg" className="bg-[#ffdad6] text-[#93000a] shadow-none hover:bg-[#ffc8c1] active:bg-[#ffb4ab]">
                           Escalate Case
-                        </button>
+                        </Button>
                       </div>
                     </>
                   ) : null}
-                </div>
+                </PanelCard>
 
-                <div className="col-span-12 rounded-xl bg-white p-6 shadow-sm lg:col-span-6">
+                <PanelCard className="col-span-12 p-6 lg:col-span-6">
                   <SectionTitle title="Entity Graph" subtitle="Linked signals" icon="hub" />
                   <div className="mt-6 flex min-h-[260px] items-center justify-center rounded-xl bg-[radial-gradient(circle_at_center,rgba(113,116,250,0.08),transparent_58%),#f8f9fd]">
                     <div className="grid grid-cols-3 gap-6">
@@ -1493,24 +1466,24 @@ export default function HomePage() {
                           key={node.icon}
                           className={`flex h-12 w-12 items-center justify-center rounded-xl text-white shadow-lg ${node.color}`}
                         >
-                          <span className="material-symbols-outlined text-[20px]">{node.icon}</span>
+                          <AppIcon name={node.icon} className="h-[18px] w-[18px]" />
                         </div>
                       ))}
                     </div>
                   </div>
-                  <p className="mt-4 text-xs text-[#777681]">
+                  <p className="table-meta mt-4">
                     Linked signals: device reuse, beneficiary change, and network context for the active case.
                   </p>
-                </div>
+                </PanelCard>
 
                 <div className="col-span-12 space-y-6 lg:col-span-6">
-                  <div className="rounded-xl bg-white p-6 shadow-sm">
+                  <PanelCard className="p-6">
                     <SectionTitle
                       title="Transaction Timeline"
                       subtitle="Event sequence"
                       icon="timeline"
                     />
-                    <div className="mt-6 space-y-5">
+                    <div className="mt-6 space-y-6">
                       {selectedTransaction
                         ? [
                             {
@@ -1532,45 +1505,94 @@ export default function HomePage() {
                             <div key={event.title} className="flex gap-3">
                               <div className={`mt-1 h-2.5 w-2.5 rounded-full ${event.tone}`} />
                               <div>
-                                <p className="text-sm font-semibold text-[#191c1f]">{event.title}</p>
-                                <p className="mt-1 text-xs text-[#777681]">{event.detail}</p>
+                                <p className="body-strong">{event.title}</p>
+                                <p className="table-meta mt-1">{event.detail}</p>
                               </div>
                             </div>
                           ))
                         : null}
                     </div>
-                  </div>
+                  </PanelCard>
 
-                  <div className="rounded-xl bg-white p-6 shadow-sm">
+                  <PanelCard className="p-6">
                     <SectionTitle
                       title="Analyst Intelligence Notes"
                       subtitle="Internal directives"
                       icon="edit_note"
                     />
-                    <div className="mt-6 rounded-xl bg-[#f2f3f7] p-4 text-sm text-[#777681]">
+                    <div className="body-copy mt-6 rounded-xl bg-[#f2f3f7] p-4">
                       Add analyst observations here. Use this panel to capture escalation notes, model concerns, or next-step instructions for the current case.
                     </div>
                     <div className="mt-4 flex items-center justify-between">
-                      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#777681]">
+                      <p className="meta-label">
                         Sarah Johnson mentioned this case in #fraud-ops-general
                       </p>
-                      <button
-                        type="button"
-                        className="rounded-lg bg-[#08004D] px-4 py-2 text-[10px] font-bold uppercase tracking-[0.18em] text-white"
-                      >
+                      <Button type="button" variant="secondary" size="md" className="bg-[#08004D] text-white hover:bg-[#12006f]">
                         Save Note
-                      </button>
+                      </Button>
                     </div>
-                  </div>
+                  </PanelCard>
                 </div>
               </div>
-            </section>
+            </PageSection>
           ) : null}
 
           {activeView === "assistant" ? (
-            <section className="grid grid-cols-12 gap-8">
-              <div className="col-span-12 flex min-h-[720px] flex-col overflow-hidden rounded-xl bg-white shadow-sm lg:col-span-8">
+            <PageSection>
+              <div className="grid grid-cols-1 gap-5 xl:grid-cols-3">
+                <PanelCard className="p-6">
+                  <p className="meta-label">
+                    Now
+                  </p>
+                  <h3 className="mt-3 font-headline text-[var(--font-size-card-title)] font-[var(--font-weight-card-title)] tracking-[-0.02em] text-[#191c1f]">
+                    Work from `fraud_transactions`
+                  </h3>
+                  <p className="body-copy mt-2">
+                    The copilot should answer from suspicious transactions, fraud signals, velocity spikes, device risk, and geography first.
+                  </p>
+                </PanelCard>
+                <PanelCard className="p-6">
+                  <p className="meta-label">
+                    Next
+                  </p>
+                  <h3 className="mt-3 font-headline text-[var(--font-size-card-title)] font-[var(--font-weight-card-title)] tracking-[-0.02em] text-[#191c1f]">
+                    Add investigation context
+                  </h3>
+                  <p className="body-copy mt-2">
+                    Layer in `investigation_cases` so the assistant can explain case status, ownership, escalation, and analyst actions.
+                  </p>
+                </PanelCard>
+                <PanelCard className="p-6">
+                  <p className="meta-label">
+                    Later
+                  </p>
+                  <h3 className="mt-3 font-headline text-[var(--font-size-card-title)] font-[var(--font-weight-card-title)] tracking-[-0.02em] text-[#191c1f]">
+                    Add model + auth telemetry
+                  </h3>
+                  <p className="body-copy mt-2">
+                    Bring in `model_inference_log` and `auth_events` so the workspace can connect predictions to real business outcomes and account-takeover stories.
+                  </p>
+                </PanelCard>
+              </div>
+
+              <div className="grid grid-cols-12 gap-5 xl:gap-6">
+              <PanelCard className="col-span-12 flex min-h-[760px] flex-col overflow-hidden lg:col-span-8">
                 <div className="h-1 w-full bg-[linear-gradient(135deg,#a04100_0%,#ff7a2f_100%)]" />
+                <div className="border-b border-[#f2f3f7] px-8 py-6">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <SurfaceChip icon="smart_toy" label="Fraud copilot live" tone="indigo" />
+                    <SurfaceChip icon="dashboard" label="Source fraud_transactions" tone="neutral" />
+                    <SurfaceChip
+                      icon="policy"
+                      label={
+                        selectedTransaction
+                          ? `Case TXN-${selectedTransaction.transactionId}`
+                          : "Case context pending"
+                      }
+                      tone="orange"
+                    />
+                  </div>
+                </div>
                 <div className="flex-1 overflow-y-auto px-8 py-8">
                   <div className="space-y-8">
                     {assistant.messages.map((message) =>
@@ -1583,59 +1605,50 @@ export default function HomePage() {
                       ) : (
                         <div key={message.id} className="flex items-start gap-3">
                           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[linear-gradient(135deg,#a04100_0%,#ff7a2f_100%)] text-white">
-                            <span className="material-symbols-outlined text-[15px]">smart_toy</span>
+                            <AppIcon name="smart_toy" className="h-4 w-4" />
                           </div>
                           <div className="max-w-[92%] flex-1 rounded-2xl rounded-tl-none border border-[#c8c5d2]/20 bg-[#f2f3f7] px-6 py-5">
-                            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#777681]">
+                            <p className="meta-label">
                               Assistant
                             </p>
-                            <p className="mt-3 text-sm leading-7 text-[#191c1f]">{message.text}</p>
+                            <p className="mt-3 text-[15px] leading-[1.72] text-[#191c1f]">{message.text}</p>
                             {message.note ? (
                               <div className="mt-4 flex items-center gap-3 rounded-lg bg-[#ffdad6]/60 p-3">
-                                <span className="material-symbols-outlined text-[#ba1a1a]">
-                                  report
-                                </span>
-                                <span className="text-xs font-semibold text-[#93000a]">
+                                <AppIcon name="report" className="h-4 w-4 text-[#ba1a1a]" />
+                                <span className="text-[13px] font-semibold leading-[1.5] text-[#93000a]">
                                   {message.note}
                                 </span>
                               </div>
                             ) : null}
                             {message.table ? (
                               <div className="mt-5 overflow-hidden rounded-lg bg-white">
-                                <table className="w-full text-left text-xs">
-                                  <thead className="bg-[#e7e8ec]/60 text-[#777681]">
+                                <DataTable className="text-left text-xs">
+                                  <thead>
                                     <tr>
                                       {["Transaction ID", "Probability", "Risk Level", "Status"].map((label) => (
-                                        <th
-                                          key={label}
-                                          className="px-4 py-3 text-[10px] font-bold uppercase tracking-[0.18em]"
-                                        >
+                                        <TableHeadCell key={label} className="px-4 py-3">
                                           {label}
-                                        </th>
+                                        </TableHeadCell>
                                       ))}
                                     </tr>
                                   </thead>
                                   <tbody className="divide-y divide-[#f2f3f7]">
                                     {message.table.map((row) => (
                                       <tr key={row.transactionId}>
-                                        <td className="px-4 py-3 font-medium">{row.transactionId}</td>
-                                        <td className="px-4 py-3 font-bold text-[#ff7a2f]">
+                                        <TableCell className="px-4 py-3 font-medium">{row.transactionId}</TableCell>
+                                        <TableCell className="px-4 py-3 font-bold text-[#ff7a2f]">
                                           {row.probability}
-                                        </td>
-                                        <td className="px-4 py-3">
-                                          <span
-                                            className={`rounded px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.16em] ${getRiskBadgeClasses(
-                                              row.riskLevel,
-                                            )}`}
-                                          >
+                                        </TableCell>
+                                        <TableCell className="px-4 py-3">
+                                          <Badge variant={row.riskLevel} className="rounded-md px-2.5 py-1">
                                             {getRiskLabel(row.riskLevel)}
-                                          </span>
-                                        </td>
-                                        <td className="px-4 py-3">{row.status}</td>
+                                          </Badge>
+                                        </TableCell>
+                                        <TableCell className="px-4 py-3">{row.status}</TableCell>
                                       </tr>
                                     ))}
                                   </tbody>
-                                </table>
+                                </DataTable>
                               </div>
                             ) : null}
                           </div>
@@ -1662,16 +1675,16 @@ export default function HomePage() {
                       },
                     ].map((card) => (
                       <div key={card.title} className="rounded-lg bg-[#f2f3f7] p-4">
-                        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#777681]">
+                        <p className="meta-label">
                           {card.title}
                         </p>
-                        <p className="mt-2 text-sm text-[#191c1f]">{card.body}</p>
+                        <p className="body-copy mt-2 text-[#191c1f]">{card.body}</p>
                       </div>
                     ))}
                   </div>
 
-                  <div className="flex items-center gap-3 rounded-lg bg-[#f2f3f7] px-4 py-3">
-                    <input
+                  <div className="flex items-center gap-3 rounded-[18px] bg-[var(--color-surface-muted)] px-4 py-3">
+                    <TextInput
                       value={assistant.question}
                       onChange={(event) =>
                         setAssistant((current) => ({
@@ -1686,38 +1699,32 @@ export default function HomePage() {
                         }
                       }}
                       placeholder="Ask the Sentinel about fraud intelligence..."
-                      className="flex-1 bg-transparent text-sm outline-none placeholder:text-[#777681]"
+                      className="h-auto flex-1 border-0 bg-transparent px-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
                     />
-                    <button
+                    <Button
                       type="button"
                       onClick={() => void submitAssistantQuestion(assistant.question)}
-                      className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#ff7a2f] text-white shadow-lg transition-opacity hover:opacity-90"
+                      variant="primary"
+                      size="md"
+                      className="h-10 w-10 px-0"
                     >
-                      <span className="material-symbols-outlined text-[18px]">send</span>
-                    </button>
+                      <AppIcon name="send" className="h-4.5 w-4.5" />
+                    </Button>
                   </div>
 
                   <div className="mt-4 flex flex-wrap gap-3">
-                    <button
-                      type="button"
-                      onClick={openSelectedTransactionInAssistant}
-                      className="rounded-lg bg-[#08004D] px-4 py-2 text-[10px] font-bold uppercase tracking-[0.18em] text-white"
-                    >
+                    <Button type="button" variant="secondary" size="md" className="bg-[#08004D] text-white hover:bg-[#12006f]" onClick={openSelectedTransactionInAssistant}>
                       Use Selected Case
-                    </button>
-                    <button
-                      type="button"
-                      onClick={resetAssistantConversation}
-                      className="rounded-lg bg-[#edeef2] px-4 py-2 text-[10px] font-bold uppercase tracking-[0.18em] text-[#474650]"
-                    >
+                    </Button>
+                    <Button type="button" variant="secondary" size="md" onClick={resetAssistantConversation}>
                       Reset Session
-                    </button>
+                    </Button>
                   </div>
                 </div>
-              </div>
+              </PanelCard>
 
-              <div className="col-span-12 space-y-6 lg:col-span-4">
-                <div className="rounded-xl bg-white p-6 shadow-sm">
+              <StickyRail className="col-span-12 lg:col-span-4 lg:sticky lg:top-24 lg:self-start">
+                <PanelCard className="p-6">
                   <SectionTitle
                     title="Real-Time Context"
                     subtitle="Current signal state"
@@ -1725,114 +1732,146 @@ export default function HomePage() {
                   />
                   <div className="space-y-5">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#777681]">
+                      <span className="meta-label">
                         Total Transactions
                       </span>
-                      <span className="font-headline text-2xl font-extrabold text-[#191c1f]">
+                      <span className="font-headline numeric text-[32px] font-bold tracking-[-0.03em] text-[#191c1f]">
                         {formatInteger(dashboard.summary.totalTransactions)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#777681]">
+                      <span className="meta-label">
                         Flagged
                       </span>
-                      <span className="font-headline text-2xl font-extrabold text-[#ba1a1a]">
+                      <span className="font-headline numeric text-[32px] font-bold tracking-[-0.03em] text-[#ba1a1a]">
                         {formatInteger(dashboard.summary.flaggedTransactions)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#777681]">
+                      <span className="meta-label">
                         Highest Count
                       </span>
-                      <span className="font-headline text-2xl font-extrabold text-[#ff7a2f]">
+                      <span className="font-headline numeric text-[32px] font-bold tracking-[-0.03em] text-[#ff7a2f]">
                         {formatInteger(dashboard.summary.highRiskEvents)}
                       </span>
                     </div>
                     <div className="rounded-lg bg-[#f2f3f7] p-4">
-                      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#777681]">
+                      <p className="meta-label">
                         Model Performance
                       </p>
-                      <p className="mt-2 text-sm font-semibold text-[#191c1f]">
+                      <p className="body-strong mt-2">
                         {dashboard.summary.averageProbabilityPct.toFixed(1)}% average probability
                       </p>
-                      <p className="mt-1 text-xs text-[#777681]">
+                      <p className="table-meta mt-1">
                         Current model: {modelManagement.activeModel}
                       </p>
                     </div>
                     <div className="rounded-lg bg-[#f2f3f7] p-4">
-                      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#777681]">
+                      <p className="meta-label">
                         Action Model
                       </p>
-                      <p className="mt-2 text-sm text-[#191c1f]">
+                      <p className="body-copy mt-2 text-[#191c1f]">
                         Sentinel-v1 recommends moving the most critical cases into Investigations for analyst confirmation.
                       </p>
                     </div>
                     <div className="rounded-lg bg-[#f2f3f7] p-4">
-                      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#777681]">
+                      <p className="meta-label">
                         Recent Context
                       </p>
-                      <p className="mt-2 text-sm text-[#191c1f]">
+                      <p className="body-copy mt-2 text-[#191c1f]">
                         {selectedTransaction
                           ? `Customer ${selectedTransaction.customerId} from ${selectedTransaction.originCity} is the active case in view.`
                           : "No case selected."}
                       </p>
                     </div>
                   </div>
-                </div>
+                </PanelCard>
 
-                <div className="rounded-xl bg-[#08004D] p-6 text-white shadow-sm">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/60">
+                <PanelCard tone="dark" className="p-6">
+                  <p className="section-subtitle text-white/60">
                     System Status
                   </p>
-                  <h3 className="mt-2 font-headline text-2xl font-extrabold">
+                  <h3 className="mt-2 font-headline text-[32px] font-bold tracking-[-0.03em]">
                     Security Core {health.usingFallback ? "Preview" : "Active"}
                   </h3>
-                  <p className="mt-3 text-sm text-white/80">
+                  <p className="mt-3 text-[15px] leading-[1.65] text-white/80">
                     {health.usingFallback
                       ? "Frontend preview mode is active while the backend is offline."
                       : "The fraud assistant backend is connected and ready for live SQL-backed answers."}
                   </p>
                   <div className="mt-5 flex items-center justify-between">
-                    <button
-                      type="button"
-                      className="rounded-lg bg-white/10 px-4 py-2 text-[10px] font-bold uppercase tracking-[0.18em]"
-                    >
+                    <Button type="button" variant="ghost" size="md">
                       View Log
-                    </button>
-                    <span className="material-symbols-outlined text-[#ff7a2f]">shield</span>
+                    </Button>
+                    <AppIcon name="shield" className="h-5 w-5 text-[#ff7a2f]" />
                   </div>
-                </div>
+                </PanelCard>
+
+                <PanelCard className="p-6">
+                  <SectionTitle
+                    title="Scenario Data Plan"
+                    subtitle="Ralph Wiggum method"
+                    icon="timeline"
+                  />
+                  <div className="mt-6 space-y-4 text-sm text-[#5d5b66]">
+                    <div className="rounded-xl bg-[#f2f3f7] p-4">
+                      <p className="meta-label">
+                        Step 1
+                      </p>
+                      <p className="mt-2 font-semibold text-[#191c1f]">Big scary numbers first.</p>
+                      <p className="mt-1">Use `fraud_transactions` for volume, flags, risk score, city, channel, and suspicious queue.</p>
+                    </div>
+                    <div className="rounded-xl bg-[#f2f3f7] p-4">
+                      <p className="meta-label">
+                        Step 2
+                      </p>
+                      <p className="mt-2 font-semibold text-[#191c1f]">Then make cases feel real.</p>
+                      <p className="mt-1">Add `investigation_cases` so the dashboard and assistant can talk about review status, assignee, and escalation.</p>
+                    </div>
+                    <div className="rounded-xl bg-[#f2f3f7] p-4">
+                      <p className="meta-label">
+                        Step 3
+                      </p>
+                      <p className="mt-2 font-semibold text-[#191c1f]">Then make the story smarter.</p>
+                      <p className="mt-1">Add `model_inference_log` and `auth_events` for explainability, deployment trust, and account-takeover context.</p>
+                    </div>
+                  </div>
+                </PanelCard>
+              </StickyRail>
               </div>
-            </section>
+            </PageSection>
           ) : null}
 
           {activeView === "models" ? (
-            <section className="space-y-6">
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <PageSection>
+              <FilterBar className="lg:items-center">
                 <div className="flex flex-wrap gap-3">
-                  <button
+                  <Button
                     type="button"
-                    className="flex items-center gap-2 rounded-lg bg-[#f2f3f7] px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-[#474650]"
+                    variant="secondary"
+                    size="md"
+                    leadingIcon={<AppIcon name="refresh" className="h-3.5 w-3.5" />}
                   >
-                    <span className="material-symbols-outlined text-[16px]">refresh</span>
                     Rollback
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
-                    className="flex items-center gap-2 rounded-lg bg-[#08004D] px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-white"
+                    variant="secondary"
+                    size="md"
+                    className="bg-[#08004D] text-white hover:bg-[#12006f]"
+                    leadingIcon={<AppIcon name="rocket_launch" className="h-3.5 w-3.5" />}
                   >
-                    <span className="material-symbols-outlined text-[16px]">rocket_launch</span>
                     Deploy Version
-                  </button>
+                  </Button>
                 </div>
                 <MiniStatus
                   label="Contract"
                   value="predictions[]"
                   tone="good"
                 />
-              </div>
+              </FilterBar>
 
-              <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
                 <KpiCard
                   label="Active Model"
                   value={modelManagement.activeModel}
@@ -1865,8 +1904,8 @@ export default function HomePage() {
                 />
               </div>
 
-              <div className="grid grid-cols-12 gap-6">
-                <div className="col-span-12 rounded-xl bg-white p-8 shadow-sm lg:col-span-8">
+              <div className="grid grid-cols-12 gap-5 xl:gap-6">
+                <PanelCard className="col-span-12 p-8 lg:col-span-8">
                   <div className="mb-10 flex flex-wrap items-center justify-between gap-4">
                     <SectionTitle
                       title="Model Performance"
@@ -1888,10 +1927,10 @@ export default function HomePage() {
                       { label: "ROC AUC", value: modelManagement.metrics.rocAuc },
                     ].map((metric, index) => (
                       <div key={metric.label} className="space-y-2">
-                        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#777681]">
+                        <p className="meta-label">
                           {metric.label}
                         </p>
-                        <p className="font-headline text-5xl font-black text-[#191c1f]">
+                        <p className="metric-value text-[44px] text-[#191c1f]">
                           {metricValue(metric.value)}
                         </p>
                         <div className="h-1 rounded-full bg-[#f2f3f7]">
@@ -1908,10 +1947,10 @@ export default function HomePage() {
 
                   <div className="mt-12 rounded-2xl bg-[#f2f3f7] p-6">
                     <div className="mb-6 flex items-center justify-between">
-                      <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#777681]">
+                      <span className="meta-label">
                         Request Volume
                       </span>
-                      <span className="rounded bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-600">
+                      <span className="rounded bg-emerald-50 px-2 py-0.5 text-[12px] font-semibold text-emerald-600">
                         +4.2% from latest sample
                       </span>
                     </div>
@@ -1934,15 +1973,15 @@ export default function HomePage() {
                       ))}
                     </div>
                   </div>
-                </div>
+                </PanelCard>
 
-                <div className="col-span-12 space-y-6 lg:col-span-4">
-                  <div className="rounded-2xl bg-white p-6 shadow-sm">
+                <StickyRail className="col-span-12 lg:col-span-4">
+                  <PanelCard className="p-6">
                     <h3 className="flex items-center gap-2 font-headline text-lg font-bold text-[#191c1f]">
-                      <span className="material-symbols-outlined text-[#07006c]">info</span>
+                      <AppIcon name="info" className="h-5 w-5 text-[#07006c]" />
                       Deployment Details
                     </h3>
-                    <div className="mt-6 space-y-5">
+                    <div className="mt-6 space-y-6">
                       {[
                         ["Algorithm", modelManagement.activeModel],
                         ["Environment", "CAI / Local preview"],
@@ -1950,57 +1989,57 @@ export default function HomePage() {
                         ["Registry Status", "Verified manually"],
                       ].map(([label, value]) => (
                         <div key={label} className="flex items-center justify-between gap-4">
-                          <span className="text-xs text-[#777681]">{label}</span>
-                          <span className="text-xs font-bold text-[#191c1f]">{value}</span>
+                          <span className="field-label">{label}</span>
+                          <span className="text-[13px] font-semibold text-[#191c1f]">{value}</span>
                         </div>
                       ))}
                       <div className="border-t border-[#f2f3f7] pt-4">
-                        <span className="mb-2 block text-[10px] font-bold uppercase tracking-[0.18em] text-[#777681]">
+                        <span className="meta-label mb-2 block">
                           Endpoint Contract
                         </span>
-                        <code className="block rounded-lg bg-[#f2f3f7] p-3 text-[10px] text-[#191c1f]">
+                        <code className="block rounded-lg bg-[#f2f3f7] p-3 text-[12px] leading-[1.6] text-[#191c1f]">
                           {modelManagement.endpointContract}
                         </code>
                       </div>
                     </div>
-                  </div>
+                  </PanelCard>
 
-                  <div className="rounded-2xl bg-white p-6 shadow-sm">
+                  <PanelCard className="p-6">
                     <h3 className="flex items-center gap-2 font-headline text-lg font-bold text-[#191c1f]">
-                      <span className="material-symbols-outlined text-[#07006c]">tune</span>
+                      <AppIcon name="tune" className="h-5 w-5 text-[#07006c]" />
                       Threshold Config
                     </h3>
                     <div className="mt-6 space-y-6">
                       <div>
                         <div className="mb-4 flex items-center justify-between">
-                          <span className="text-xs font-bold text-[#777681]">
+                          <span className="field-label">
                             Risk Sensitivity
                           </span>
-                          <span className="text-xs font-bold text-[#a04100]">0.85</span>
+                          <span className="numeric text-[13px] font-semibold text-[#a04100]">0.85</span>
                         </div>
                         <input
                           type="range"
                           defaultValue="85"
                           disabled
-                          className="w-full cursor-not-allowed accent-[#ff7a2f]"
+                          className="w-full cursor-not-allowed accent-[var(--color-brand-orange)]"
                         />
                       </div>
                       <div>
                         <div className="mb-4 flex items-center justify-between">
-                          <span className="text-xs font-bold text-[#777681]">
+                          <span className="field-label">
                             Auto-Block Threshold
                           </span>
-                          <span className="text-xs font-bold text-[#a04100]">0.92</span>
+                          <span className="numeric text-[13px] font-semibold text-[#a04100]">0.92</span>
                         </div>
                         <input
                           type="range"
                           defaultValue="92"
                           disabled
-                          className="w-full cursor-not-allowed accent-[#ff7a2f]"
+                          className="w-full cursor-not-allowed accent-[var(--color-brand-orange)]"
                         />
                       </div>
                       <div className="border-t border-[#f2f3f7] pt-6">
-                        <p className="mb-4 text-[10px] font-bold uppercase tracking-widest text-[#777681]">
+                        <p className="meta-label mb-4">
                           Deployment Bundle
                         </p>
                         <div className="space-y-4">
@@ -2009,8 +2048,8 @@ export default function HomePage() {
                           key={artifact}
                           className="flex items-center justify-between rounded-lg bg-[#f2f3f7] px-4 py-3"
                         >
-                          <span className="text-xs font-semibold text-[#191c1f]">{artifact}</span>
-                          <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#777681]">
+                          <span className="text-[13px] font-semibold text-[#191c1f]">{artifact}</span>
+                          <span className="meta-label">
                             Ready
                           </span>
                         </div>
@@ -2019,86 +2058,81 @@ export default function HomePage() {
                       </div>
                     </div>
                     <div className="mt-6 flex gap-3">
-                      <button
-                        type="button"
-                        className="flex-1 rounded-lg bg-[#edeef2] px-4 py-2 text-[10px] font-bold uppercase tracking-[0.18em] text-[#474650]"
-                      >
+                      <Button type="button" variant="secondary" size="md" className="flex-1">
                         Inspect
-                      </button>
-                      <button
-                        type="button"
-                        className="flex-1 rounded-lg bg-[#07006c] px-4 py-2 text-[10px] font-bold uppercase tracking-[0.18em] text-white"
-                      >
+                      </Button>
+                      <Button type="button" variant="secondary" size="md" className="flex-1 bg-[#07006c] text-white hover:bg-[#12006f]">
                         Apply
-                      </button>
+                      </Button>
                     </div>
-                  </div>
-                </div>
+                  </PanelCard>
+                </StickyRail>
               </div>
 
-              <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
+              <TableCard>
                 <div className="flex items-center justify-between border-b border-[#f2f3f7] px-8 py-6">
                   <h3 className="font-headline text-lg font-bold text-[#191c1f]">
                     Recent Model Pipeline Runs
                   </h3>
                   <div className="flex gap-3">
-                    <button
+                    <Button
                       type="button"
-                      className="flex items-center gap-2 rounded-lg bg-[#ff7a2f] px-4 py-2 text-[10px] font-bold uppercase tracking-[0.18em] text-white"
+                      variant="primary"
+                      size="md"
+                      leadingIcon={<AppIcon name="refresh" className="h-3.5 w-3.5" />}
                     >
-                      <span className="material-symbols-outlined text-[16px]">refresh</span>
                       Retrain Model
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="button"
-                      className="flex items-center gap-2 rounded-lg bg-[#f2f3f7] px-4 py-2 text-[10px] font-bold uppercase tracking-[0.18em] text-[#474650]"
+                      variant="secondary"
+                      size="md"
+                      leadingIcon={<AppIcon name="filter_list" className="h-3.5 w-3.5" />}
                     >
-                      <span className="material-symbols-outlined text-[16px]">filter_list</span>
                       Filter
-                    </button>
+                    </Button>
                   </div>
                 </div>
-                <table className="w-full text-left">
+                <DataTable>
                   <thead>
-                    <tr className="bg-[#f2f3f7]">
+                    <tr>
                       {["Version", "Training Date", "Metric (AUC)", "Status", "Deployed By", "Actions"].map((label) => (
-                        <th
-                          key={label}
-                          className="px-8 py-4 text-[10px] font-bold uppercase tracking-[0.18em] text-[#777681]"
-                        >
+                        <TableHeadCell key={label}>
                           {label}
-                        </th>
+                        </TableHeadCell>
                       ))}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#f2f3f7]">
                     {modelManagement.runs.map((run) => (
                       <tr key={run.version}>
-                        <td className="px-8 py-5 text-sm font-bold">{run.version}</td>
-                        <td className="px-8 py-5 text-sm text-[#777681]">{run.trainingDate}</td>
-                        <td className="px-8 py-5 text-sm font-bold">{run.auc}</td>
-                        <td className="px-8 py-5">
-                          <span className="rounded-full bg-emerald-100 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-emerald-700">
+                        <TableCell className="text-sm font-bold">{run.version}</TableCell>
+                        <TableCell className="text-sm text-[#777681]">{run.trainingDate}</TableCell>
+                        <TableCell className="text-sm font-bold">{run.auc}</TableCell>
+                        <TableCell>
+                          <Badge variant="deployed">
                             {run.status}
-                          </span>
-                        </td>
-                        <td className="px-8 py-5 text-sm text-[#777681]">{run.deployedBy}</td>
-                        <td className="px-8 py-5">
-                          <button
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-sm text-[#777681]">{run.deployedBy}</TableCell>
+                        <TableCell>
+                          <Button
                             type="button"
-                            className="material-symbols-outlined text-[#777681] hover:text-[#191c1f]"
+                            variant="tertiary"
+                            size="sm"
+                            className="h-8 w-8 rounded-lg px-0 text-[#777681] hover:bg-[#f2f3f7] hover:text-[#191c1f]"
                           >
-                            more_vert
-                          </button>
-                        </td>
+                            <AppIcon name="more_vert" className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
                       </tr>
                     ))}
                   </tbody>
-                </table>
-              </div>
-            </section>
+                </DataTable>
+              </TableCard>
+            </PageSection>
           ) : null}
-        </div>
+        </PageCanvas>
       </main>
     </div>
   );

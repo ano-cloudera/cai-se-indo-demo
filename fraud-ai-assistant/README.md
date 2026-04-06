@@ -95,6 +95,8 @@ Current frontend direction:
 - follows the Stitch design system and screen structure
 - treats `fraud_transactions` as the primary analytics source for v1
 - uses preview fallback data when the backend is offline
+- now includes shared UI primitives for shell, cards, tables, buttons, badges, icons, and inputs
+- now uses a normalized typography and spacing system for a more production-ready enterprise console
 - preserves room for later additions such as `investigation_cases` and `model_inference_log`
 
 The dashboard is currently the main contract-defining screen. It should establish:
