@@ -35,6 +35,7 @@ export function TableHeadCell({
     <th
       className={cn(
         "bg-[var(--color-surface-muted)] px-5 py-4 text-[13px] font-semibold tracking-[0.02em] text-[var(--color-ink-subtle)]",
+        "sticky top-0 z-[1] backdrop-blur-sm",
         numeric && "text-right",
         className,
       )}

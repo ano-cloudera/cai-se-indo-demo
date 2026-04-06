@@ -89,6 +89,17 @@ body {
   background: var(--color-page-bg);
 }
 
+.app-sidebar {
+  background:
+    linear-gradient(180deg, rgba(18, 10, 92, 0.18) 0%, rgba(8, 0, 77, 0) 22%),
+    var(--color-sidebar-bg);
+}
+
+.app-topbar {
+  backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.92);
+}
+
 .page-canvas {
   margin-inline: auto;
   max-width: var(--layout-max-w);
@@ -155,6 +166,18 @@ body {
   display: flex;
   flex-direction: column;
   gap: var(--space-6);
+}
+
+.nav-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.topbar-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
 }
 
 .table-toolbar {

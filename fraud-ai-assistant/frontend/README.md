@@ -20,6 +20,7 @@ It is designed for local development, CAI session validation, and CAI Applicatio
 - keep the dashboard usable even during frontend-only local work
 - use a shared UI foundation for cards, tables, buttons, badges, inputs, icons, and shell layout
 - use a normalized typography and spacing system for the fraud operations console
+- use shared interaction-state patterns for loading, empty, warning, selected, and action-feedback states
 
 ## Required Environment Variables
 
@@ -102,6 +103,9 @@ The model management surface should stay lightweight and truthful:
 - deployment bundle visibility
 - endpoint contract
 - recent pipeline runs
+- compact deployment summary row
+- production performance as the primary analytical section
+- deployment details and threshold policy as secondary operational panels
 
 The experience should feel more investigation-oriented than the generic `ask-data` app, even though both share the same core architecture.
 
@@ -122,6 +126,11 @@ The current frontend foundation now includes:
   - sticky right rail
 - standardized table spacing and card padding
 - standardized button hierarchy and input sizing
+- reusable interaction-state primitives for:
+  - loading skeletons
+  - empty and warning state panels
+  - calmer row selection and focus treatment
+  - action feedback on model operations and analyst notes
 
 Current sidebar branding uses:
 

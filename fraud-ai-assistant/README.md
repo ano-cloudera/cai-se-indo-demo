@@ -97,6 +97,7 @@ Current frontend direction:
 - uses preview fallback data when the backend is offline
 - now includes shared UI primitives for shell, cards, tables, buttons, badges, icons, and inputs
 - now uses a normalized typography and spacing system for a more production-ready enterprise console
+- now includes shared interaction-state primitives so the UI can show loading, empty, warning, selected, and action-feedback states more realistically
 - preserves room for later additions such as `investigation_cases` and `model_inference_log`
 
 The dashboard is currently the main contract-defining screen. It should establish:
@@ -106,6 +107,15 @@ The dashboard is currently the main contract-defining screen. It should establis
 - top suspicious transaction queue
 - drill-in path to investigations
 - lightweight model visibility
+
+The current frontend polish state also includes:
+
+- shell and navigation refinement for a more stable enterprise console frame
+- page-specific UX refinement for:
+  - `Dashboard`
+  - `Investigations`
+  - `Model Management`
+- a calmer, compact Model Management layout that emphasizes deployment status, performance, threshold policy, and recent runs without hero-style clutter
 
 ## Typical Questions It Should Support
 

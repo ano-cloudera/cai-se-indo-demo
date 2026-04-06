@@ -1,7 +1,7 @@
 ---
 project: fraud-ai-assistant
 document: project-state
-version: 6
+version: 7
 last_modified: 2026-04-06
 workspace_root: /Users/triano/Documents/Cloudera/cai-se-indo-demo
 project_root: /Users/triano/Documents/Cloudera/cai-se-indo-demo/fraud-ai-assistant
@@ -11,7 +11,7 @@ latest_workspace_commits:
   - b598a5a8 Add fraud analytics data and traditional ML template
 status: active
 priority: primary
-current_focus: Stitch-aligned fraud frontend foundation refinement plus fraud analytics assistant and traditional fraud ML workflow for Cloudera AI.
+current_focus: Stitch-aligned fraud frontend refinement across shell, dashboards, investigations, assistant interactions, and a cleaned-up fraud model operations console.
 portable_reading: true
 deployment_database: cai_sdx_se_indonesia
 impala_external_data_location: s3a://go01-demo/user/cai-demo-se-indonesia/data/
@@ -45,6 +45,8 @@ Project status summary:
 - frontend design-system primitives: implemented
 - frontend typography foundation: implemented
 - frontend spacing and layout rhythm refinement: implemented
+- frontend shared interaction-state system: implemented
+- model management page cleanup and hierarchy rebalance: implemented
 - traditional ML baseline workflow: implemented
 - Impala-backed fraud ML training flow: implemented
 - local ML workflow verification: completed
@@ -264,6 +266,25 @@ Implemented:
   - section blocks
   - tables
   - assistant workspace panels
+- reusable interaction-state handling for:
+  - loading buttons
+  - empty and warning state panels
+  - calmer row selection
+  - assistant empty/loading states
+  - model action feedback
+  - analyst note save feedback
+
+Current page refinement state:
+
+- `Dashboard` now reads as a fraud command center and uses more believable signal, queue, and workload framing
+- `Investigations` now behaves like an analyst review workspace with queue selection, linked entities, timeline, and notes
+- `AI Assistant` now supports empty, loading, prompt-suggestion, and composer states more like a real fraud copilot
+- `Model Management` has been rebalanced into a calmer operations console with:
+  - compact action and status row
+  - compact six-card deployment summary row
+  - left-side performance focus
+  - right-side deployment details and threshold policy
+  - reduced redundancy versus earlier iterations
 
 Current frontend asset direction:
 
@@ -272,7 +293,7 @@ Current frontend asset direction:
 
 Latest local validation:
 
-- local frontend production build completed successfully after the design-system, typography, and spacing/layout refinements
+- local frontend production build completed successfully after shell, dashboard, investigations, interaction-state, and model-management refinements
 - validated command:
   - `PATH="/Users/triano/Documents/Cloudera/cai-se-indo-demo/.local/node/bin:$PATH" npm run build`
 

@@ -7,13 +7,13 @@ type ButtonSize = "sm" | "md" | "lg";
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    "bg-[var(--color-action-primary)] text-white shadow-[var(--shadow-accent)] hover:bg-[var(--color-action-primary-hover)] active:bg-[var(--color-action-primary-pressed)]",
+    "bg-[var(--color-action-primary)] text-white shadow-[var(--shadow-accent)] hover:-translate-y-[1px] hover:bg-[var(--color-action-primary-hover)] hover:shadow-[0_18px_26px_rgba(95,103,246,0.24)] active:translate-y-0 active:bg-[var(--color-action-primary-pressed)] active:shadow-[0_10px_18px_rgba(95,103,246,0.18)]",
   secondary:
-    "bg-[var(--color-surface-strong)] text-[var(--color-ink-strong)] border border-[var(--color-border-soft)] hover:bg-[var(--color-surface-muted)] active:bg-[var(--color-surface-subtle)]",
+    "bg-[var(--color-surface-strong)] text-[var(--color-ink-strong)] border border-[var(--color-border-soft)] hover:-translate-y-[1px] hover:bg-[var(--color-surface-muted)] hover:shadow-[0_10px_20px_rgba(15,23,42,0.06)] active:translate-y-0 active:bg-[var(--color-surface-subtle)] active:shadow-none",
   tertiary:
     "bg-transparent text-[var(--color-action-primary)] border border-transparent hover:bg-[var(--color-action-soft)] active:bg-[var(--color-surface-subtle)]",
   destructive:
-    "bg-[var(--color-danger-strong)] text-white shadow-[0_14px_24px_rgba(186,26,26,0.18)] hover:bg-[#9f111d] active:bg-[#840d18]",
+    "bg-[var(--color-danger-strong)] text-white shadow-[0_14px_24px_rgba(186,26,26,0.18)] hover:-translate-y-[1px] hover:bg-[#9f111d] hover:shadow-[0_18px_30px_rgba(186,26,26,0.24)] active:translate-y-0 active:bg-[#840d18] active:shadow-[0_10px_16px_rgba(186,26,26,0.18)]",
   ghost:
     "bg-white/8 text-white hover:bg-white/14 active:bg-white/18",
 };
@@ -31,28 +31,39 @@ export function Button({
   children,
   leadingIcon,
   trailingIcon,
+  loading = false,
   ...props
 }: ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: ButtonVariant;
   size?: ButtonSize;
   leadingIcon?: ReactNode;
   trailingIcon?: ReactNode;
+  loading?: boolean;
 }) {
   return (
     <button
       className={cn(
-        "inline-flex items-center justify-center gap-2 whitespace-nowrap font-semibold tracking-[0.01em] transition-all duration-150",
+        "inline-flex items-center justify-center gap-2 whitespace-nowrap font-semibold tracking-[0.01em] transition-all duration-150 ease-out",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-action-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-white",
-        "disabled:pointer-events-none disabled:opacity-50",
+        "disabled:pointer-events-none disabled:translate-y-0 disabled:opacity-50 disabled:shadow-none",
         variantClasses[variant],
         sizeClasses[size],
         className,
       )}
+      aria-busy={loading}
+      disabled={props.disabled || loading}
       {...props}
     >
-      {leadingIcon}
+      {loading ? (
+        <span
+          aria-hidden="true"
+          className="h-4 w-4 animate-spin rounded-full border-2 border-current border-r-transparent opacity-80"
+        />
+      ) : (
+        leadingIcon
+      )}
       {children}
-      {trailingIcon}
+      {!loading ? trailingIcon : null}
     </button>
   );
 }
