@@ -1,0 +1,5 @@
+Content Recommendation Tool Parameters
+
+default_audience=General audience
+recommendation_count=4
+content_style=formal and informative

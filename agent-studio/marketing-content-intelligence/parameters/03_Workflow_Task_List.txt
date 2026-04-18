@@ -1,0 +1,19 @@
+Workflow Name: Content Intelligence Workflow
+
+Task 1: Review Submitted Content
+Assigned Agent: Content Review Agent
+
+Task 2: Research Relevant External Information
+Assigned Agent: Research Agent
+
+Task 3: Generate Content Recommendations
+Assigned Agent: Content Strategy Agent
+
+Task 4: Draft Enhanced Content
+Assigned Agent: Content Drafting Agent
+
+Task 5: Perform Final Quality Review
+Assigned Agent: Quality Review Agent
+
+Task 6: Export Final Document
+Assigned Agent: Export Final Document Agent

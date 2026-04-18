@@ -1,0 +1,20 @@
+Tool Name: PDF Export Tool
+Assigned Agent: Export Final Document Agent
+
+Purpose:
+Generate a downloadable PDF from the final approved article.
+
+Expected Inputs:
+- final title
+- short summary
+- final article body
+- metadata
+- output filename
+
+Expected Outputs:
+- final_article.pdf
+- export status
+- optional metadata artifact
+
+Notes:
+This tool should write artifacts to /workspace so they appear in Agent Studio Artifact Files.

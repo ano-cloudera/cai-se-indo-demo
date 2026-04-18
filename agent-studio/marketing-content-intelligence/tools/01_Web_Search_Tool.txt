@@ -1,0 +1,12 @@
+Tool Name: Web Search Tool
+Assigned Agent: Research Agent
+
+Purpose:
+Search current relevant external information from the internet to enrich the uploaded content.
+
+Used For:
+- official themes
+- current public context
+- related events
+- authoritative references
+- supporting narrative context

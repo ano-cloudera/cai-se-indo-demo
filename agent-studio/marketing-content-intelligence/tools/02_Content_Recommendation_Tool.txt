@@ -1,0 +1,25 @@
+Tool Name: Content Recommendation Tool
+Assigned Agent: Content Strategy Agent
+
+Purpose:
+Turn uploaded content summary, review findings, and research findings into structured editorial recommendations.
+
+Expected Inputs:
+- uploaded_content_summary
+- improvement_priorities
+- research_findings
+- desired_outcomes
+- target_audience
+- recommendation_count
+
+Expected Outputs:
+- recommendations
+- primary recommendation
+- title ideas
+- angle suggestions
+- target audience
+- why it matters
+
+Artifacts:
+- content_recommendations.json
+- content_recommendations.md
