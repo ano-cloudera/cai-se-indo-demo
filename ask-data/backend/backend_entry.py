@@ -2,6 +2,7 @@ import logging
 import os
 import subprocess
 import sys
+from importlib import metadata
 from pathlib import Path
 
 
@@ -61,6 +62,11 @@ def main() -> None:
 
     logging.info("Starting Ask Data backend")
     logging.info("Working directory: %s", Path.cwd())
+    for package_name in ("fastapi", "starlette", "uvicorn"):
+        try:
+            logging.info("%s version: %s", package_name, metadata.version(package_name))
+        except metadata.PackageNotFoundError:
+            logging.warning("%s is not installed", package_name)
 
     backend_dir = resolve_backend_dir()
     port = resolve_port()
