@@ -16,32 +16,41 @@ def resolve_port() -> int:
 def resolve_frontend_dir() -> Path:
     cwd = Path.cwd()
 
-    # Most reliable: resolve relative to this script's own location.
-    # frontend_entry.py lives in ask-data/frontend/, so __file__ points there.
+    # Dump env vars and cwd listing to help diagnose path issues in CAI
+    cdsw_vars = {k: v for k, v in os.environ.items() if "CDSW" in k or "CML" in k}
+    logging.info("CAI env vars: %s", cdsw_vars)
+
     try:
-        script_dir = Path(__file__).resolve().parent
-    except NameError:
-        script_dir = None
+        top_level = sorted(str(p) for p in cwd.iterdir())
+        logging.info("Contents of cwd (%s): %s", cwd, top_level)
+    except Exception as exc:
+        logging.warning("Could not list cwd: %s", exc)
 
-    candidates = []
-
-    # 1. Directory containing this script (works when CAI uses absolute script path)
-    if script_dir is not None:
-        candidates.append(script_dir)
-
-    # 2. Relative to cwd — covers the case where CAI cwd is the repo root
-    candidates += [
+    candidates: list[Path] = [
         cwd / "ask-data" / "frontend",
         cwd / "frontend",
+        cwd / "cai-se-indo-demo" / "ask-data" / "frontend",
     ]
 
-    for candidate in candidates:
-        if (candidate / "package.json").exists():
-            return candidate
+    # Scan one level deep under cwd
+    try:
+        for entry in sorted(cwd.iterdir()):
+            if entry.is_dir():
+                candidates.append(entry / "ask-data" / "frontend")
+                candidates.append(entry / "frontend")
+    except Exception:
+        pass
+
+    logging.info("Checking %d candidates:", len(candidates))
+    for c in candidates:
+        exists = (c / "package.json").exists()
+        logging.info("  %s -> package.json exists=%s", c, exists)
+        if exists:
+            return c
 
     raise SystemExit(
         f"Could not find frontend directory with package.json. "
-        f"script_dir={script_dir}, cwd={cwd}"
+        f"cwd={cwd}. Check logs above for directory listing."
     )
 
 
@@ -69,16 +78,13 @@ def resolve_binary(name: str) -> str:
     for candidate in candidates:
         if not candidate:
             continue
-
         candidate_path = Path(candidate)
         if candidate_path.is_file() and candidate_path.name == name:
             return str(candidate_path)
-
         if candidate_path.is_dir():
             direct_bin = candidate_path / name
             if direct_bin.exists():
                 return str(direct_bin)
-
             for nested_bin in sorted(candidate_path.glob(f"*/bin/{name}"), reverse=True):
                 if nested_bin.exists():
                     return str(nested_bin)
@@ -94,6 +100,9 @@ def main() -> None:
         level=logging.INFO,
         format="%(asctime)s %(levelname)s %(message)s",
     )
+
+    logging.info("Starting Ask Data frontend")
+    logging.info("Working directory: %s", Path.cwd())
 
     frontend_dir = resolve_frontend_dir()
     port = resolve_port()
@@ -112,13 +121,11 @@ def main() -> None:
     node_bin_dir = str(Path(node_bin).parent)
     env["PATH"] = f"{node_bin_dir}:{env.get('PATH', '')}"
 
-    logging.info("Starting Ask Data frontend")
-    logging.info("Working directory: %s", Path.cwd())
     logging.info("Resolved frontend dir: %s", frontend_dir)
     logging.info("Port: %s", port)
     logging.info("NEXT_PUBLIC_API_BASE_URL is configured")
-    logging.info("Resolved npm binary: %s", npm_bin)
-    logging.info("Resolved node binary: %s", node_bin)
+    logging.info("Resolved npm: %s", npm_bin)
+    logging.info("Resolved node: %s", node_bin)
 
     if not (frontend_dir / "node_modules").exists():
         if (frontend_dir / "package-lock.json").exists():
@@ -129,15 +136,8 @@ def main() -> None:
     run_command([npm_bin, "run", "build"], cwd=frontend_dir, env=env)
 
     run_command(
-        [
-            node_bin,
-            "node_modules/next/dist/bin/next",
-            "start",
-            "--hostname",
-            "127.0.0.1",
-            "--port",
-            str(port),
-        ],
+        [node_bin, "node_modules/next/dist/bin/next", "start",
+         "--hostname", "127.0.0.1", "--port", str(port)],
         cwd=frontend_dir,
         env=env,
     )
