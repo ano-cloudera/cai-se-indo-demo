@@ -15,6 +15,7 @@ Important:
 - `APP_HOST`
 - `APP_PORT`
 - `APP_DEBUG`
+- `CORS_ALLOW_ORIGINS`
 
 ### Impala / database
 
@@ -64,3 +65,4 @@ Important:
 - Current shared external data location is `s3a://go01-demo/user/cai-demo-se-indonesia/data/`.
 - Recommended `SQL_ALLOWED_TABLES` value is `customers,deposits,credits,fraud_transactions`.
 - No secrets should be hardcoded into source files.
+- `CORS_ALLOW_ORIGINS` defaults to `*` for the current demo so the frontend Application can call the backend across Cloudera subdomains. Set a comma-separated allowlist later if you need stricter browser access.

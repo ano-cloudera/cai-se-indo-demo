@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     app_host: str = Field(default="0.0.0.0", alias="APP_HOST")
     app_port: int = Field(default=8000, alias="APP_PORT")
     app_debug: bool = Field(default=False, alias="APP_DEBUG")
+    cors_allow_origins: str = Field(default="*", alias="CORS_ALLOW_ORIGINS")
 
     impala_host: str = Field(
         default="",
@@ -101,6 +102,14 @@ class Settings(BaseSettings):
             for table in self.sql_allowed_tables.split(",")
             if table.strip()
         ]
+
+    @property
+    def cors_allow_origins_list(self) -> list[str]:
+        return [
+            origin.strip()
+            for origin in self.cors_allow_origins.split(",")
+            if origin.strip()
+        ] or ["*"]
 
 
 @lru_cache
