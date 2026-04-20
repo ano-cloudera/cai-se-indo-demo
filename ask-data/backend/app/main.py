@@ -1,5 +1,4 @@
 import logging
-from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
 # from fastapi.middleware.cors import CORSMiddleware
@@ -44,16 +43,11 @@ sql_executor = SQLExecutorService(settings=settings)
 answer_generator = AnswerGeneratorService(settings=settings)
 conversation_generator = ConversationGeneratorService(settings=settings)
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    logger.info("ask-data backend startup complete")
-    yield
-
+logger.info("ask-data backend startup complete")
 
 app = FastAPI(
     title="Ask Data Backend",
     debug=settings.app_debug,
-    lifespan=lifespan,
 )
 
 # app.add_middleware(
