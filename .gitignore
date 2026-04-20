@@ -26,6 +26,13 @@ fraud-ai-assistant/frontend/out/
 fraud-ai-assistant/backend/.env
 fraud-ai-assistant/frontend/.env.local
 
+agent-studio/marketing-content-intelligence/**/.env
+agent-studio/marketing-content-intelligence/**/.env.*
+!agent-studio/marketing-content-intelligence/**/.env.example
+!agent-studio/marketing-content-intelligence/**/.env.template
+agent-studio/marketing-content-intelligence/**/*.secrets
+agent-studio/marketing-content-intelligence/**/secrets.env
+
 ml-templates/
 rules/
 skills/

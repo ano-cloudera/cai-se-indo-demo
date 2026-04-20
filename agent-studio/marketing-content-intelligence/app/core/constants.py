@@ -1,0 +1,12 @@
+CREATE_SESSION_ENDPOINT_NAME = "create_session"
+UPLOAD_FILE_ENDPOINT_NAME = "upload_file"
+KICKOFF_WORKFLOW_ENDPOINT_NAME = "kickoff_workflow"
+GET_EVENTS_ENDPOINT_NAME = "get_workflow_events"
+LIST_ARTIFACTS_ENDPOINT_NAME = "list_artifacts"
+DOWNLOAD_ARTIFACT_ENDPOINT_NAME = "download_artifact"
+DOWNLOAD_ALL_ARTIFACTS_ENDPOINT_NAME = "download_all_artifacts"
+
+DEFAULT_EXPORT_FILENAME = "final_article.pdf"
+DEFAULT_CONTENT_TYPE_JSON = "application/json"
+AUTH_HEADER_NAME = "Authorization"
+BEARER_PREFIX = "Bearer"

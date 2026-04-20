@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+httpx
+pydantic
+pydantic-settings
+python-multipart
+PyMuPDF
+python-docx
+guardrails-ai>=0.4.2
