@@ -54,12 +54,14 @@ Important:
 ## Frontend environment variables
 
 - `NEXT_PUBLIC_API_BASE_URL`
+- `BACKEND_API_BASE_URL`
 - `PORT`
 - `CDSW_APP_PORT`
 
 ## Notes
 
 - The frontend must point to the backend URL using `NEXT_PUBLIC_API_BASE_URL`.
+- The browser client now calls the frontend's same-origin proxy at `/api/backend`. Set `BACKEND_API_BASE_URL` on the frontend Application to the backend app URL. `NEXT_PUBLIC_API_BASE_URL` can still be used as a fallback for older frontend deployments.
 - For CAI Application hosting, `CDSW_APP_PORT` should be preferred when present.
 - Recommended `DB_NAME` for the current CAI demo is `cai_sdx_se_indonesia`.
 - Current shared external data location is `s3a://go01-demo/user/cai-demo-se-indonesia/data/`.

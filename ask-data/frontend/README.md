@@ -8,13 +8,13 @@ It is designed for local development, CAI session validation, and CAI Applicatio
 
 - collect user questions
 - keep lightweight client session continuity
-- call the backend through `NEXT_PUBLIC_API_BASE_URL`
+- call the backend through the frontend proxy using `BACKEND_API_BASE_URL` or `NEXT_PUBLIC_API_BASE_URL`
 - display backend and database health state
 - present the answer first, with generated SQL and result previews for transparency
 
 ## Required Environment Variables
 
-- `NEXT_PUBLIC_API_BASE_URL`
+- `BACKEND_API_BASE_URL` or `NEXT_PUBLIC_API_BASE_URL`
 - `PORT`
 - `CDSW_APP_PORT`
 
@@ -41,7 +41,7 @@ Alternative launcher:
 ./frontend_entry.sh
 ```
 
-Both launchers validate `NEXT_PUBLIC_API_BASE_URL`, use CAI port conventions, and start the app for Application hosting.
+Both launchers validate `BACKEND_API_BASE_URL` or `NEXT_PUBLIC_API_BASE_URL`, use CAI port conventions, and start the app for Application hosting.
 
 ## UI Expectations
 

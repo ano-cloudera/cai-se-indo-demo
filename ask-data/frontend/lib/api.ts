@@ -46,13 +46,7 @@ export interface ChatAnswerResponse {
 }
 
 function getApiBaseUrl(): string {
-  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.trim();
-  if (!baseUrl) {
-    throw new Error(
-      "NEXT_PUBLIC_API_BASE_URL is not set. Point the frontend to the backend API first.",
-    );
-  }
-  return baseUrl.replace(/\/+$/, "");
+  return "/api/backend";
 }
 
 async function request<T>(

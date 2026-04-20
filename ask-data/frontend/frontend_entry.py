@@ -107,10 +107,10 @@ def main() -> None:
 
     frontend_dir = resolve_frontend_dir()
     port = resolve_port()
-    api_base_url = os.getenv("NEXT_PUBLIC_API_BASE_URL")
+    api_base_url = os.getenv("BACKEND_API_BASE_URL") or os.getenv("NEXT_PUBLIC_API_BASE_URL")
 
     if not api_base_url:
-        raise SystemExit("NEXT_PUBLIC_API_BASE_URL is not set")
+        raise SystemExit("BACKEND_API_BASE_URL or NEXT_PUBLIC_API_BASE_URL is not set")
 
     env = os.environ.copy()
     env["PORT"] = str(port)
@@ -124,7 +124,7 @@ def main() -> None:
 
     logging.info("Resolved frontend dir: %s", frontend_dir)
     logging.info("Port: %s", port)
-    logging.info("NEXT_PUBLIC_API_BASE_URL is configured")
+    logging.info("Backend API base URL is configured")
     logging.info("Resolved npm: %s", npm_bin)
     logging.info("Resolved node: %s", node_bin)
 

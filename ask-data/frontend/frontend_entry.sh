@@ -1,8 +1,8 @@
 #!/usr/bin/env sh
 set -eu
 
-if [ -z "${NEXT_PUBLIC_API_BASE_URL:-}" ]; then
-  echo "NEXT_PUBLIC_API_BASE_URL is required for frontend deployment." >&2
+if [ -z "${BACKEND_API_BASE_URL:-${NEXT_PUBLIC_API_BASE_URL:-}}" ]; then
+  echo "BACKEND_API_BASE_URL or NEXT_PUBLIC_API_BASE_URL is required for frontend deployment." >&2
   exit 1
 fi
 
