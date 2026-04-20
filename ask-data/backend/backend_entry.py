@@ -28,6 +28,7 @@ def resolve_backend_dir() -> Path:
 
     candidates: list[Path] = [
         cwd / "ask-data" / "backend",
+        cwd / "bni-demo" / "backend",   # legacy CAI project folder name
         cwd / "backend",
         cwd / "cai-se-indo-demo" / "ask-data" / "backend",
     ]
