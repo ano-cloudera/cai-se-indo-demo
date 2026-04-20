@@ -6,6 +6,13 @@ from importlib import metadata
 from pathlib import Path
 
 
+EXPECTED_VERSIONS = {
+    "fastapi": "0.127.0",
+    "starlette": "0.50.0",
+    "uvicorn": "0.30.6",
+}
+
+
 def resolve_port() -> int:
     raw_port = os.getenv("CDSW_APP_PORT") or os.getenv("PORT") or "8080"
     try:
@@ -54,6 +61,36 @@ def resolve_backend_dir() -> Path:
     return cwd
 
 
+def validate_runtime_dependencies() -> None:
+    actual_versions: dict[str, str | None] = {}
+    mismatches: list[str] = []
+
+    for package_name, expected_version in EXPECTED_VERSIONS.items():
+        try:
+            actual_version = metadata.version(package_name)
+            actual_versions[package_name] = actual_version
+            logging.info("%s version: %s", package_name, actual_version)
+            if actual_version != expected_version:
+                mismatches.append(
+                    f"{package_name}=={actual_version} (expected {expected_version})"
+                )
+        except metadata.PackageNotFoundError:
+            actual_versions[package_name] = None
+            logging.warning("%s is not installed", package_name)
+            mismatches.append(f"{package_name} is not installed (expected {expected_version})")
+
+    if mismatches:
+        mismatch_summary = ", ".join(mismatches)
+        raise SystemExit(
+            "Incompatible Python package versions detected for Ask Data backend: "
+            f"{mismatch_summary}. "
+            "This usually means the Cloudera AI Application install command is not using "
+            "ask-data/backend/requirements.txt. "
+            "Set the Application working directory to ask-data/backend and the install command "
+            "to 'pip install --upgrade -r requirements.txt', then redeploy."
+        )
+
+
 def main() -> None:
     logging.basicConfig(
         level=logging.INFO,
@@ -62,11 +99,7 @@ def main() -> None:
 
     logging.info("Starting Ask Data backend")
     logging.info("Working directory: %s", Path.cwd())
-    for package_name in ("fastapi", "starlette", "uvicorn"):
-        try:
-            logging.info("%s version: %s", package_name, metadata.version(package_name))
-        except metadata.PackageNotFoundError:
-            logging.warning("%s is not installed", package_name)
+    validate_runtime_dependencies()
 
     backend_dir = resolve_backend_dir()
     port = resolve_port()
