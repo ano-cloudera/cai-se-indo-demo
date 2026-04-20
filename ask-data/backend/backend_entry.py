@@ -27,10 +27,10 @@ def resolve_backend_dir() -> Path:
         logging.warning("Could not list cwd: %s", exc)
 
     candidates: list[Path] = [
+        cwd / "cai-se-indo-demo" / "ask-data" / "backend",  # current CAI project folder
         cwd / "ask-data" / "backend",
-        cwd / "bni-demo" / "backend",   # legacy CAI project folder name
+        cwd / "bni-demo" / "backend",                        # legacy folder name
         cwd / "backend",
-        cwd / "cai-se-indo-demo" / "ask-data" / "backend",
     ]
 
     # Scan one level deep under cwd
