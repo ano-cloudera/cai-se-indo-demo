@@ -16,17 +16,34 @@ def resolve_port() -> int:
 def resolve_backend_dir() -> Path:
     cwd = Path.cwd()
 
-    candidates = [
+    # Most reliable: resolve relative to this script's own location.
+    # backend_entry.py lives in ask-data/backend/, so __file__ points there.
+    try:
+        script_dir = Path(__file__).resolve().parent
+    except NameError:
+        script_dir = None
+
+    candidates = []
+
+    # 1. Directory containing this script (works when CAI uses absolute script path)
+    if script_dir is not None:
+        candidates.append(script_dir)
+
+    # 2. Relative to cwd — covers the case where CAI cwd is the repo root
+    candidates += [
         cwd / "ask-data" / "backend",
         cwd / "backend",
-        cwd,
     ]
+
+    # 3. Last resort: cwd itself
+    candidates.append(cwd)
 
     for candidate in candidates:
         if (candidate / "app").exists():
             return candidate
 
-    return cwd
+    # If none matched, return script_dir or cwd and let uvicorn surface the real error
+    return script_dir if script_dir is not None else cwd
 
 
 def main() -> None:

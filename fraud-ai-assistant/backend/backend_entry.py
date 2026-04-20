@@ -16,17 +16,28 @@ def resolve_port() -> int:
 def resolve_backend_dir() -> Path:
     cwd = Path.cwd()
 
-    candidates = [
+    try:
+        script_dir = Path(__file__).resolve().parent
+    except NameError:
+        script_dir = None
+
+    candidates = []
+
+    if script_dir is not None:
+        candidates.append(script_dir)
+
+    candidates += [
         cwd / "fraud-ai-assistant" / "backend",
         cwd / "backend",
-        cwd,
     ]
+
+    candidates.append(cwd)
 
     for candidate in candidates:
         if (candidate / "app").exists():
             return candidate
 
-    return cwd
+    return script_dir if script_dir is not None else cwd
 
 
 def main() -> None:

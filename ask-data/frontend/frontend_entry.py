@@ -15,17 +15,34 @@ def resolve_port() -> int:
 
 def resolve_frontend_dir() -> Path:
     cwd = Path.cwd()
-    candidates = [
+
+    # Most reliable: resolve relative to this script's own location.
+    # frontend_entry.py lives in ask-data/frontend/, so __file__ points there.
+    try:
+        script_dir = Path(__file__).resolve().parent
+    except NameError:
+        script_dir = None
+
+    candidates = []
+
+    # 1. Directory containing this script (works when CAI uses absolute script path)
+    if script_dir is not None:
+        candidates.append(script_dir)
+
+    # 2. Relative to cwd — covers the case where CAI cwd is the repo root
+    candidates += [
         cwd / "ask-data" / "frontend",
         cwd / "frontend",
-        cwd,
     ]
 
     for candidate in candidates:
         if (candidate / "package.json").exists():
             return candidate
 
-    raise SystemExit("Could not find frontend directory with package.json")
+    raise SystemExit(
+        f"Could not find frontend directory with package.json. "
+        f"script_dir={script_dir}, cwd={cwd}"
+    )
 
 
 def run_command(cmd: list[str], cwd: Path, env: dict[str, str]) -> None:
