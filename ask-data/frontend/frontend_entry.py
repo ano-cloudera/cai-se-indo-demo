@@ -16,7 +16,7 @@ def resolve_port() -> int:
 def resolve_frontend_dir() -> Path:
     cwd = Path.cwd()
     candidates = [
-        cwd / "bni-demo" / "frontend",
+        cwd / "ask-data" / "frontend",
         cwd / "frontend",
         cwd,
     ]
@@ -95,7 +95,7 @@ def main() -> None:
     node_bin_dir = str(Path(node_bin).parent)
     env["PATH"] = f"{node_bin_dir}:{env.get('PATH', '')}"
 
-    logging.info("Starting BNI Demo frontend")
+    logging.info("Starting Ask Data frontend")
     logging.info("Working directory: %s", Path.cwd())
     logging.info("Resolved frontend dir: %s", frontend_dir)
     logging.info("Port: %s", port)
