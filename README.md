@@ -2,10 +2,11 @@
 
 This repository is the shared workspace for the CAI SE Indonesia demo environment on Cloudera AI.
 
-It contains two application tracks that use the same demo data model in Impala:
+It contains three application tracks:
 
-- `ask-data` for a general analytics assistant
-- `fraud-ai-assistant` for a fraud-focused assistant and a traditional ML workflow
+- `ask-data` — general-purpose AI analytics assistant (Ask the Data / NL-to-SQL)
+- `fraud-ai-assistant` — fraud-focused AI assistant with dashboard, investigations, and ML workflows
+- `agent-studio` — experimental agent applications built with the Cloudera Agent SDK
 
 ## Current Shared Platform Configuration
 
@@ -19,7 +20,7 @@ These values are the current shared defaults for the CAI deployment:
   - `credits`
   - `fraud_transactions`
 
-Both applications are expected to use the same Impala connection pattern through environment variables such as:
+Both `ask-data` and `fraud-ai-assistant` share the same Impala connection pattern via environment variables:
 
 - `IMPALA_HOST`
 - `IMPALA_PORT`
@@ -32,10 +33,19 @@ Both applications are expected to use the same Impala connection pattern through
 
 ```text
 cai-se-indo-demo/
-├── ask-data/
-├── fraud-ai-assistant/
-├── sample/
-├── scripts/
+├── ask-data/                        # General analytics assistant
+│   ├── backend/                     # FastAPI + NL-to-SQL
+│   ├── frontend/                    # Next.js, Cloudera design system
+│   └── docs/                        # API contract, setup, project state
+├── fraud-ai-assistant/              # Fraud detection assistant + ML
+│   ├── backend/
+│   ├── frontend/
+│   ├── ml-templates/
+│   └── docs/
+├── agent-studio/                    # Agent SDK experiments
+│   └── marketing-content-intelligence/
+├── sample/                          # Generated CSV data for local dev
+├── scripts/                         # Repo sync and CAI helper scripts
 ├── generate_demo_data.py
 ├── impala_demo_ddl.sql
 ├── submit_impala_schema.py
@@ -46,37 +56,42 @@ cai-se-indo-demo/
 
 ### `ask-data`
 
-Generic analytics assistant for banking and fraud-adjacent questions.
+General-purpose AI analytics assistant. Ask questions about structured data in natural language — no SQL knowledge required.
 
-- FastAPI backend
-- Next.js frontend
-- Azure OpenAI-based text-to-SQL and answer generation
-- read-only Impala execution with guardrails
-- suitable for general analytics demos on CAI
+- FastAPI backend with NL-to-SQL via Azure OpenAI and Impala/CDW execution
+- Next.js frontend with Cloudera-branded design (dark navy sidebar, indigo accent)
+- Read-only Impala query execution with SQL guardrails
+- Generic enough to reuse across different banking or enterprise customers
+- Deployed as two separate Cloudera AI Applications (backend + frontend)
+
+See [`ask-data/docs/project-state.md`](ask-data/docs/project-state.md) for full implementation and deployment details.
 
 ### `fraud-ai-assistant`
 
-Fraud-specific demo track with both assistant behavior and traditional ML.
+Fraud-specific demo track combining an AI assistant with a full analytics console and ML workflows.
 
-- FastAPI backend tuned for fraud analysis
-- Next.js frontend aligned to the Stitch fraud console design
-- four core UI surfaces:
-  - Dashboard
-  - AI Assistant
-  - Investigations
-  - Model Management
-- fraud-aware schema and business context
-- `ml-templates` for baseline fraud model training and packaging
-- training workflow now supports Impala as the primary CAI data source
-- deployed fraud model API validated in CAI
+- FastAPI backend tuned for fraud analysis queries
+- Next.js frontend with four core views: Dashboard, AI Assistant, Investigations, Model Management
+- Fraud-aware schema and business context
+- `ml-templates/` for baseline fraud model training and packaging
+- Training workflow supports Impala as the primary CAI data source
+- Deployed fraud model API validated in CAI
+
+See [`fraud-ai-assistant/docs/project-state.md`](fraud-ai-assistant/docs/project-state.md) for full implementation and deployment details.
+
+### `agent-studio`
+
+Experimental track for agent applications built on the Cloudera Agent SDK.
+
+- `marketing-content-intelligence/` — multi-agent pipeline for marketing content analysis
 
 ### Shared files
 
-- `sample/` contains generated CSVs for local development and fallback testing
-- `generate_demo_data.py` produces the synthetic demo datasets
-- `impala_demo_ddl.sql` contains the shared Impala DDL
-- `submit_impala_schema.py` applies the DDL to Impala from a configured Python session
-- `scripts/` contains repository sync and helper scripts used during CAI operations
+- `sample/` — generated CSVs for local development and fallback testing
+- `generate_demo_data.py` — produces synthetic demo datasets
+- `impala_demo_ddl.sql` — shared Impala DDL for all core tables
+- `submit_impala_schema.py` — applies the DDL to Impala from a configured Python session
+- `scripts/` — repository sync and helper scripts used during CAI operations
 
 ## Recommended Usage Model
 
@@ -84,21 +99,22 @@ Fraud-specific demo track with both assistant behavior and traditional ML.
 
 - keep GitHub as the source of truth
 - sync the CAI project from GitHub
-- inject runtime configuration through CAI environment variables
-- run backend and frontend as separate CAI Applications when needed
+- inject runtime configuration through CAI environment variables (never commit secrets)
+- run backend and frontend as separate CAI Applications
 - use CAI Jobs for repeatable training, schema, or deployment tasks
 
 ### Locally
 
 - use the repo for editing, review, and documentation
 - use `sample/` CSV data for local fallback when Impala is not available
-- use the `fraud-ai-assistant` frontend in preview mode when the backend is offline
-- validate final runtime behavior in CAI, especially for networking and authentication
+- validate final runtime behavior in CAI — especially for networking and authentication
 
 ## Where To Start
 
-- root overview: [`README.md`](/Users/triano/Documents/Cloudera/cai-se-indo-demo/README.md)
-- general analytics app: [`ask-data/README.md`](/Users/triano/Documents/Cloudera/cai-se-indo-demo/ask-data/README.md)
-- fraud app: [`fraud-ai-assistant/README.md`](/Users/triano/Documents/Cloudera/cai-se-indo-demo/fraud-ai-assistant/README.md)
-- fraud project handoff: [`fraud-ai-assistant/docs/project-state.md`](/Users/triano/Documents/Cloudera/cai-se-indo-demo/fraud-ai-assistant/docs/project-state.md)
-- ask-data handoff: [`ask-data/docs/project-state.md`](/Users/triano/Documents/Cloudera/cai-se-indo-demo/ask-data/docs/project-state.md)
+| Resource | Path |
+|---|---|
+| General analytics app | [`ask-data/README.md`](ask-data/README.md) |
+| Ask-data project state | [`ask-data/docs/project-state.md`](ask-data/docs/project-state.md) |
+| Fraud app | [`fraud-ai-assistant/README.md`](fraud-ai-assistant/README.md) |
+| Fraud project state | [`fraud-ai-assistant/docs/project-state.md`](fraud-ai-assistant/docs/project-state.md) |
+| Agent studio | [`agent-studio/`](agent-studio/) |
