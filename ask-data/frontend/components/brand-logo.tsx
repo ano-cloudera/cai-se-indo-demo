@@ -5,34 +5,47 @@ interface BrandLogoProps {
 }
 
 export function BrandLogo({ compact = false }: BrandLogoProps) {
-  return (
-    <div className="flex items-center gap-3">
-      <div className="relative flex h-[72px] w-[72px] shrink-0 items-center justify-center overflow-hidden rounded-[24px] border border-white/80 bg-white shadow-[0_16px_30px_rgba(249,115,22,0.16)]">
+  if (compact) {
+    return (
+      <div className="relative h-7 w-28">
         <Image
-          src="/logo.svg.png"
-          alt="BNI logo"
+          src="/Cloudera_logo.svg.png"
+          alt="Cloudera"
           fill
-          className="object-contain p-2"
-          sizes="72px"
+          className="object-contain object-left"
+          sizes="112px"
           priority
         />
       </div>
-      {!compact ? (
-        <div className="min-w-0 pt-1">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#b45309]">
-            BNI Insight Desk
-          </p>
-          <h1 className="mt-1.5 text-[1.22rem] font-semibold leading-[1.02] text-slate-950">
-            Data Analyst Assistant
-          </h1>
-        </div>
-      ) : (
-        <div className="min-w-0">
-          <p className="text-sm font-semibold leading-none text-slate-950">
-            Insight Desk
-          </p>
-        </div>
-      )}
+    );
+  }
+
+  return (
+    <div className="flex flex-col items-center gap-4 py-2">
+      {/* Cloudera logo — centered, generous size */}
+      <div className="relative h-11 w-[172px]">
+        <Image
+          src="/Cloudera_logo.svg.png"
+          alt="Cloudera"
+          fill
+          className="object-contain"
+          sizes="172px"
+          priority
+        />
+      </div>
+
+      {/* Divider */}
+      <div className="h-px w-full bg-white/10" />
+
+      {/* App title block — centered */}
+      <div className="w-full text-center">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[#8f94ff]">
+          Data Intelligence
+        </p>
+        <h1 className="mt-1.5 font-headline text-[1.05rem] font-extrabold leading-tight tracking-[-0.01em] text-white">
+          Ask the Data
+        </h1>
+      </div>
     </div>
   );
 }

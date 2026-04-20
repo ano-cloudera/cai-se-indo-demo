@@ -4,22 +4,23 @@ interface StarterCardProps {
   onClick: () => void;
 }
 
-export function StarterCard({
-  title,
-  description,
-  onClick,
-}: StarterCardProps) {
+export function StarterCard({ title, description, onClick }: StarterCardProps) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="group rounded-[28px] border border-white/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.96)_0%,rgba(255,252,247,0.92)_100%)] p-5 text-left shadow-[0_18px_36px_rgba(15,23,42,0.06),inset_0_1px_0_rgba(255,255,255,0.9)] ring-1 ring-black/[0.02] transition hover:-translate-y-0.5 hover:border-[#f59e0b]/30 hover:shadow-[0_24px_50px_rgba(15,23,42,0.1)]"
+      className="group rounded-[var(--radius-panel)] border border-[var(--color-border-soft)] bg-[var(--color-surface)] p-5 text-left shadow-panel transition hover:-translate-y-0.5 hover:border-[var(--color-action-primary)] hover:shadow-[0_22px_48px_rgba(92,99,242,0.1)]"
     >
-      <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-2xl bg-[#fff4e5] text-lg text-[#c2410c]">
-        ✦
+      <div
+        className="mb-4 flex h-9 w-9 items-center justify-center rounded-[10px] text-white"
+        style={{ background: "linear-gradient(135deg, #6970ff 0%, #5c63f2 100%)" }}
+      >
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
+          <path d="M7 1v12M1 7h12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        </svg>
       </div>
-      <h3 className="text-base font-semibold text-slate-950">{title}</h3>
-      <p className="mt-2 text-sm leading-6 text-slate-500">{description}</p>
+      <h3 className="font-headline text-sm font-semibold text-[var(--color-ink-strong)]">{title}</h3>
+      <p className="mt-1.5 text-xs leading-5 text-[var(--color-ink-subtle)]">{description}</p>
     </button>
   );
 }

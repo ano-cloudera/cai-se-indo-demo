@@ -1,256 +1,206 @@
----
-project: ask-data
-document: project-state
-version: 4
-last_modified: 2026-03-29
-workspace_root: /Users/trianonurhikmat/Documents/Works/cloudera/cai-demo
-project_root: /Users/trianonurhikmat/Documents/Works/cloudera/cai-demo/ask-data
-repository_branch: main
-latest_workspace_commits:
-  - 5eaf14ea Restructure demo apps and clean repository layout
-  - b598a5a8 Add fraud analytics data and traditional ML template
-status: active
-priority: secondary
-current_focus: Maintain a reusable analytics assistant that can query banking and fraud demo data.
-portable_reading: true
-deployment_database: cai_sdx_se_indonesia
-impala_external_data_location: s3a://go01-demo/user/cai-demo-se-indonesia/data/
+# Ask Data — Project State (Latest)
+
+## Document Purpose
+
+This document captures the full working understanding of the Ask Data project up to the latest successful state.
+It is intended as a handoff/reference so work can be resumed in a new session without re-deriving context.
+
+This version supersedes the earlier BNI-specific state and reflects the refactored general-purpose UI.
+
 ---
 
-# Ask Data Project State
+## 1. Executive Summary
 
-## Resume Context
+**Use Case:** Ask the Data / Natural Language to SQL
 
-Use this document as the source of truth when reopening the project from another device, IDE, or AI coding tool.
+A general-purpose AI analytics assistant that lets users ask questions about structured data in natural language.
+The backend generates SQL, executes against the database, and returns a natural language answer.
 
-Current interpretation:
+The UI was originally built for a BNI banking demo and has since been refactored to a generic Cloudera-branded design,
+removing all BNI-specific references so it can be reused across different banking or enterprise customers.
 
-- `ask-data` is the general analytics assistant in this workspace.
-- It is no longer the primary innovation track.
-- It remains important as the generic SQL and analytics interface that can query the shared demo data.
-- It now understands `fraud_transactions` in addition to the original banking tables.
-- the currently validated Impala database is `cai_sdx_se_indonesia`
-- the currently validated external table location is `s3a://go01-demo/user/cai-demo-se-indonesia/data/`
-- the current assistant behavior is aligned with the shared CAI demo schema used by `fraud-ai-assistant`
+**Deployment target:**
+- Backend as a Cloudera AI Application
+- Frontend as a Cloudera AI Application
 
-## Current Status
+---
 
-Project status summary:
+## 2. Demo Flow
 
-- backend: implemented
-- frontend: implemented
-- text-to-SQL flow: implemented
-- answer generation: implemented
-- Impala guardrails: implemented
-- fraud table awareness: implemented
-- local repo structure cleanup: completed
-- CAI Application deployment review: completed
-- CAI launcher logic preservation: confirmed
-- frontend production build verification: completed
-- shared CAI database alignment with `fraud-ai-assistant`: completed
-- full runtime validation in Cloudera AI: pending
-- full backend test run in dependency-complete environment: pending
+1. User opens the frontend (Ask the Data UI)
+2. User asks a question in natural language (e.g. "What is the total deposit balance right now?")
+3. Frontend calls `/chat/answer` on the backend
+4. Backend builds a prompt, generates SQL via Azure OpenAI, executes it against Impala/CDW
+5. Backend returns a natural language answer
+6. Frontend renders the answer in a chat-style panel
 
-## Purpose
+---
 
-`ask-data` is a demo-ready analytics assistant designed to:
+## 3. Architecture
 
-- translate natural language into safe read-only SQL
-- run SQL against Impala or compatible warehouse targets
-- summarize query results in natural language
-- support generic banking analysis and lightweight fraud exploration
+| Layer | Technology |
+|---|---|
+| Structured data | Impala / CDW |
+| LLM provider | Azure OpenAI |
+| Backend | FastAPI + Uvicorn |
+| Frontend | Next.js 15 + Tailwind CSS + TypeScript |
+| Deployment | Cloudera AI Applications |
 
-## Current Scope
+### Important note
+Runtime config lives in **Cloudera AI environment variables**, not in local `.env` files.
+`.env.example` is documentation only.
 
-The current app includes:
+---
 
-- FastAPI backend
-- Next.js frontend
-- Azure OpenAI-backed SQL generation and answer generation
-- in-memory session and conversation support
-- SQL validation and execution guardrails
-- schema-aware and business-aware prompts
+## 4. Data Model
 
-## Supported Data Model
-
-The assistant now expects these core demo tables:
-
-1. `customers`
-2. `deposits`
-3. `credits`
-4. `fraud_transactions`
-
-Important join assumptions:
-
-- `deposits.customer_id = customers.customer_id`
-- `credits.customer_id = customers.customer_id`
-- `fraud_transactions.customer_id = customers.customer_id`
-
-Important fraud-specific notes:
-
-- grain of `fraud_transactions` is one row per transaction
-- `fraud_flag` is the binary label
-- `fraud_reason` is explainability metadata and should not be used as a model feature
-
-## Architecture Snapshot
-
-### Backend
-
-- framework: FastAPI
-- config style: environment-driven settings
-- database target: Impala / Cloudera Data Warehouse
-- LLM usage:
-  - SQL generation
-  - answer synthesis
-- memory model:
-  - in-memory session store
-  - in-memory conversation memory
-
-### Frontend
-
-- framework: Next.js App Router
-- styling: Tailwind CSS
-- deployment expectation: compatible with Cloudera AI Application hosting
-
-## Historical Plan and Delivery Log
-
-### Original plan
-
-The original project was built as a generic banking analytics assistant with:
-
-- customer analytics
-- deposit analytics
-- credit analytics
-- safe text-to-SQL
-- natural-language answer synthesis
-
-### Major implementation phases
-
-1. Backend foundation
-2. Azure OpenAI integration
-3. Session and memory support
-4. Safe SQL validation and execution
-5. Schema and business context
-6. Frontend implementation
-7. Natural-language answer generation
-8. Documentation sync
-9. Cloudera AI runtime preparation
-
-### Later workspace changes
-
-After the fraud initiative became the main track:
-
-- shared schema context was extended to include `fraud_transactions`
-- allowlisted tables were expanded for fraud-aware SQL
-- prompt context was updated so `ask-data` can answer fraud-adjacent questions
-- repository structure was cleaned and `bni-demo` was migrated into `ask-data`
-- deployment readiness for Cloudera AI Applications was reviewed without changing the existing launcher behavior
-
-## What Is Implemented
-
-### Backend and API
-
-Implemented:
-
-- health and database health endpoints
-- SQL generation endpoint
-- SQL execution endpoint
-- combined chat query flow
-- answer-only response flow
-- session-aware response behavior
-
-### Guardrails
-
-Implemented:
-
-- read-only SQL restriction
-- single-statement enforcement
-- allowlisted table access
-- preview-friendly result formatting
-
-Current allowlist direction:
-
+Three core tables:
 - `customers`
 - `deposits`
 - `credits`
-- `fraud_transactions`
 
-### Prompt and Context Layer
+All join on `customer_id`. No orphan records. Date fields in `YYYY-MM-DD` format for Impala compatibility.
 
-Implemented:
+**Supported queries:**
+- Total deposit balance
+- Outstanding credit
+- Top debtors by outstanding credit
+- Customers per segment
+- Deposits maturing in next N days
+- Total deposit balance by city
+- Total outstanding credit by collectibility
+- Customers with both deposit and credit
 
-- system prompt for SQL generation
-- business context for banking and fraud analysis
-- schema context with join guidance
-- conversation prompt composition
+---
 
-### Frontend Experience
+## 5. Backend
 
-Implemented:
+**Stack:** FastAPI, Uvicorn, Impyla, Pydantic, OpenAI Python SDK (Azure-configured)
 
-- natural-language input
-- SQL preview
-- execution preview
-- answer card
-- result table rendering
-- backend health visibility
+**Key endpoints:**
+| Endpoint | Purpose |
+|---|---|
+| `GET /health` | App liveness check |
+| `GET /health/db` | Database connectivity check |
+| `POST /chat/answer` | Main demo endpoint — returns `session_id`, `original_question`, `answer` |
+| `POST /chat/query` | Debug endpoint — returns full payload with SQL and rows |
+| `POST /sql/generate` | SQL-only generation for debugging |
 
-### Cloudera AI Application Readiness
+**Session memory:** In-memory only (acceptable for demo; no persistence required).
 
-Completed:
+**CORS:** FastAPI CORSMiddleware is removed. Cloudera Application proxy handles CORS headers.
+Do not re-add middleware unless thoroughly tested — it caused duplicate CORS headers in the past.
 
-- deployment docs were aligned to the current `ask-data` folder structure
-- backend and frontend environment references were refreshed
-- frontend production build succeeded locally
-- existing launcher logic in `backend_entry.py` and `frontend_entry.py` was intentionally preserved because it had already been working in prior CAI deployment flow
+**Deployment entry:** `backend/backend_entry.py`
+- Resolves paths via `os.getcwd()` (not `__file__`, which is unavailable in JupyterWSG context)
+- Launches Uvicorn via `subprocess` (not `uvicorn.run()`) to avoid running event loop conflict
 
-Current validation state:
+---
 
-- launcher logic preserved
-- frontend build verified
-- backend dependency-complete runtime verification still depends on installing Python requirements in the target environment
+## 6. Frontend
 
-## Constraints
+**Stack:** Next.js 15 (App Router), Tailwind CSS 3, TypeScript, Inter + Manrope fonts
 
-Current known constraints:
+### Design system (adopted from fraud-ai-assistant project)
+- **Sidebar:** Dark navy (`#08004D`) with indigo accent (`#5c63f2`)
+- **Background:** Light grey (`#f3f5fa`)
+- **Typography:** Inter (body), Manrope (headlines)
+- **Radius tokens:** `--radius-panel: 22px`, `--radius-control: 16px`
+- **Sidebar width:** `18rem`
 
-- runtime validation inside an actual Cloudera AI deployment is still pending
-- local Python test execution depends on environment packages that may not be installed everywhere
-- local backend import validation is currently blocked in bare environments that do not have `pydantic_settings` installed
-- the app is still a demo architecture, not a production-hard multi-user platform
-- fraud-focused UX copy in `ask-data` is intentionally lighter than in `fraud-ai-assistant`
+### Branding
+- Logo: Cloudera wordmark (`/Cloudera_logo.svg.png`) — centered in sidebar, `172px` wide
+- Favicon: `/pavicon.png`
+- App title: **Data Intelligence — Ask the Data**
 
-## Recommended Next Actions
+### Key components
+| Component | Location | Purpose |
+|---|---|---|
+| `BrandLogo` | `components/brand-logo.tsx` | Cloudera logo + app title in sidebar |
+| `ChatInputPanel` | `components/chat-input-panel.tsx` | Textarea + submit with indigo button |
+| `AnswerCard` | `components/answer-card.tsx` | Renders assistant response |
+| `StarterCard` | `components/starter-card.tsx` | Clickable prompt suggestion cards |
+| `NoticePanel` | `components/notice-panel.tsx` | Error / empty state notices |
+| `AppShell` | `components/ui/shell.tsx` | Layout: sidebar + topbar + main |
 
-Priority order:
+### UI features
+- Dark navy fixed sidebar with Cloudera logo + nav
+- Topbar shows: breadcrumb, database connection status (green when live), latest opened datetime, refresh button
+- Welcome screen with Cloudera logo + 3 starter prompt cards
+- Chat messages: user bubble (dark navy) + assistant answer card (white surface)
+- Loading state: animated bouncing dots
+- "New Conversation" button in sidebar footer resets session
 
-1. Validate the backend and frontend end-to-end inside Cloudera AI Applications.
-2. Re-run backend tests in an environment with complete Python dependencies installed.
-3. Confirm backend env injection and Impala connectivity in deployed mode.
-4. Add a few explicit starter prompts for fraud-aware exploratory analysis.
-5. Keep docs aligned with the current four-table shared demo schema.
+### Starter prompts (generic, not BNI-specific)
+1. "What is the total deposit balance right now?"
+2. "What is the total outstanding credit right now?"
+3. "Who are the customers with the highest outstanding credit?"
 
-## Key Files
+### API integration
+- Uses `NEXT_PUBLIC_API_BASE_URL` env var
+- Typed API client in `lib/api.ts`
+- Calls `POST /chat/answer` → expects `{ session_id, original_question, answer }`
 
-Primary files to inspect first:
+**Deployment entry:** `frontend/frontend_entry.py`
+- Resolves port from `CDSW_APP_PORT`
+- Runs `npm install` + `next build` + `next start`
 
-- `/Users/trianonurhikmat/Documents/Works/cloudera/cai-demo/ask-data/backend/app/core/config.py`
-- `/Users/trianonurhikmat/Documents/Works/cloudera/cai-demo/ask-data/backend/app/services/schema_context.py`
-- `/Users/trianonurhikmat/Documents/Works/cloudera/cai-demo/ask-data/backend/app/services/business_context.py`
-- `/Users/trianonurhikmat/Documents/Works/cloudera/cai-demo/ask-data/backend/app/services/system_prompt.py`
-- `/Users/trianonurhikmat/Documents/Works/cloudera/cai-demo/ask-data/backend/app/services/chat_router.py`
-- `/Users/trianonurhikmat/Documents/Works/cloudera/cai-demo/ask-data/docs/setup.md`
-- `/Users/trianonurhikmat/Documents/Works/cloudera/cai-demo/ask-data/docs/env.md`
-- `/Users/trianonurhikmat/Documents/Works/cloudera/cai-demo/ask-data/frontend/app/page.tsx`
-- `/Users/trianonurhikmat/Documents/Works/cloudera/cai-demo/sample/fraud_transactions.csv`
-- `/Users/trianonurhikmat/Documents/Works/cloudera/cai-demo/impala_demo_ddl.sql`
+---
 
-## Handoff Notes
+## 7. Known Deployment Rules
 
-If another AI tool resumes from this file, the safe assumption is:
+1. **Both Applications must have "Allow Unauthenticated Access" enabled** — otherwise frontend gets 302 redirects to login when calling backend
+2. **Do not use `.sh` as Application script** — Cloudera Application script picker may not list `.sh` files; use Python launchers
+3. **Do not re-add FastAPI CORSMiddleware** — Cloudera proxy already sets CORS headers; middleware causes duplicate headers and browser rejection
+4. **Session proxy in VS Code session ≠ Application behavior** — asset path issues in session proxy do not predict Application failure
 
-- the repo structure is already cleaned
-- `ask-data` is stable and secondary in priority
-- the existing CAI launcher files are intentionally preserved and should not be changed casually
-- fraud-related innovation should usually happen in `fraud-ai-assistant` first
-- changes to shared schema or demo data may still require corresponding updates in `ask-data`
+---
+
+## 8. Environment Variables
+
+### Backend (set in Cloudera AI)
+- Impala / CDW connection: host, port, database, auth
+- Azure OpenAI: endpoint, key, deployment name, model name
+
+### Frontend (set in Cloudera AI)
+- `NEXT_PUBLIC_API_BASE_URL` — full URL of the backend Application
+
+---
+
+## 9. Current State
+
+### UI
+- [x] Fully refactored from BNI-specific to generic Cloudera-branded design
+- [x] Design system aligned with fraud-ai-assistant project (same color tokens, fonts, shell layout)
+- [x] All BNI references removed from UI text and prompts
+- [x] Cloudera logo + favicon in place
+- [x] Database status indicator (live green/red based on `/health/db`)
+- [x] Latest opened datetime shown in topbar
+
+### Backend
+- [x] Implemented and deployed
+- [x] Azure OpenAI integration working
+- [x] Impala/CDW query execution working
+- [x] `/chat/answer` endpoint working
+
+### Demo readiness
+- [x] End-to-end flow working
+- [x] UI polished and generic enough to reuse for any banking/enterprise customer
+- [ ] Backend runtime env vars need to be set per customer environment
+
+---
+
+## 10. Resume Instructions
+
+When resuming in a new session, assume:
+1. Use case is Ask the Data / NL-to-SQL
+2. UI is a generic Cloudera-branded analytics assistant (not BNI-specific)
+3. Design system is shared with `fraud-ai-assistant` — adopt changes from there for consistency
+4. Backend: FastAPI, deployed as CAI Application, CORS middleware removed
+5. Frontend: Next.js 15, deployed as CAI Application, indigo+navy design system
+6. Runtime config lives in Cloudera AI env vars — do not touch `.env.example` for runtime
+7. Major deployment blockers already solved — focus on polish or feature additions
+
+---
+
+End of project state.

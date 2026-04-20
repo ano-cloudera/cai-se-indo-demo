@@ -4,8 +4,11 @@ import type { ReactNode } from "react";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Ask Data Frontend",
-  description: "Cloudera AI-ready frontend for the ask-data analytics assistant.",
+  title: "Data Intelligence — Ask the Data",
+  description: "Cloudera AI-powered analytics assistant. Ask questions about your data in natural language.",
+  icons: {
+    icon: "/pavicon.png",
+  },
 };
 
 export default function RootLayout({
