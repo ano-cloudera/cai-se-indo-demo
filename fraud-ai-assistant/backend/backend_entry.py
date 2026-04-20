@@ -17,7 +17,7 @@ def resolve_backend_dir() -> Path:
     cwd = Path.cwd()
 
     candidates = [
-        cwd / "bni-demo" / "backend",
+        cwd / "fraud-ai-assistant" / "backend",
         cwd / "backend",
         cwd,
     ]
@@ -38,7 +38,7 @@ def main() -> None:
         format="%(asctime)s %(levelname)s %(message)s",
     )
 
-    logging.info("Starting BNI Demo backend")
+    logging.info("Starting Fraud AI Assistant backend")
     logging.info("Working directory: %s", Path.cwd())
     logging.info("Resolved backend dir: %s", backend_dir)
     logging.info("Port: %s", port)

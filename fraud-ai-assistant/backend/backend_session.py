@@ -17,7 +17,7 @@ def resolve_port() -> int:
 def main() -> None:
     port = resolve_port()
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
-    logging.info("Starting BNI Demo backend session on 0.0.0.0:%s", port)
+    logging.info("Starting Fraud AI Assistant backend session on 0.0.0.0:%s", port)
     uvicorn.run("app.main:app", host="0.0.0.0", port=port, reload=False)
 
 

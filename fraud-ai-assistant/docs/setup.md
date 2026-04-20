@@ -1,4 +1,4 @@
-# BNI Demo Setup Guide
+# Fraud AI Assistant Setup Guide
 
 This guide summarizes the practical setup flow for testing and deployment in Cloudera AI.
 

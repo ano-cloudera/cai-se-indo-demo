@@ -1,4 +1,4 @@
-# BNI Demo Environment Reference
+# Fraud AI Assistant Environment Reference
 
 This document lists the main runtime environment variables expected by the project.
 

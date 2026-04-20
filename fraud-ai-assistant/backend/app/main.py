@@ -44,7 +44,7 @@ answer_generator = AnswerGeneratorService(settings=settings)
 conversation_generator = ConversationGeneratorService(settings=settings)
 
 app = FastAPI(
-    title="BNI Demo Backend",
+    title="Fraud AI Assistant Backend",
     debug=settings.app_debug,
 )
 
@@ -64,13 +64,13 @@ app.add_middleware(
 
 @app.on_event("startup")
 def on_startup() -> None:
-    logger.info("BNI Demo backend startup complete")
+    logger.info("Fraud AI Assistant backend startup complete")
 
 
 @app.get("/")
 def read_root() -> dict[str, object]:
     return {
-        "message": "BNI demo backend is running.",
+        "message": "Fraud AI Assistant backend is running.",
         "environment": settings.app_env,
         "database": settings.impala_db,
         "docs": "/docs",
@@ -81,7 +81,7 @@ def read_root() -> dict[str, object]:
 def health() -> dict[str, object]:
     return {
         "status": "ok",
-        "service": "bni-demo-backend",
+        "service": "fraud-ai-assistant-backend",
         "environment": settings.app_env,
         "debug": settings.app_debug,
     }

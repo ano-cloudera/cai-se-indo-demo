@@ -65,7 +65,7 @@ def on_startup() -> None:
 @app.get("/")
 def read_root() -> dict[str, object]:
     return {
-        "message": "BNI demo backend is running.",
+        "message": "Ask Data backend is running.",
         "app": "ask-data",
         "environment": settings.app_env,
         "database": settings.impala_db,

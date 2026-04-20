@@ -1,4 +1,4 @@
-# BNI Demo API Contract
+# Fraud AI Assistant API Contract
 
 This document summarizes the main backend endpoints used by the frontend and demo flow.
 
@@ -18,7 +18,7 @@ Example response:
 ```json
 {
   "status": "ok",
-  "service": "bni-demo-backend",
+  "service": "fraud-ai-assistant-backend",
   "environment": "development",
   "debug": false
 }
