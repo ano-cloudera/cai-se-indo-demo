@@ -39,9 +39,17 @@ export function RagConfigModal({
 }: RagConfigModalProps) {
   if (!open) return null;
 
+  const canSave =
+    !saving &&
+    !loadingOptions &&
+    (!config.enabled ||
+      (config.project_id !== null &&
+        config.knowledge_base_id !== null &&
+        Boolean(config.inference_model_id)));
+
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/35 p-6 backdrop-blur-[2px]">
-      <div className="w-full max-w-4xl rounded-[24px] border border-[var(--color-border-soft)] bg-[var(--color-surface)] shadow-[0_30px_80px_rgba(15,23,42,0.28)]">
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/35 p-3 sm:p-4 lg:p-6 backdrop-blur-[2px]">
+      <div className="max-h-[92vh] w-full max-w-4xl overflow-hidden rounded-[24px] border border-[var(--color-border-soft)] bg-[var(--color-surface)] shadow-[0_30px_80px_rgba(15,23,42,0.28)]">
         <div className="flex items-center justify-between border-b border-[var(--color-border-soft)] px-6 py-5">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-ink-subtle)]">
@@ -63,7 +71,7 @@ export function RagConfigModal({
           </button>
         </div>
 
-        <div className="space-y-5 px-6 py-6">
+        <div className="max-h-[calc(92vh-152px)] space-y-5 overflow-y-auto px-4 py-5 sm:px-6 sm:py-6">
           <div className="flex flex-wrap items-center justify-between gap-4 rounded-[18px] border border-[var(--color-border-soft)] bg-[var(--color-surface-muted)] p-4">
             <div>
               <p className="text-sm font-semibold text-[var(--color-ink-strong)]">
@@ -112,6 +120,7 @@ export function RagConfigModal({
                 onChange={(event) =>
                   onConfigChange({ ...config, session_name: event.target.value })
                 }
+                disabled={loadingOptions}
                 className="rounded-[14px] border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-2.5 outline-none"
               />
             </label>
@@ -127,6 +136,7 @@ export function RagConfigModal({
                     project_id: event.target.value ? Number(event.target.value) : null,
                   })
                 }
+                disabled={loadingOptions}
                 className="rounded-[14px] border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-2.5 outline-none"
               />
             </label>
@@ -221,6 +231,7 @@ export function RagConfigModal({
                     response_chunks: Number(event.target.value),
                   })
                 }
+                disabled={loadingOptions}
               />
             </label>
           </div>
@@ -241,6 +252,7 @@ export function RagConfigModal({
                   <input
                     type="checkbox"
                     checked={Boolean(config.query_configuration[key as keyof typeof config.query_configuration])}
+                    disabled={loadingOptions}
                     onChange={(event) =>
                       onConfigChange({
                         ...config,
@@ -272,7 +284,7 @@ export function RagConfigModal({
             <button
               type="button"
               onClick={onSave}
-              disabled={saving}
+              disabled={!canSave}
               className="rounded-[var(--radius-pill)] bg-[linear-gradient(135deg,#6970ff_0%,#5c63f2_100%)] px-5 py-2.5 text-sm font-semibold text-white shadow-[var(--shadow-accent)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {saving ? "Saving..." : "Save configuration"}

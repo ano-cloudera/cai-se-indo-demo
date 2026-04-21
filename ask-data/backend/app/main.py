@@ -258,6 +258,28 @@ def _get_rag_config_response(session_id: str) -> RagSessionConfigResponse:
     )
 
 
+def _validate_rag_config(payload: RagSessionConfigRequest) -> None:
+    if not payload.enabled:
+        return
+
+    missing: list[str] = []
+    if payload.project_id is None:
+        missing.append("project ID")
+    if payload.knowledge_base_id is None:
+        missing.append("knowledge base")
+    if not payload.inference_model_id:
+        missing.append("chat model")
+
+    if missing:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "RAG Studio configuration is incomplete. "
+                f"Please select: {', '.join(missing)}."
+            ),
+        )
+
+
 def _run_rag_chat_flow(payload: ChatQueryRequest) -> dict[str, object]:
     if rag_client is None:
         raise RagClientError("RAG Studio is not configured for this backend.")
@@ -360,12 +382,18 @@ def save_rag_config(payload: RagSessionConfigRequest) -> RagSessionConfigRespons
     if rag_client is None:
         raise HTTPException(status_code=400, detail="RAG Studio is not configured for this backend.")
 
+    _validate_rag_config(payload)
+
     try:
         rag_session_id = None
         if payload.enabled:
             rag_session_id = rag_client.create_session(payload)
         memory_store.set_rag_config(payload, rag_session_id=rag_session_id)
         return _get_rag_config_response(payload.session_id)
+    except HTTPException:
+        raise
+    except RagClientError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 

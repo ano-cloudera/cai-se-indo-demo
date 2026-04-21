@@ -100,6 +100,38 @@ function getApiBaseUrl(): string {
   return "/api/backend";
 }
 
+function formatErrorDetail(detail: unknown): string | null {
+  if (!detail) return null;
+  if (typeof detail === "string") return detail;
+
+  if (Array.isArray(detail)) {
+    const messages = detail
+      .map((item) => {
+        if (typeof item === "string") return item;
+        if (item && typeof item === "object") {
+          const record = item as { loc?: unknown[]; msg?: string };
+          const location = Array.isArray(record.loc) ? record.loc.join(" > ") : null;
+          if (record.msg && location) return `${location}: ${record.msg}`;
+          if (record.msg) return record.msg;
+        }
+        return null;
+      })
+      .filter((item): item is string => Boolean(item));
+
+    if (messages.length > 0) return messages.join(" ");
+  }
+
+  if (typeof detail === "object") {
+    try {
+      return JSON.stringify(detail);
+    } catch {
+      return "Request failed.";
+    }
+  }
+
+  return String(detail);
+}
+
 async function request<T>(
   path: string,
   init?: RequestInit,
@@ -118,9 +150,10 @@ async function request<T>(
   if (!response.ok) {
     let message = `Request failed with status ${response.status}`;
     try {
-      const data = (await response.json()) as { detail?: string };
-      if (data.detail) {
-        message = data.detail;
+      const data = (await response.json()) as { detail?: unknown };
+      const formatted = formatErrorDetail(data.detail);
+      if (formatted) {
+        message = formatted;
       }
     } catch {
       // Keep the default message when the backend response is not JSON.

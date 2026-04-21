@@ -34,6 +34,15 @@ removing all BNI-specific references so it can be reused across different bankin
 5. Backend returns a natural language answer
 6. Frontend renders the answer in a chat-style panel
 
+### Optional RAG Studio Flow
+
+1. User opens the `RAG Studio` panel from the top bar
+2. User enables RAG for the current chat session
+3. User selects knowledge base, model, and optional advanced settings
+4. Frontend saves config via backend
+5. Backend creates a backing RAG session and stores it in in-memory session state
+6. Subsequent chat requests in that session can be routed to RAG instead of the default SQL flow
+
 ---
 
 ## 3. Architecture
@@ -82,11 +91,15 @@ All join on `customer_id`. No orphan records. Date fields in `YYYY-MM-DD` format
 |---|---|
 | `GET /health` | App liveness check |
 | `GET /health/db` | Database connectivity check |
+| `GET /rag/options` | Load available RAG Studio KB + model options |
+| `GET /rag/config/{session_id}` | Load saved RAG config for one chat session |
+| `POST /rag/config` | Save RAG config and create backing RAG session |
 | `POST /chat/answer` | Main demo endpoint — returns `session_id`, `original_question`, `answer` |
 | `POST /chat/query` | Debug endpoint — returns full payload with SQL and rows |
 | `POST /sql/generate` | SQL-only generation for debugging |
 
 **Session memory:** In-memory only (acceptable for demo; no persistence required).
+This now also stores per-session RAG configuration and RAG session IDs.
 
 **CORS:** FastAPI CORSMiddleware is removed. Cloudera Application proxy handles CORS headers.
 Do not re-add middleware unless thoroughly tested — it caused duplicate CORS headers in the past.
@@ -121,15 +134,18 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
 | `AnswerCard` | `components/answer-card.tsx` | Renders assistant response |
 | `StarterCard` | `components/starter-card.tsx` | Clickable prompt suggestion cards |
 | `NoticePanel` | `components/notice-panel.tsx` | Error / empty state notices |
+| `RagConfigModal` | `components/rag-config-modal.tsx` | Per-session RAG Studio config panel |
 | `AppShell` | `components/ui/shell.tsx` | Layout: sidebar + topbar + main |
 
 ### UI features
 - Dark navy fixed sidebar with Cloudera logo + nav
-- Topbar shows: breadcrumb, database connection status (green when live), latest opened datetime, refresh button
+- Topbar shows: breadcrumb, database connection status (green when live), latest opened datetime, refresh button, `RAG Studio`, `Clear Session`
 - Welcome screen with Cloudera logo + 3 starter prompt cards
 - Chat messages: user bubble (dark navy) + assistant answer card (white surface)
 - Loading state: animated bouncing dots
 - "New Conversation" button in sidebar footer resets session
+- RAG config lives in a separate modal, not in the chat input area
+- Layout has been adjusted to be more responsive on narrower screens
 
 ### Starter prompts (generic, not BNI-specific)
 1. "What is the total deposit balance right now?"
@@ -137,9 +153,11 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
 3. "Who are the customers with the highest outstanding credit?"
 
 ### API integration
-- Uses `NEXT_PUBLIC_API_BASE_URL` env var
+- Frontend proxies backend calls through `/api/backend`
+- Proxy upstream uses `BACKEND_API_BASE_URL` or `NEXT_PUBLIC_API_BASE_URL`
 - Typed API client in `lib/api.ts`
 - Calls `POST /chat/answer` → expects `{ session_id, original_question, answer }`
+- Also calls `GET /rag/options`, `GET /rag/config/{session_id}`, and `POST /rag/config`
 
 **Deployment entry:** `frontend/frontend_entry.py`
 - Resolves port from `CDSW_APP_PORT`
@@ -161,9 +179,10 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
 ### Backend (set in Cloudera AI)
 - Impala / CDW connection: host, port, database, auth
 - Azure OpenAI: endpoint, key, deployment name, model name
+- `RAG_BASE_URL` or `AGENT_BASE_URL` for RAG Studio integration
 
 ### Frontend (set in Cloudera AI)
-- `NEXT_PUBLIC_API_BASE_URL` — full URL of the backend Application
+- `BACKEND_API_BASE_URL` or `NEXT_PUBLIC_API_BASE_URL` — full URL of the backend Application
 
 ---
 
@@ -176,17 +195,28 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
 - [x] Cloudera logo + favicon in place
 - [x] Database status indicator (live green/red based on `/health/db`)
 - [x] Latest opened datetime shown in topbar
+- [x] Dedicated RAG Studio config modal implemented
+- [x] `Clear Session` implemented
+- [x] Responsive shell and modal behavior improved
 
 ### Backend
 - [x] Implemented and deployed
 - [x] Azure OpenAI integration working
 - [x] Impala/CDW query execution working
 - [x] `/chat/answer` endpoint working
+- [x] RAG config endpoints implemented
+- [x] RAG session creation working with complete payload
+- [x] Human-readable validation errors added for incomplete RAG config
 
 ### Demo readiness
 - [x] End-to-end flow working
 - [x] UI polished and generic enough to reuse for any banking/enterprise customer
+- [x] Frontend fallback RAG defaults added:
+  - Knowledge base: `BPJS-Claim-Knowledge (291)`
+  - Chat model: `meta.llama3-8b-instruct-v1:0`
 - [ ] Backend runtime env vars need to be set per customer environment
+- [ ] CAI backend should be redeployed with the latest null-safe `/rag/options` parser
+- [ ] Until redeployed, frontend may rely on hardcoded fallback options if live `/rag/options` still fails
 
 ---
 

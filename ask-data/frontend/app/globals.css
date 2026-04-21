@@ -177,6 +177,7 @@ body {
 .topbar-meta {
   display: inline-flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: var(--space-4);
 }
 
@@ -191,6 +192,36 @@ body {
 @media (min-width: 768px) {
   .metric-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1279px) {
+  :root {
+    --shell-sidebar-w: 15rem;
+  }
+}
+
+@media (max-width: 1023px) {
+  :root {
+    --space-page-x: 1rem;
+    --space-page-y: 1rem;
+  }
+}
+
+@media (max-width: 767px) {
+  :root {
+    --space-page-x: 0.875rem;
+    --space-page-y: 0.875rem;
+    --space-card: 1rem;
+    --space-card-lg: 1.25rem;
+  }
+
+  .page-canvas {
+    padding-top: 1rem;
+  }
+
+  .topbar-meta {
+    gap: 0.5rem;
   }
 }
 

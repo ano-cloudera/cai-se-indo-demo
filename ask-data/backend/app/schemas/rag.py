@@ -37,10 +37,10 @@ class RagSessionConfigRequest(BaseModel):
     session_id: str
     enabled: bool = False
     session_name: str = "ask-data-rag-session"
-    project_id: int
-    knowledge_base_id: int
+    project_id: int | None = None
+    knowledge_base_id: int | None = None
     knowledge_base_name: str | None = None
-    inference_model_id: str
+    inference_model_id: str | None = None
     inference_model_name: str | None = None
     rerank_model_id: str | None = None
     rerank_model_name: str | None = None
@@ -62,4 +62,3 @@ class RagSessionConfigResponse(BaseModel):
     rerank_model_name: str | None = None
     response_chunks: int = 10
     query_configuration: RagQueryConfiguration = Field(default_factory=RagQueryConfiguration)
-

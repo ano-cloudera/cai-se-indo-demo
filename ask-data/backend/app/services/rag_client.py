@@ -39,8 +39,8 @@ class RagClient:
                 model_id=item["model_id"],
                 name=item["name"],
                 available=item.get("available", True),
-                replica_count=item.get("replica_count", 0),
-                tool_calling_supported=item.get("tool_calling_supported", False),
+                replica_count=item.get("replica_count") or 0,
+                tool_calling_supported=bool(item.get("tool_calling_supported", False)),
             )
             for item in payload
             if item.get("available", True)
@@ -78,7 +78,7 @@ class RagClient:
                     id=item["id"],
                     name=item["name"],
                     description=item.get("description"),
-                    document_count=item.get("documentCount", 0),
+                    document_count=item.get("documentCount") or 0,
                     embedding_model=item.get("embeddingModel"),
                     summarization_model=item.get("summarizationModel"),
                     metadata={
@@ -182,4 +182,3 @@ class RagClient:
             "answer": answer,
             "response_id": response_id,
         }
-

@@ -63,7 +63,7 @@ export function AppSidebar({
   footer?: ReactNode;
 }) {
   return (
-    <aside className="app-sidebar fixed left-0 top-0 z-50 flex h-full w-[var(--shell-sidebar-w)] flex-col overflow-hidden py-7 shadow-2xl">
+    <aside className="app-sidebar hidden lg:fixed lg:left-0 lg:top-0 lg:z-50 lg:flex lg:h-full lg:w-[var(--shell-sidebar-w)] lg:flex-col lg:overflow-hidden lg:py-7 lg:shadow-2xl">
       <div className="px-5 pb-2">{brand}</div>
       <nav className="nav-group mt-6 flex-1">
         {items.map((item) => (
@@ -89,11 +89,11 @@ export function AppTopHeader({
   right?: ReactNode;
 }) {
   return (
-    <header className="app-topbar fixed left-[var(--shell-sidebar-w)] right-0 top-0 z-40 flex h-[var(--shell-header-h)] items-center justify-between border-b border-[var(--color-border-soft)] shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
+    <header className="app-topbar sticky left-0 right-0 top-0 z-40 border-b border-[var(--color-border-soft)] shadow-[0_8px_24px_rgba(15,23,42,0.04)] lg:left-[var(--shell-sidebar-w)]">
       <div className="absolute inset-x-0 bottom-0 h-[2px] bg-[#5F67F6]" />
-      <div className="relative flex w-full items-center justify-between px-8">
+      <div className="relative flex min-h-[var(--shell-header-h)] w-full flex-col gap-3 px-4 py-3 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8 lg:py-0">
         <div className="topbar-meta min-w-0">{left}</div>
-        {right ? <div className="ml-6 flex shrink-0 items-center gap-4">{right}</div> : null}
+        {right ? <div className="flex w-full flex-wrap items-center gap-3 lg:ml-6 lg:w-auto lg:shrink-0 lg:justify-end">{right}</div> : null}
       </div>
     </header>
   );
@@ -112,7 +112,7 @@ export function AppShell({
     <div className="app-shell text-[var(--color-ink-strong)]">
       {sidebar}
       {header}
-      <main className="ml-[var(--shell-sidebar-w)] min-h-screen bg-[var(--color-page-bg)] pt-[var(--shell-header-h)]">
+      <main className="min-h-screen bg-[var(--color-page-bg)] lg:ml-[var(--shell-sidebar-w)]">
         {children}
       </main>
     </div>

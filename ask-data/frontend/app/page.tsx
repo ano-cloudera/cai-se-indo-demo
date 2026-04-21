@@ -85,6 +85,49 @@ const starterPrompts = [
   },
 ];
 
+const fallbackRagOptions: RagOptionsResponse = {
+  enabled: true,
+  model_source: "fallback",
+  chat_models: [
+    {
+      model_id: "meta.llama3-8b-instruct-v1:0",
+      name: "Llama 3 8B Instruct",
+      available: true,
+      replica_count: 1,
+      tool_calling_supported: false,
+    },
+  ],
+  rerank_models: [],
+  knowledge_bases: [
+    {
+      id: 291,
+      name: "BPJS-Claim-Knowledge",
+      description: "Fallback knowledge base option loaded locally while RAG options are unavailable.",
+      document_count: 0,
+      embedding_model: null,
+      summarization_model: null,
+      metadata: {
+        source: "fallback",
+      },
+    },
+  ],
+};
+
+function withFallbackRagOptions(options: RagOptionsResponse): RagOptionsResponse {
+  return {
+    enabled: options.enabled,
+    model_source: options.model_source ?? fallbackRagOptions.model_source,
+    chat_models:
+      options.chat_models.length > 0 ? options.chat_models : fallbackRagOptions.chat_models,
+    rerank_models:
+      options.rerank_models.length > 0 ? options.rerank_models : fallbackRagOptions.rerank_models,
+    knowledge_bases:
+      options.knowledge_bases.length > 0
+        ? options.knowledge_bases
+        : fallbackRagOptions.knowledge_bases,
+  };
+}
+
 const initialChatState: ChatState = {
   sessionId: "",
   question: "",
@@ -166,7 +209,7 @@ export default function HomePage() {
   async function loadRagOptions() {
     setRagOptionsLoading(true);
     try {
-      const options = await apiClient.ragOptions();
+      const options = withFallbackRagOptions(await apiClient.ragOptions());
       setRagOptions(options);
 
       const preferredModel =
@@ -184,13 +227,15 @@ export default function HomePage() {
         inference_model_name: cur.inference_model_name ?? preferredModel?.name ?? null,
       }));
     } catch {
-      setRagOptions({
-        enabled: false,
-        model_source: null,
-        chat_models: [],
-        rerank_models: [],
-        knowledge_bases: [],
-      });
+      setRagOptions(fallbackRagOptions);
+      setRagConfig((cur) => ({
+        ...cur,
+        project_id: cur.project_id ?? 1,
+        knowledge_base_id: cur.knowledge_base_id ?? 291,
+        knowledge_base_name: cur.knowledge_base_name ?? "BPJS-Claim-Knowledge",
+        inference_model_id: cur.inference_model_id || "meta.llama3-8b-instruct-v1:0",
+        inference_model_name: cur.inference_model_name ?? "Llama 3 8B Instruct",
+      }));
     } finally {
       setRagOptionsLoading(false);
     }
@@ -201,8 +246,19 @@ export default function HomePage() {
       const saved = await apiClient.getRagConfig(sessionId);
       setRagConfig((cur) => ({
         ...cur,
-        ...saved,
         session_id: sessionId,
+        enabled: saved.enabled,
+        session_name: saved.session_name || cur.session_name,
+        project_id: saved.project_id ?? cur.project_id ?? 1,
+        knowledge_base_id: saved.knowledge_base_id ?? cur.knowledge_base_id,
+        knowledge_base_name: saved.knowledge_base_name ?? cur.knowledge_base_name,
+        rag_session_id: saved.rag_session_id,
+        inference_model_id: saved.inference_model_id ?? cur.inference_model_id,
+        inference_model_name: saved.inference_model_name ?? cur.inference_model_name,
+        rerank_model_id: saved.rerank_model_id ?? cur.rerank_model_id,
+        rerank_model_name: saved.rerank_model_name ?? cur.rerank_model_name,
+        response_chunks: saved.response_chunks || cur.response_chunks,
+        query_configuration: saved.query_configuration ?? cur.query_configuration,
       }));
       setRagConfigDirty(false);
     } catch {
@@ -290,7 +346,7 @@ export default function HomePage() {
     } catch (error) {
       setState((cur) => ({
         ...cur,
-        error: error instanceof Error ? error.message : "Unable to save RAG configuration.",
+        error: error instanceof Error ? toFriendlyErrorMessage(error.message) : "Unable to save RAG configuration.",
       }));
     } finally {
       setRagSaving(false);
@@ -430,13 +486,24 @@ export default function HomePage() {
               void loadRagOptions();
               setRagPanelOpen(true);
             }}
-            className={`rounded-[var(--radius-pill)] border px-3 py-1.5 text-xs font-semibold transition ${
+            className={`inline-flex items-center gap-2 rounded-[var(--radius-pill)] border px-3 py-1.5 text-xs font-semibold transition ${
               ragConfig.enabled && ragConfig.rag_session_id
                 ? "border-emerald-400 bg-emerald-50 text-emerald-700"
                 : "border-[var(--color-border-strong)] bg-[var(--color-surface)] text-[var(--color-ink-muted)] hover:border-[var(--color-action-primary)] hover:text-[var(--color-action-primary)]"
             }`}
           >
-            {ragConfig.enabled && ragConfig.rag_session_id ? "RAG Studio On" : "RAG Studio"}
+            <span
+              className={`relative h-4 w-7 rounded-full transition ${
+                ragConfig.enabled && ragConfig.rag_session_id ? "bg-emerald-500" : "bg-[#c7ccda]"
+              }`}
+            >
+              <span
+                className={`absolute top-0.5 h-3 w-3 rounded-full bg-white shadow transition ${
+                  ragConfig.enabled && ragConfig.rag_session_id ? "left-3.5" : "left-0.5"
+                }`}
+              />
+            </span>
+            <span>{ragConfig.enabled && ragConfig.rag_session_id ? "RAG Studio On" : "RAG Studio"}</span>
           </button>
           <button
             type="button"
@@ -459,7 +526,7 @@ export default function HomePage() {
     <AppShell sidebar={sidebar} header={header}>
       <PageCanvas>
         {/* Chat area */}
-        <div className="flex flex-col gap-4" style={{ minHeight: "calc(100vh - var(--shell-header-h) - var(--space-page-y) * 2)" }}>
+        <div className="flex min-h-[calc(100vh-var(--space-page-y)*2-6rem)] flex-col gap-4">
           {/* Messages / Welcome */}
           <div
             className="flex-1 overflow-y-auto rounded-[var(--radius-panel)] border border-[var(--color-border-soft)] bg-[var(--color-surface)] p-6 shadow-panel"
@@ -489,7 +556,7 @@ export default function HomePage() {
                 </section>
 
                 {/* Starter cards */}
-                <div className="mt-6 grid gap-4 sm:grid-cols-3">
+                <div className="mt-6 grid gap-4 md:grid-cols-3">
                   {starterPrompts.map((item) => (
                     <StarterCard
                       key={item.title}
@@ -510,7 +577,7 @@ export default function HomePage() {
               <div className="mx-auto flex max-w-3xl flex-col gap-5">
                 {state.messages.map((message) =>
                   message.role === "user" ? (
-                    <div key={message.id} className="ml-auto max-w-[28rem]">
+                    <div key={message.id} className="ml-auto max-w-full sm:max-w-[28rem]">
                       <div
                         className="rounded-[18px] px-4 py-3 text-sm leading-6 text-white shadow-panel"
                         style={{ background: "linear-gradient(135deg, #06293e 0%, #08004d 100%)" }}
