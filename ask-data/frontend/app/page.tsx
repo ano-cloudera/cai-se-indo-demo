@@ -115,6 +115,7 @@ export default function HomePage() {
     error: "",
   });
   const [ragOptions, setRagOptions] = useState<RagOptionsResponse | null>(null);
+  const [ragOptionsLoading, setRagOptionsLoading] = useState(false);
   const [ragConfig, setRagConfig] = useState<RagSessionConfig>(defaultRagConfig(""));
   const [ragPanelOpen, setRagPanelOpen] = useState(false);
   const [ragSaving, setRagSaving] = useState(false);
@@ -163,6 +164,7 @@ export default function HomePage() {
   }
 
   async function loadRagOptions() {
+    setRagOptionsLoading(true);
     try {
       const options = await apiClient.ragOptions();
       setRagOptions(options);
@@ -189,6 +191,8 @@ export default function HomePage() {
         rerank_models: [],
         knowledge_bases: [],
       });
+    } finally {
+      setRagOptionsLoading(false);
     }
   }
 
@@ -294,6 +298,8 @@ export default function HomePage() {
   }
 
   async function handleToggleRag(enabled: boolean) {
+    await loadRagOptions();
+
     const nextConfig: RagSessionConfig = {
       ...ragConfig,
       enabled,
@@ -420,10 +426,17 @@ export default function HomePage() {
           </button>
           <button
             type="button"
-            onClick={() => setRagPanelOpen(true)}
-            className="rounded-[var(--radius-pill)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-1.5 text-xs font-semibold text-[var(--color-ink-muted)] transition hover:border-[var(--color-action-primary)] hover:text-[var(--color-action-primary)]"
+            onClick={() => {
+              void loadRagOptions();
+              setRagPanelOpen(true);
+            }}
+            className={`rounded-[var(--radius-pill)] border px-3 py-1.5 text-xs font-semibold transition ${
+              ragConfig.enabled && ragConfig.rag_session_id
+                ? "border-emerald-400 bg-emerald-50 text-emerald-700"
+                : "border-[var(--color-border-strong)] bg-[var(--color-surface)] text-[var(--color-ink-muted)] hover:border-[var(--color-action-primary)] hover:text-[var(--color-action-primary)]"
+            }`}
           >
-            RAG Studio
+            {ragConfig.enabled && ragConfig.rag_session_id ? "RAG Studio On" : "RAG Studio"}
           </button>
           <button
             type="button"
@@ -550,6 +563,7 @@ export default function HomePage() {
       <RagConfigModal
         open={ragPanelOpen}
         saving={ragSaving}
+        loadingOptions={ragOptionsLoading}
         ragAvailable={Boolean(ragOptions?.enabled)}
         ragConfigLocked={Boolean(ragConfig.enabled && ragConfig.rag_session_id && !ragConfigDirty)}
         config={ragConfig}

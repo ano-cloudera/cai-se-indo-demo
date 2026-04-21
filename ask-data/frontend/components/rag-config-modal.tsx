@@ -9,6 +9,7 @@ import type {
 interface RagConfigModalProps {
   open: boolean;
   saving: boolean;
+  loadingOptions: boolean;
   ragAvailable: boolean;
   ragConfigLocked: boolean;
   config: RagSessionConfig;
@@ -24,6 +25,7 @@ interface RagConfigModalProps {
 export function RagConfigModal({
   open,
   saving,
+  loadingOptions,
   ragAvailable,
   ragConfigLocked,
   config,
@@ -71,16 +73,36 @@ export function RagConfigModal({
                 Saved config is reused across all following requests in the current session.
               </p>
             </div>
-            <label className="inline-flex items-center gap-3 text-sm font-medium text-[var(--color-ink-muted)]">
+            <button
+              type="button"
+              disabled={!ragAvailable}
+              onClick={() => onToggleEnabled(!config.enabled)}
+              className={`inline-flex items-center gap-3 rounded-[var(--radius-pill)] border px-3 py-2 text-sm font-semibold transition ${
+                config.enabled
+                  ? "border-emerald-400 bg-emerald-50 text-emerald-700"
+                  : "border-[var(--color-border-strong)] bg-[var(--color-surface)] text-[var(--color-ink-muted)]"
+              } ${!ragAvailable ? "cursor-not-allowed opacity-50" : ""}`}
+            >
               <span>{config.enabled ? "Enabled" : "Disabled"}</span>
-              <input
-                type="checkbox"
-                checked={config.enabled}
-                disabled={!ragAvailable}
-                onChange={(event) => onToggleEnabled(event.target.checked)}
-              />
-            </label>
+              <span
+                className={`relative h-6 w-11 rounded-full transition ${
+                  config.enabled ? "bg-emerald-500" : "bg-[#c7ccda]"
+                }`}
+              >
+                <span
+                  className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition ${
+                    config.enabled ? "left-[22px]" : "left-0.5"
+                  }`}
+                />
+              </span>
+            </button>
           </div>
+
+          {loadingOptions ? (
+            <div className="rounded-[18px] border border-[var(--color-border-soft)] bg-[var(--color-surface-muted)] px-4 py-3 text-sm text-[var(--color-ink-subtle)]">
+              Loading knowledge bases and model options from RAG Studio…
+            </div>
+          ) : null}
 
           <div className="grid gap-4 md:grid-cols-2">
             <label className="flex flex-col gap-2 text-sm text-[var(--color-ink-muted)]">
@@ -102,7 +124,7 @@ export function RagConfigModal({
                 onChange={(event) =>
                   onConfigChange({
                     ...config,
-                    project_id: Number(event.target.value),
+                    project_id: event.target.value ? Number(event.target.value) : null,
                   })
                 }
                 className="rounded-[14px] border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-2.5 outline-none"
@@ -113,6 +135,7 @@ export function RagConfigModal({
               <span className="font-medium">Knowledge base</span>
               <select
                 value={config.knowledge_base_id ?? ""}
+                disabled={loadingOptions}
                 onChange={(event) => {
                   const selected = knowledgeBases.find(
                     (item) => item.id === Number(event.target.value),
@@ -138,6 +161,7 @@ export function RagConfigModal({
               <span className="font-medium">Chat model</span>
               <select
                 value={config.inference_model_id ?? ""}
+                disabled={loadingOptions}
                 onChange={(event) => {
                   const selected = chatModels.find((item) => item.model_id === event.target.value);
                   onConfigChange({
@@ -161,6 +185,7 @@ export function RagConfigModal({
               <span className="font-medium">Reranking model</span>
               <select
                 value={config.rerank_model_id ?? ""}
+                disabled={loadingOptions}
                 onChange={(event) => {
                   const selected = rerankModels.find((item) => item.model_id === event.target.value);
                   onConfigChange({
