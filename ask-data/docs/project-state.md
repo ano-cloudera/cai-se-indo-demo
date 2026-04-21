@@ -142,10 +142,12 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
 - Topbar shows: breadcrumb, database connection status (green when live), latest opened datetime, refresh button, `RAG Studio`, `Clear Session`
 - Welcome screen with Cloudera logo + 3 starter prompt cards
 - Chat messages: user bubble (dark navy) + assistant answer card (white surface)
+- RAG-backed answers can render a structured source list under the answer card when source metadata is available
 - Loading state: animated bouncing dots
 - "New Conversation" button in sidebar footer resets session
 - RAG config lives in a separate modal, not in the chat input area
 - Layout has been adjusted to be more responsive on narrower screens
+- RAG modal locks page scroll on open and avoids repeated option reloads to reduce visible modal flicker/glitch
 
 ### Starter prompts (generic, not BNI-specific)
 1. "What is the total deposit balance right now?"
@@ -198,6 +200,10 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
 - [x] Dedicated RAG Studio config modal implemented
 - [x] `Clear Session` implemented
 - [x] Responsive shell and modal behavior improved
+- [x] Modal scroll locking and deferred option loading added to reduce opening glitch
+- [x] Footer actions in RAG config modal no longer easily clip off-screen
+- [x] Frontend can fall back to hardcoded RAG KB/model defaults if live `/rag/options` is still failing in a stale backend deployment
+- [x] Answer card supports rendering structured RAG sources instead of raw source objects
 
 ### Backend
 - [x] Implemented and deployed
@@ -207,6 +213,7 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
 - [x] RAG config endpoints implemented
 - [x] RAG session creation working with complete payload
 - [x] Human-readable validation errors added for incomplete RAG config
+- [x] RAG source extraction added from chat history into a structured `sources` payload for UI rendering
 
 ### Demo readiness
 - [x] End-to-end flow working
@@ -214,9 +221,11 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
 - [x] Frontend fallback RAG defaults added:
   - Knowledge base: `BPJS-Claim-Knowledge (291)`
   - Chat model: `meta.llama3-8b-instruct-v1:0`
+- [x] Source rendering support added for RAG answers
 - [ ] Backend runtime env vars need to be set per customer environment
 - [ ] CAI backend should be redeployed with the latest null-safe `/rag/options` parser
 - [ ] Until redeployed, frontend may rely on hardcoded fallback options if live `/rag/options` still fails
+- [ ] RAG source card rendering depends on the exact `chat-history` payload shape returned by the target RAG Studio instance
 
 ---
 

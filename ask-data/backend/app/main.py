@@ -299,6 +299,14 @@ def _run_rag_chat_flow(payload: ChatQueryRequest) -> dict[str, object]:
         question=payload.question,
     )
     answer = str(rag_result["answer"])
+    sources = rag_client.get_sources(
+        session_id=rag_config.rag_session_id,
+        response_id=(
+            str(rag_result["response_id"])
+            if rag_result.get("response_id") is not None
+            else None
+        ),
+    )
 
     memory_store.append_user_message(payload.session_id, payload.question)
     memory_store.append_assistant_message(payload.session_id, answer)
@@ -310,6 +318,7 @@ def _run_rag_chat_flow(payload: ChatQueryRequest) -> dict[str, object]:
         "original_question": payload.question,
         "answer": answer,
         "mode": "rag",
+        "sources": sources,
     }
 
 
@@ -424,6 +433,7 @@ def chat_answer(payload: ChatQueryRequest) -> ChatAnswerResponse:
             "original_question": payload.question,
             "answer": fallback_answer,
             "mode": "fallback",
+            "sources": [],
         }
     except Exception:
         fallback_answer = build_processing_fallback_answer(payload.question)
@@ -438,6 +448,7 @@ def chat_answer(payload: ChatQueryRequest) -> ChatAnswerResponse:
             "original_question": payload.question,
             "answer": fallback_answer,
             "mode": "fallback",
+            "sources": [],
         }
 
     return ChatAnswerResponse(
@@ -445,4 +456,5 @@ def chat_answer(payload: ChatQueryRequest) -> ChatAnswerResponse:
         original_question=response_payload["original_question"],
         answer=response_payload["answer"],
         mode=response_payload.get("mode"),
+        sources=response_payload.get("sources", []),
     )

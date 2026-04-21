@@ -11,6 +11,7 @@ from app.schemas.rag import (
     RagModelOption,
     RagSessionConfigRequest,
 )
+from app.schemas.sql import AnswerSource
 
 
 class RagClientError(RuntimeError):
@@ -182,3 +183,67 @@ class RagClient:
             "answer": answer,
             "response_id": response_id,
         }
+
+    def get_sources(self, session_id: int, response_id: str | None = None) -> list[AnswerSource]:
+        with self._client() as client:
+            response = client.get(
+                self._build_url(f"/llm-service/sessions/{session_id}/chat-history"),
+                headers={"accept": "application/json"},
+            )
+            response.raise_for_status()
+            payload = response.json()
+
+        items = payload.get("data", []) if isinstance(payload, dict) else []
+        if not isinstance(items, list):
+            return []
+
+        candidate: dict | None = None
+        if response_id:
+            for item in reversed(items):
+                if isinstance(item, dict) and item.get("id") == response_id:
+                    candidate = item
+                    break
+
+        if candidate is None:
+            for item in reversed(items):
+                if isinstance(item, dict) and item.get("source_nodes"):
+                    candidate = item
+                    break
+
+        if not isinstance(candidate, dict):
+            return []
+
+        source_nodes = candidate.get("source_nodes", [])
+        if not isinstance(source_nodes, list):
+            return []
+
+        seen: set[tuple[str | None, str | None]] = set()
+        sources: list[AnswerSource] = []
+        for node in source_nodes:
+            if not isinstance(node, dict):
+                continue
+
+            title = node.get("source_file_name") or node.get("doc_id") or node.get("node_id")
+            if not isinstance(title, str) or not title:
+                continue
+
+            document_id = node.get("doc_id") if isinstance(node.get("doc_id"), str) else None
+            node_id = node.get("node_id") if isinstance(node.get("node_id"), str) else None
+            score = node.get("score")
+            score_value = float(score) if isinstance(score, (int, float)) else None
+
+            dedupe_key = (document_id, node_id)
+            if dedupe_key in seen:
+                continue
+            seen.add(dedupe_key)
+
+            sources.append(
+                AnswerSource(
+                    title=title,
+                    document_id=document_id,
+                    node_id=node_id,
+                    score=score_value,
+                )
+            )
+
+        return sources

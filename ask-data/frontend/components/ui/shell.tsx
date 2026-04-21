@@ -111,10 +111,12 @@ export function AppShell({
   return (
     <div className="app-shell text-[var(--color-ink-strong)]">
       {sidebar}
-      {header}
-      <main className="min-h-screen bg-[var(--color-page-bg)] lg:ml-[var(--shell-sidebar-w)]">
-        {children}
-      </main>
+      <div className="min-h-screen lg:ml-[var(--shell-sidebar-w)]">
+        {header}
+        <main className="min-h-[calc(100vh-var(--shell-header-h))] bg-[var(--color-page-bg)]">
+          {children}
+        </main>
+      </div>
     </div>
   );
 }

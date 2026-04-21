@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/shell";
 import {
   apiClient,
+  type AnswerSource,
   type ChatAnswerResponse,
   type HealthResponse,
   type RagOptionsResponse,
@@ -28,6 +29,7 @@ interface ChatMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
+  sources?: AnswerSource[];
 }
 
 interface ChatState {
@@ -180,7 +182,7 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    void loadRagOptions();
+    void ensureRagOptionsLoaded();
   }, []);
 
   useEffect(() => {
@@ -239,6 +241,14 @@ export default function HomePage() {
     } finally {
       setRagOptionsLoading(false);
     }
+  }
+
+  async function ensureRagOptionsLoaded() {
+    if (ragOptionsLoading) return;
+    if (ragOptions && ragOptions.chat_models.length > 0 && ragOptions.knowledge_bases.length > 0) {
+      return;
+    }
+    await loadRagOptions();
   }
 
   async function loadSavedRagConfig(sessionId: string) {
@@ -315,6 +325,7 @@ export default function HomePage() {
         id: `assistant-${Date.now()}`,
         role: "assistant",
         content: response.answer,
+        sources: response.sources ?? [],
       };
       setState((cur) => ({
         ...cur,
@@ -354,7 +365,7 @@ export default function HomePage() {
   }
 
   async function handleToggleRag(enabled: boolean) {
-    await loadRagOptions();
+    await ensureRagOptionsLoaded();
 
     const nextConfig: RagSessionConfig = {
       ...ragConfig,
@@ -483,8 +494,8 @@ export default function HomePage() {
           <button
             type="button"
             onClick={() => {
-              void loadRagOptions();
               setRagPanelOpen(true);
+              void ensureRagOptionsLoaded();
             }}
             className={`inline-flex items-center gap-2 rounded-[var(--radius-pill)] border px-3 py-1.5 text-xs font-semibold transition ${
               ragConfig.enabled && ragConfig.rag_session_id
@@ -586,7 +597,7 @@ export default function HomePage() {
                       </div>
                     </div>
                   ) : (
-                    <AnswerCard key={message.id} answer={message.content} />
+                    <AnswerCard key={message.id} answer={message.content} sources={message.sources} />
                   ),
                 )}
 

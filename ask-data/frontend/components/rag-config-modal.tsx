@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect } from "react";
+
 import type {
   RagKnowledgeBaseOption,
   RagModelOption,
@@ -37,6 +39,24 @@ export function RagConfigModal({
   onConfigChange,
   onSave,
 }: RagConfigModalProps) {
+  useEffect(() => {
+    if (!open) return;
+
+    const previousOverflow = document.body.style.overflow;
+    const previousPaddingRight = document.body.style.paddingRight;
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+
+    document.body.style.overflow = "hidden";
+    if (scrollbarWidth > 0) {
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+    }
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.body.style.paddingRight = previousPaddingRight;
+    };
+  }, [open]);
+
   if (!open) return null;
 
   const canSave =
@@ -48,8 +68,8 @@ export function RagConfigModal({
         Boolean(config.inference_model_id)));
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/35 p-3 sm:p-4 lg:p-6 backdrop-blur-[2px]">
-      <div className="max-h-[92vh] w-full max-w-4xl overflow-hidden rounded-[24px] border border-[var(--color-border-soft)] bg-[var(--color-surface)] shadow-[0_30px_80px_rgba(15,23,42,0.28)]">
+    <div className="fixed inset-0 z-[70] overflow-y-auto bg-slate-950/35 p-3 sm:p-4 lg:p-6 backdrop-blur-[2px]">
+      <div className="mx-auto my-2 flex min-h-[min(92vh,48rem)] w-full max-w-4xl flex-col overflow-hidden rounded-[24px] border border-[var(--color-border-soft)] bg-[var(--color-surface)] shadow-[0_30px_80px_rgba(15,23,42,0.28)]">
         <div className="flex items-center justify-between border-b border-[var(--color-border-soft)] px-6 py-5">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-ink-subtle)]">
@@ -71,7 +91,7 @@ export function RagConfigModal({
           </button>
         </div>
 
-        <div className="max-h-[calc(92vh-152px)] space-y-5 overflow-y-auto px-4 py-5 sm:px-6 sm:py-6">
+        <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-4 py-5 sm:px-6 sm:py-6">
           <div className="flex flex-wrap items-center justify-between gap-4 rounded-[18px] border border-[var(--color-border-soft)] bg-[var(--color-surface-muted)] p-4">
             <div>
               <p className="text-sm font-semibold text-[var(--color-ink-strong)]">
@@ -269,11 +289,12 @@ export function RagConfigModal({
           </div>
         </div>
 
-        <div className="flex items-center justify-between border-t border-[var(--color-border-soft)] px-6 py-4">
-          <div className="text-xs text-[var(--color-ink-subtle)]">
-            {ragConfigLocked ? "Saved and active for this session." : "Changes take effect after you save."}
-          </div>
-          <div className="flex gap-3">
+        <div className="shrink-0 border-t border-[var(--color-border-soft)] px-4 py-4 sm:px-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="text-xs text-[var(--color-ink-subtle)]">
+              {ragConfigLocked ? "Saved and active for this session." : "Changes take effect after you save."}
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
             <button
               type="button"
               onClick={onClose}
@@ -289,6 +310,7 @@ export function RagConfigModal({
             >
               {saving ? "Saving..." : "Save configuration"}
             </button>
+            </div>
           </div>
         </div>
       </div>

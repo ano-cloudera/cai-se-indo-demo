@@ -20,11 +20,19 @@ class ChatQueryRequest(BaseModel):
     session_id: str | None = None
 
 
+class AnswerSource(BaseModel):
+    title: str
+    document_id: str | None = None
+    node_id: str | None = None
+    score: float | None = None
+
+
 class ChatAnswerResponse(BaseModel):
     session_id: str | None = None
     original_question: str
     answer: str
     mode: str | None = None
+    sources: list[AnswerSource] = Field(default_factory=list)
 
 
 class SQLExecutionResponse(BaseModel):

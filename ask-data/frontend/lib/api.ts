@@ -44,6 +44,14 @@ export interface ChatAnswerResponse {
   original_question: string;
   answer: string;
   mode?: string | null;
+  sources?: AnswerSource[];
+}
+
+export interface AnswerSource {
+  title: string;
+  document_id?: string | null;
+  node_id?: string | null;
+  score?: number | null;
 }
 
 export interface RagQueryConfiguration {
