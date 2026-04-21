@@ -218,9 +218,32 @@ export function AnswerCard({ answer, sources = [] }: AnswerCardProps) {
                 >
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-[var(--color-ink-strong)]">
-                        {source.title}
-                      </p>
+                      <div className="flex min-w-0 items-center gap-2">
+                        <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-rose-50 text-rose-600">
+                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
+                            <path
+                              d="M4 1.75h4.25L11 4.5v6.75A1.75 1.75 0 0 1 9.25 13h-5.5A1.75 1.75 0 0 1 2 11.25v-7.5A1.75 1.75 0 0 1 3.75 2H4"
+                              stroke="currentColor"
+                              strokeWidth="1.2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                            <path
+                              d="M8.25 1.75V4.5H11"
+                              stroke="currentColor"
+                              strokeWidth="1.2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        </span>
+                        <p className="truncate text-sm font-semibold text-[var(--color-ink-strong)]">
+                          {source.title}
+                        </p>
+                        <span className="shrink-0 rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-rose-700">
+                          PDF
+                        </span>
+                      </div>
                       <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-[var(--color-ink-subtle)]">
                         {formatScore(source.score) ? <span>Relevance: {formatScore(source.score)}</span> : null}
                         {source.document_id ? <span>PDF source available</span> : null}
