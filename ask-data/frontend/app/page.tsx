@@ -18,6 +18,8 @@ import {
   apiClient,
   type ChatAnswerResponse,
   type HealthResponse,
+  type RagOptionsResponse,
+  type RagSessionConfig,
 } from "@/lib/api";
 import { createNewSessionId, getOrCreateSessionId } from "@/lib/session";
 
@@ -41,6 +43,28 @@ interface HealthState {
   db: HealthResponse | null;
   error: string;
 }
+
+const defaultRagConfig = (sessionId: string): RagSessionConfig => ({
+  session_id: sessionId,
+  enabled: false,
+  session_name: "ask-data-rag-session",
+  project_id: 1,
+  knowledge_base_id: 291,
+  knowledge_base_name: null,
+  rag_session_id: null,
+  inference_model_id: "",
+  inference_model_name: null,
+  rerank_model_id: null,
+  rerank_model_name: null,
+  response_chunks: 10,
+  query_configuration: {
+    enable_hyde: false,
+    enable_summary_filter: true,
+    enable_tool_calling: false,
+    disable_streaming: false,
+    selected_tools: [],
+  },
+});
 
 const starterPrompts = [
   {
@@ -89,6 +113,11 @@ export default function HomePage() {
     db: null,
     error: "",
   });
+  const [ragOptions, setRagOptions] = useState<RagOptionsResponse | null>(null);
+  const [ragConfig, setRagConfig] = useState<RagSessionConfig>(defaultRagConfig(""));
+  const [ragPanelOpen, setRagPanelOpen] = useState(false);
+  const [ragSaving, setRagSaving] = useState(false);
+  const [ragConfigDirty, setRagConfigDirty] = useState(false);
   const [openedAt] = useState<string>(() => {
     const now = new Date();
     return now.toLocaleDateString("en-US", { month: "short", day: "numeric" }) +
@@ -98,11 +127,21 @@ export default function HomePage() {
   useEffect(() => {
     const sessionId = getOrCreateSessionId();
     setState((cur) => ({ ...cur, sessionId }));
+    setRagConfig(defaultRagConfig(sessionId));
   }, []);
 
   useEffect(() => {
     void refreshHealth();
   }, []);
+
+  useEffect(() => {
+    void loadRagOptions();
+  }, []);
+
+  useEffect(() => {
+    if (!state.sessionId) return;
+    void loadSavedRagConfig(state.sessionId);
+  }, [state.sessionId]);
 
   async function refreshHealth() {
     setHealth((cur) => ({ ...cur, loading: true, error: "" }));
@@ -119,6 +158,51 @@ export default function HomePage() {
         db: null,
         error: error instanceof Error ? error.message : "Unable to reach the backend.",
       });
+    }
+  }
+
+  async function loadRagOptions() {
+    try {
+      const options = await apiClient.ragOptions();
+      setRagOptions(options);
+
+      const preferredModel =
+        options.chat_models.find((model) => model.name === "Llama 3 8B Instruct") ??
+        options.chat_models[0];
+      const preferredKb =
+        options.knowledge_bases.find((item) => item.id === 291) ??
+        options.knowledge_bases[0];
+
+      setRagConfig((cur) => ({
+        ...cur,
+        knowledge_base_id: cur.knowledge_base_id ?? preferredKb?.id ?? null,
+        knowledge_base_name: cur.knowledge_base_name ?? preferredKb?.name ?? null,
+        inference_model_id: cur.inference_model_id || preferredModel?.model_id || "",
+        inference_model_name: cur.inference_model_name ?? preferredModel?.name ?? null,
+      }));
+    } catch {
+      setRagOptions({
+        enabled: false,
+        model_source: null,
+        chat_models: [],
+        rerank_models: [],
+        knowledge_bases: [],
+      });
+    }
+  }
+
+  async function loadSavedRagConfig(sessionId: string) {
+    try {
+      const saved = await apiClient.getRagConfig(sessionId);
+      setRagConfig((cur) => ({
+        ...cur,
+        ...saved,
+        session_id: sessionId,
+      }));
+      setRagConfigDirty(false);
+    } catch {
+      setRagConfig((cur) => ({ ...cur, session_id: sessionId }));
+      setRagConfigDirty(false);
     }
   }
 
@@ -141,6 +225,13 @@ export default function HomePage() {
     const sessionId = state.sessionId || getOrCreateSessionId();
     if (!trimmed) {
       setState((cur) => ({ ...cur, error: "Please enter a question first." }));
+      return;
+    }
+    if (ragConfig.enabled && (!ragConfig.rag_session_id || ragConfigDirty)) {
+      setState((cur) => ({
+        ...cur,
+        error: "Save the RAG Studio configuration first before sending a knowledge-base question.",
+      }));
       return;
     }
 
@@ -179,8 +270,69 @@ export default function HomePage() {
     }
   }
 
+  async function saveRagConfig() {
+    if (!state.sessionId) return;
+
+    setRagSaving(true);
+    try {
+      const saved = await apiClient.saveRagConfig({
+        ...ragConfig,
+        session_id: state.sessionId,
+      });
+      setRagConfig(saved);
+      setRagConfigDirty(false);
+      setRagPanelOpen(false);
+    } catch (error) {
+      setState((cur) => ({
+        ...cur,
+        error: error instanceof Error ? error.message : "Unable to save RAG configuration.",
+      }));
+    } finally {
+      setRagSaving(false);
+    }
+  }
+
+  async function handleToggleRag(enabled: boolean) {
+    const nextConfig: RagSessionConfig = {
+      ...ragConfig,
+      enabled,
+      session_id: state.sessionId,
+    };
+
+    setRagConfig(nextConfig);
+    setRagConfigDirty(enabled || ragConfigDirty);
+
+    if (enabled) {
+      setRagPanelOpen(true);
+      return;
+    }
+
+    if (ragConfig.rag_session_id) {
+      setRagSaving(true);
+      try {
+        const saved = await apiClient.saveRagConfig({
+          ...nextConfig,
+          rag_session_id: null,
+        });
+        setRagConfig(saved);
+        setRagConfigDirty(false);
+      } catch (error) {
+        setState((cur) => ({
+          ...cur,
+          error: error instanceof Error ? error.message : "Unable to disable RAG configuration.",
+        }));
+      } finally {
+        setRagSaving(false);
+      }
+    }
+  }
+
   function handleNewChat() {
-    setState({ ...initialChatState, sessionId: createNewSessionId() });
+    const sessionId = createNewSessionId();
+    setState({ ...initialChatState, sessionId });
+    setRagConfig(defaultRagConfig(sessionId));
+    setRagPanelOpen(false);
+    setRagConfigDirty(false);
   }
 
   const sidebar = (
@@ -257,6 +409,11 @@ export default function HomePage() {
           >
             Refresh status
           </button>
+          {ragOptions?.enabled ? (
+            <span className="hidden rounded-[var(--radius-pill)] bg-[rgba(92,99,242,0.12)] px-3 py-1.5 text-xs font-semibold text-[#4953d3] sm:inline-flex">
+              RAG Studio ready
+            </span>
+          ) : null}
         </div>
       }
     />
@@ -361,9 +518,25 @@ export default function HomePage() {
             question={state.question}
             loading={state.loading}
             starterPrompts={starterPrompts.map((item) => item.prompt)}
+            ragAvailable={Boolean(ragOptions?.enabled)}
+            ragPanelOpen={ragPanelOpen}
+            ragSaving={ragSaving}
+            ragConfigLocked={Boolean(ragConfig.enabled && ragConfig.rag_session_id && !ragConfigDirty)}
+            ragConfig={ragConfig}
+            chatModels={ragOptions?.chat_models ?? []}
+            rerankModels={ragOptions?.rerank_models ?? []}
+            knowledgeBases={ragOptions?.knowledge_bases ?? []}
             onQuestionChange={(question) => setState((cur) => ({ ...cur, question, error: "" }))}
             onStarterSelect={(prompt) => submitQuestion(prompt)}
             onSubmit={() => submitQuestion(state.question)}
+            onToggleRag={(enabled) => void handleToggleRag(enabled)}
+            onOpenRagPanel={() => setRagPanelOpen(true)}
+            onCloseRagPanel={() => setRagPanelOpen(false)}
+            onRagConfigChange={(config) => {
+              setRagConfig(config);
+              setRagConfigDirty(true);
+            }}
+            onSaveRagConfig={() => void saveRagConfig()}
           />
         </div>
       </PageCanvas>

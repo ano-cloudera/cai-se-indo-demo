@@ -3,7 +3,14 @@ from __future__ import annotations
 from typing import Any
 
 from app.core.config import Settings, get_settings
-from app.schemas.session import ChatMessage, ResultPreviewContext, SessionMemoryState
+from app.schemas.rag import RagSessionConfigRequest
+from app.schemas.session import (
+    ChatMessage,
+    RagSessionConfigState,
+    ResultPreviewContext,
+    SessionMemoryState,
+    utc_now,
+)
 from app.services.session_store import InMemorySessionStore
 
 
@@ -82,6 +89,33 @@ class SessionMemoryStore:
 
     def get_session_state(self, session_id: str) -> SessionMemoryState | None:
         return self.session_store.get_session(session_id)
+
+    def set_rag_config(
+        self,
+        payload: RagSessionConfigRequest,
+        rag_session_id: int | None,
+    ) -> SessionMemoryState:
+        session = self.get_or_create_session(payload.session_id)
+        session.rag_config = RagSessionConfigState(
+            enabled=payload.enabled,
+            session_name=payload.session_name,
+            project_id=payload.project_id,
+            knowledge_base_id=payload.knowledge_base_id,
+            knowledge_base_name=payload.knowledge_base_name,
+            rag_session_id=rag_session_id,
+            inference_model_id=payload.inference_model_id,
+            inference_model_name=payload.inference_model_name,
+            rerank_model_id=payload.rerank_model_id,
+            rerank_model_name=payload.rerank_model_name,
+            response_chunks=payload.response_chunks,
+            query_configuration=payload.query_configuration.model_copy(deep=True),
+            updated_at=utc_now(),
+        )
+        return self.session_store.update_session(session)
+
+    def get_rag_config(self, session_id: str) -> RagSessionConfigState | None:
+        session = self.session_store.get_session(session_id)
+        return None if session is None else session.rag_config
 
     def _append_message(
         self,

@@ -39,6 +39,8 @@ It is designed to run in Cloudera AI sessions and Applications, using Impala for
 - `AZURE_OPENAI_API_VERSION`
 - `AZURE_OPENAI_DEPLOYMENT`
 - `AZURE_OPENAI_MODEL`
+- `RAG_BASE_URL` or `AGENT_BASE_URL`
+- `RAG_TIMEOUT_SECONDS`
 - `SESSION_BACKEND`
 - `SESSION_TTL_MINUTES`
 - `MEMORY_MAX_HISTORY`
@@ -77,6 +79,10 @@ The launcher reads `CDSW_APP_PORT` first, then `PORT`, then falls back to `8080`
 - `POST /sql/generate`
 - `POST /sql/execute`
 - `POST /chat/query`
+- `POST /chat/answer`
+- `GET /rag/options`
+- `GET /rag/config/{session_id}`
+- `POST /rag/config`
 
 ## Behavioral Notes
 
@@ -84,4 +90,5 @@ The launcher reads `CDSW_APP_PORT` first, then `PORT`, then falls back to `8080`
 - generated SQL is validated before execution
 - dangerous keywords and multi-statement SQL are blocked
 - answer generation is grounded in result previews, not hidden data access
+- when RAG Studio is configured and enabled per chat session, `POST /chat/answer` can route to a saved RAG session instead of the default SQL flow
 - this app remains more general-purpose than `fraud-ai-assistant`

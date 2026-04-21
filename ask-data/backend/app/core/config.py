@@ -72,6 +72,11 @@ class Settings(BaseSettings):
         default="customers,deposits,credits,fraud_transactions",
         alias="SQL_ALLOWED_TABLES",
     )
+    rag_base_url: str = Field(
+        default="",
+        validation_alias=AliasChoices("RAG_BASE_URL", "AGENT_BASE_URL"),
+    )
+    rag_timeout_seconds: int = Field(default=60, alias="RAG_TIMEOUT_SECONDS")
 
     @property
     def is_impala_configured(self) -> bool:
@@ -110,6 +115,10 @@ class Settings(BaseSettings):
             for origin in self.cors_allow_origins.split(",")
             if origin.strip()
         ] or ["*"]
+
+    @property
+    def is_rag_configured(self) -> bool:
+        return bool(self.rag_base_url.strip())
 
 
 @lru_cache

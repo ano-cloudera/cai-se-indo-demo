@@ -34,6 +34,12 @@ Important:
 - `AZURE_OPENAI_DEPLOYMENT`
 - `AZURE_OPENAI_MODEL`
 
+### RAG Studio
+
+- `RAG_BASE_URL`
+- `AGENT_BASE_URL`
+- `RAG_TIMEOUT_SECONDS`
+
 ### Session and memory
 
 - `SESSION_BACKEND`
@@ -64,6 +70,7 @@ Important:
 - The browser client now calls the frontend's same-origin proxy at `/api/backend`. Set `BACKEND_API_BASE_URL` on the frontend Application to the backend app URL. `NEXT_PUBLIC_API_BASE_URL` can still be used as a fallback for older frontend deployments.
 - For CAI Application hosting, `CDSW_APP_PORT` should be preferred when present.
 - Recommended `DB_NAME` for the current CAI demo is `cai_sdx_se_indonesia`.
+- Set either `RAG_BASE_URL` or `AGENT_BASE_URL` to the RAG Studio application base URL when enabling the optional knowledge-base workflow.
 - Current shared external data location is `s3a://go01-demo/user/cai-demo-se-indonesia/data/`.
 - Recommended `SQL_ALLOWED_TABLES` value is `customers,deposits,credits,fraud_transactions`.
 - No secrets should be hardcoded into source files.

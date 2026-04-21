@@ -43,6 +43,57 @@ export interface ChatAnswerResponse {
   session_id: string | null;
   original_question: string;
   answer: string;
+  mode?: string | null;
+}
+
+export interface RagQueryConfiguration {
+  enable_hyde: boolean;
+  enable_summary_filter: boolean;
+  enable_tool_calling: boolean;
+  disable_streaming: boolean;
+  selected_tools: string[];
+}
+
+export interface RagModelOption {
+  model_id: string;
+  name: string;
+  available: boolean;
+  replica_count: number;
+  tool_calling_supported: boolean;
+}
+
+export interface RagKnowledgeBaseOption {
+  id: number;
+  name: string;
+  description?: string | null;
+  document_count: number;
+  embedding_model?: string | null;
+  summarization_model?: string | null;
+  metadata: Record<string, unknown>;
+}
+
+export interface RagOptionsResponse {
+  enabled: boolean;
+  model_source?: string | null;
+  chat_models: RagModelOption[];
+  rerank_models: RagModelOption[];
+  knowledge_bases: RagKnowledgeBaseOption[];
+}
+
+export interface RagSessionConfig {
+  session_id: string;
+  enabled: boolean;
+  session_name: string;
+  project_id: number | null;
+  knowledge_base_id: number | null;
+  knowledge_base_name?: string | null;
+  rag_session_id?: number | null;
+  inference_model_id?: string | null;
+  inference_model_name?: string | null;
+  rerank_model_id?: string | null;
+  rerank_model_name?: string | null;
+  response_chunks: number;
+  query_configuration: RagQueryConfiguration;
 }
 
 function getApiBaseUrl(): string {
@@ -100,6 +151,14 @@ export const apiClient = {
     }),
   chatAnswer: (payload: { question: string; session_id?: string }) =>
     request<ChatAnswerResponse>("/chat/answer", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  ragOptions: () => request<RagOptionsResponse>("/rag/options"),
+  getRagConfig: (sessionId: string) =>
+    request<RagSessionConfig>(`/rag/config/${sessionId}`),
+  saveRagConfig: (payload: RagSessionConfig) =>
+    request<RagSessionConfig>("/rag/config", {
       method: "POST",
       body: JSON.stringify(payload),
     }),

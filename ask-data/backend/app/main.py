@@ -10,6 +10,11 @@ from app.db.connection import (
     check_impala_health,
     run_query,
 )
+from app.schemas.rag import (
+    RagOptionsResponse,
+    RagSessionConfigRequest,
+    RagSessionConfigResponse,
+)
 from app.schemas.sql import (
     ChatAnswerResponse,
     ChatQueryRequest,
@@ -28,6 +33,7 @@ from app.services.chat_router import (
     is_acknowledgement,
     is_farewell,
 )
+from app.services.rag_client import RagClient, RagClientError
 from app.services.conversation_generator import ConversationGeneratorService
 from app.services.session_store import InMemorySessionStore
 from app.services.sql_executor import SQLExecutionError, SQLExecutorService
@@ -42,6 +48,7 @@ sql_generator = SQLGeneratorService(memory_store=memory_store, settings=settings
 sql_executor = SQLExecutorService(settings=settings)
 answer_generator = AnswerGeneratorService(settings=settings)
 conversation_generator = ConversationGeneratorService(settings=settings)
+rag_client = RagClient(settings=settings) if settings.is_rag_configured else None
 
 logger.info("ask-data backend startup complete")
 
@@ -229,6 +236,61 @@ def _run_chat_flow(payload: ChatQueryRequest) -> dict[str, object]:
     }
 
 
+def _get_rag_config_response(session_id: str) -> RagSessionConfigResponse:
+    rag_config = memory_store.get_rag_config(session_id)
+    if rag_config is None:
+        return RagSessionConfigResponse(session_id=session_id)
+
+    return RagSessionConfigResponse(
+        session_id=session_id,
+        enabled=rag_config.enabled,
+        session_name=rag_config.session_name,
+        project_id=rag_config.project_id,
+        knowledge_base_id=rag_config.knowledge_base_id,
+        knowledge_base_name=rag_config.knowledge_base_name,
+        rag_session_id=rag_config.rag_session_id,
+        inference_model_id=rag_config.inference_model_id,
+        inference_model_name=rag_config.inference_model_name,
+        rerank_model_id=rag_config.rerank_model_id,
+        rerank_model_name=rag_config.rerank_model_name,
+        response_chunks=rag_config.response_chunks,
+        query_configuration=rag_config.query_configuration,
+    )
+
+
+def _run_rag_chat_flow(payload: ChatQueryRequest) -> dict[str, object]:
+    if rag_client is None:
+        raise RagClientError("RAG Studio is not configured for this backend.")
+    if not payload.session_id:
+        raise RagClientError("RAG requests require a session ID.")
+
+    rag_config = memory_store.get_rag_config(payload.session_id)
+    if (
+        rag_config is None
+        or not rag_config.enabled
+        or rag_config.rag_session_id is None
+    ):
+        raise RagClientError("RAG Studio is not enabled for this chat session.")
+
+    rag_result = rag_client.stream_completion(
+        session_id=rag_config.rag_session_id,
+        question=payload.question,
+    )
+    answer = str(rag_result["answer"])
+
+    memory_store.append_user_message(payload.session_id, payload.question)
+    memory_store.append_assistant_message(payload.session_id, answer)
+    memory_store.set_last_answer(payload.session_id, answer)
+    memory_store.set_last_intent(payload.session_id, "rag")
+
+    return {
+        "session_id": payload.session_id,
+        "original_question": payload.question,
+        "answer": answer,
+        "mode": "rag",
+    }
+
+
 @app.post("/sql/generate", response_model=SQLGenerationResponse)
 def generate_sql(payload: SQLGenerateRequest) -> SQLGenerationResponse:
     try:
@@ -271,10 +333,56 @@ def chat_query(payload: ChatQueryRequest) -> ChatQueryResponse:
     return ChatQueryResponse(**response_payload)
 
 
+@app.get("/rag/options", response_model=RagOptionsResponse)
+def rag_options() -> RagOptionsResponse:
+    if rag_client is None:
+        return RagOptionsResponse(enabled=False)
+
+    try:
+        return RagOptionsResponse(
+            enabled=True,
+            model_source=rag_client.get_model_source(),
+            chat_models=rag_client.get_chat_models(),
+            rerank_models=rag_client.get_rerank_models(),
+            knowledge_bases=rag_client.get_knowledge_bases(),
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@app.get("/rag/config/{session_id}", response_model=RagSessionConfigResponse)
+def get_rag_config(session_id: str) -> RagSessionConfigResponse:
+    return _get_rag_config_response(session_id)
+
+
+@app.post("/rag/config", response_model=RagSessionConfigResponse)
+def save_rag_config(payload: RagSessionConfigRequest) -> RagSessionConfigResponse:
+    if rag_client is None:
+        raise HTTPException(status_code=400, detail="RAG Studio is not configured for this backend.")
+
+    try:
+        rag_session_id = None
+        if payload.enabled:
+            rag_session_id = rag_client.create_session(payload)
+        memory_store.set_rag_config(payload, rag_session_id=rag_session_id)
+        return _get_rag_config_response(payload.session_id)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
 @app.post("/chat/answer", response_model=ChatAnswerResponse)
 def chat_answer(payload: ChatQueryRequest) -> ChatAnswerResponse:
+    rag_config = (
+        memory_store.get_rag_config(payload.session_id)
+        if payload.session_id
+        else None
+    )
+
     try:
-        response_payload = _run_chat_flow(payload)
+        if rag_config is not None and rag_config.enabled and rag_config.rag_session_id is not None:
+            response_payload = _run_rag_chat_flow(payload)
+        else:
+            response_payload = _run_chat_flow(payload)
     except (ValueError, SQLValidationError, SQLExecutionError):
         fallback_answer = build_processing_fallback_answer(payload.question)
         if payload.session_id:
@@ -287,6 +395,7 @@ def chat_answer(payload: ChatQueryRequest) -> ChatAnswerResponse:
             "session_id": payload.session_id,
             "original_question": payload.question,
             "answer": fallback_answer,
+            "mode": "fallback",
         }
     except Exception:
         fallback_answer = build_processing_fallback_answer(payload.question)
@@ -300,10 +409,12 @@ def chat_answer(payload: ChatQueryRequest) -> ChatAnswerResponse:
             "session_id": payload.session_id,
             "original_question": payload.question,
             "answer": fallback_answer,
+            "mode": "fallback",
         }
 
     return ChatAnswerResponse(
         session_id=response_payload["session_id"],
         original_question=response_payload["original_question"],
         answer=response_payload["answer"],
+        mode=response_payload.get("mode"),
     )

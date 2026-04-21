@@ -24,6 +24,7 @@ class ChatAnswerResponse(BaseModel):
     session_id: str | None = None
     original_question: str
     answer: str
+    mode: str | None = None
 
 
 class SQLExecutionResponse(BaseModel):
