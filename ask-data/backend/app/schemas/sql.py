@@ -25,6 +25,8 @@ class AnswerSource(BaseModel):
     document_id: str | None = None
     node_id: str | None = None
     score: float | None = None
+    preview_url: str | None = None
+    download_url: str | None = None
 
 
 class ChatAnswerResponse(BaseModel):

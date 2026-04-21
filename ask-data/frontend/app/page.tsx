@@ -585,24 +585,26 @@ export default function HomePage() {
                 ) : null}
               </div>
             ) : (
-              <div className="mx-auto flex max-w-3xl flex-col gap-5">
+              <div className="mx-auto flex w-full max-w-5xl flex-col gap-5">
                 {state.messages.map((message) =>
                   message.role === "user" ? (
-                    <div key={message.id} className="ml-auto max-w-full sm:max-w-[28rem]">
+                    <div key={message.id} className="flex w-full justify-end">
                       <div
-                        className="rounded-[18px] px-4 py-3 text-sm leading-6 text-white shadow-panel"
+                        className="w-full max-w-[42rem] rounded-[18px] px-4 py-3 text-sm leading-6 text-white shadow-panel lg:max-w-[75%]"
                         style={{ background: "linear-gradient(135deg, #06293e 0%, #08004d 100%)" }}
                       >
                         {message.content}
                       </div>
                     </div>
                   ) : (
-                    <AnswerCard key={message.id} answer={message.content} sources={message.sources} />
+                    <div key={message.id} className="flex w-full justify-start">
+                      <AnswerCard answer={message.content} sources={message.sources} />
+                    </div>
                   ),
                 )}
 
                 {state.loading ? (
-                  <section className="max-w-[48rem] rounded-[var(--radius-panel)] border border-[var(--color-border-soft)] bg-[var(--color-surface)] p-5 shadow-panel">
+                  <section className="w-full max-w-[56rem] rounded-[var(--radius-panel)] border border-[var(--color-border-soft)] bg-[var(--color-surface)] p-5 shadow-panel">
                     <div className="flex items-center gap-3">
                       <span className="inline-flex gap-1">
                         {[0, 1, 2].map((i) => (

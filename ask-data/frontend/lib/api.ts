@@ -52,6 +52,8 @@ export interface AnswerSource {
   document_id?: string | null;
   node_id?: string | null;
   score?: number | null;
+  preview_url?: string | null;
+  download_url?: string | null;
 }
 
 export interface RagQueryConfiguration {

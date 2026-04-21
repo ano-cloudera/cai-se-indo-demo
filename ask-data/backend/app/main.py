@@ -306,6 +306,7 @@ def _run_rag_chat_flow(payload: ChatQueryRequest) -> dict[str, object]:
             if rag_result.get("response_id") is not None
             else None
         ),
+        data_source_id=rag_config.knowledge_base_id,
     )
 
     memory_store.append_user_message(payload.session_id, payload.question)

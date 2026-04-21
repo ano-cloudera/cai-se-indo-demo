@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import html
 import json
+import re
 from urllib.parse import urljoin
 
 import httpx
@@ -16,6 +18,10 @@ from app.schemas.sql import AnswerSource
 
 class RagClientError(RuntimeError):
     pass
+
+
+_RAG_CITATION_PATTERN = re.compile(r"<a\b[^>]*>(.*?)</a>", re.IGNORECASE | re.DOTALL)
+_HTML_TAG_PATTERN = re.compile(r"</?[^>]+>")
 
 
 class RagClient:
@@ -180,11 +186,16 @@ class RagClient:
             raise RagClientError("RAG stream completion returned no answer text.")
 
         return {
-            "answer": answer,
+            "answer": self.sanitize_answer_text(answer),
             "response_id": response_id,
         }
 
-    def get_sources(self, session_id: int, response_id: str | None = None) -> list[AnswerSource]:
+    def get_sources(
+        self,
+        session_id: int,
+        response_id: str | None = None,
+        data_source_id: int | None = None,
+    ) -> list[AnswerSource]:
         with self._client() as client:
             response = client.get(
                 self._build_url(f"/llm-service/sessions/{session_id}/chat-history"),
@@ -237,13 +248,29 @@ class RagClient:
                 continue
             seen.add(dedupe_key)
 
+            preview_url = None
+            if data_source_id is not None and document_id:
+                preview_url = self._build_url(
+                    f"/api/v1/rag/dataSources/{data_source_id}/files/{document_id}/download"
+                )
+
             sources.append(
                 AnswerSource(
                     title=title,
                     document_id=document_id,
                     node_id=node_id,
                     score=score_value,
+                    preview_url=preview_url,
+                    download_url=preview_url,
                 )
             )
 
         return sources
+
+    @staticmethod
+    def sanitize_answer_text(answer: str) -> str:
+        cleaned = _RAG_CITATION_PATTERN.sub(lambda match: html.unescape(match.group(1).strip()), answer)
+        cleaned = _HTML_TAG_PATTERN.sub("", cleaned)
+        cleaned = html.unescape(cleaned)
+        cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
+        return cleaned.strip()
