@@ -115,8 +115,9 @@ def build_greeting_answer(question: str) -> str:
     if is_indonesian_text(question):
         return (
             "Selamat datang. Saya Data Analyst Assistant, siap membantu Anda "
-            "membaca data nasabah, deposito, dan kredit dengan cara yang lebih sederhana "
-            "dan nyaman.\n\n"
+            "membaca data deposito dan kredit dengan cara yang lebih sederhana "
+            "dan nyaman. Jika Anda nanti butuh jawaban dari dokumen, SOP, atau knowledge base, "
+            "aktifkan dulu RAG Studio dari aplikasi.\n\n"
             "Kalau mau mulai, Anda bisa tanya hal seperti:\n"
             "1. Berapa total saldo deposito saat ini?\n"
             "2. Berapa total outstanding kredit saat ini?\n"
@@ -125,11 +126,12 @@ def build_greeting_answer(question: str) -> str:
 
     return (
         "Hello, it is great to meet you. I am the Data Analyst Assistant, "
-        "ready to help you explore customer, deposit, credit, and fraud data in a clear and practical way.\n\n"
+        "ready to help you explore deposit and credit data in a clear and practical way. "
+        "If you need answers grounded in documents or knowledge-base content, enable RAG Studio first.\n\n"
         "You can start with questions like:\n"
         "1. What is the total deposit balance?\n"
         "2. What is the total outstanding credit?\n"
-        "3. What is the fraud rate by channel?"
+        "3. Who has the highest outstanding credit?"
     )
 
 
@@ -150,14 +152,14 @@ def build_out_of_scope_answer(question: str) -> str:
     if is_indonesian_text(question):
         return (
             "Saya paling cocok membantu pertanyaan yang berhubungan dengan data "
-            "nasabah, deposito, kredit, dan fraud BNI. Kalau Anda mau, coba tanyakan total saldo "
-            "deposito, outstanding kredit, fraud rate per channel, atau transaksi paling berisiko."
+            "deposito, kredit, dan konteks nasabah yang mendukung analisis itu. "
+            "Kalau yang Anda butuhkan berasal dari dokumen atau knowledge base, "
+            "aktifkan RAG Studio terlebih dahulu."
         )
 
     return (
-        "I can help with questions related to BNI customer, deposit, credit, and fraud data. "
-        "You can ask about total deposit balance, total outstanding credit, fraud rate by channel, "
-        "or the most suspicious transactions."
+        "I am best suited for deposit, credit, and supporting customer-analysis questions. "
+        "If you need answers from documents or a knowledge base, enable RAG Studio first."
     )
 
 
@@ -176,11 +178,13 @@ def build_processing_fallback_answer(question: str) -> str:
         return (
             "Maaf, saya belum bisa memproses pertanyaan itu dengan baik saat ini. "
             "Coba tuliskan pertanyaannya lebih spesifik, misalnya tentang total saldo deposito, "
-            "outstanding kredit, fraud rate, transaksi mencurigakan, jumlah nasabah, segmen, atau cabang."
+            "outstanding kredit, komposisi portofolio, nasabah terbesar, atau tren kredit. "
+            "Jika pertanyaannya butuh dokumen atau SOP, aktifkan RAG Studio terlebih dahulu."
         )
 
     return (
         "I am sorry, I could not process that question cleanly just now. "
         "Please try asking in a more specific way, for example about total deposit balance, "
-        "outstanding credit, fraud rate, suspicious transactions, customer counts, segments, or branches."
+        "outstanding credit, portfolio composition, top debtors, or branch-level credit trends. "
+        "If the question depends on documents or SOPs, enable RAG Studio first."
     )

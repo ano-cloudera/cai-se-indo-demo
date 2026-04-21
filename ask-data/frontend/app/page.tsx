@@ -7,6 +7,7 @@ import { AnswerCard } from "@/components/answer-card";
 import { BrandLogo } from "@/components/brand-logo";
 import { ChatInputPanel } from "@/components/chat-input-panel";
 import { NoticePanel } from "@/components/notice-panel";
+import { RagConfigModal } from "@/components/rag-config-modal";
 import { StarterCard } from "@/components/starter-card";
 import {
   AppShell,
@@ -335,6 +336,14 @@ export default function HomePage() {
     setRagConfigDirty(false);
   }
 
+  function handleClearSession() {
+    const sessionId = createNewSessionId();
+    setState({ ...initialChatState, sessionId });
+    setRagConfig(defaultRagConfig(sessionId));
+    setRagPanelOpen(false);
+    setRagConfigDirty(false);
+  }
+
   const sidebar = (
     <AppSidebar
       brand={<BrandLogo />}
@@ -409,9 +418,23 @@ export default function HomePage() {
           >
             Refresh status
           </button>
+          <button
+            type="button"
+            onClick={() => setRagPanelOpen(true)}
+            className="rounded-[var(--radius-pill)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-1.5 text-xs font-semibold text-[var(--color-ink-muted)] transition hover:border-[var(--color-action-primary)] hover:text-[var(--color-action-primary)]"
+          >
+            RAG Studio
+          </button>
+          <button
+            type="button"
+            onClick={handleClearSession}
+            className="rounded-[var(--radius-pill)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-1.5 text-xs font-semibold text-[var(--color-ink-muted)] transition hover:border-rose-400 hover:text-rose-500"
+          >
+            Clear Session
+          </button>
           {ragOptions?.enabled ? (
             <span className="hidden rounded-[var(--radius-pill)] bg-[rgba(92,99,242,0.12)] px-3 py-1.5 text-xs font-semibold text-[#4953d3] sm:inline-flex">
-              RAG Studio ready
+              {ragConfig.enabled && ragConfig.rag_session_id ? "RAG active" : "RAG Studio ready"}
             </span>
           ) : null}
         </div>
@@ -448,7 +471,7 @@ export default function HomePage() {
                     Hello, I am the Data Analyst Assistant.
                   </h3>
                   <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-[var(--color-ink-muted)]">
-                    I&apos;m here to help you understand your data — deposits, credit, customers, and more — using natural language. Just ask a question and I&apos;ll surface a clear, structured answer.
+                    I&apos;m here to help you analyze deposit and credit data quickly using natural language. If you need answers grounded in policy or operational documents, enable RAG Studio from the top bar first.
                   </p>
                 </section>
 
@@ -518,28 +541,29 @@ export default function HomePage() {
             question={state.question}
             loading={state.loading}
             starterPrompts={starterPrompts.map((item) => item.prompt)}
-            ragAvailable={Boolean(ragOptions?.enabled)}
-            ragPanelOpen={ragPanelOpen}
-            ragSaving={ragSaving}
-            ragConfigLocked={Boolean(ragConfig.enabled && ragConfig.rag_session_id && !ragConfigDirty)}
-            ragConfig={ragConfig}
-            chatModels={ragOptions?.chat_models ?? []}
-            rerankModels={ragOptions?.rerank_models ?? []}
-            knowledgeBases={ragOptions?.knowledge_bases ?? []}
             onQuestionChange={(question) => setState((cur) => ({ ...cur, question, error: "" }))}
             onStarterSelect={(prompt) => submitQuestion(prompt)}
             onSubmit={() => submitQuestion(state.question)}
-            onToggleRag={(enabled) => void handleToggleRag(enabled)}
-            onOpenRagPanel={() => setRagPanelOpen(true)}
-            onCloseRagPanel={() => setRagPanelOpen(false)}
-            onRagConfigChange={(config) => {
-              setRagConfig(config);
-              setRagConfigDirty(true);
-            }}
-            onSaveRagConfig={() => void saveRagConfig()}
           />
         </div>
       </PageCanvas>
+      <RagConfigModal
+        open={ragPanelOpen}
+        saving={ragSaving}
+        ragAvailable={Boolean(ragOptions?.enabled)}
+        ragConfigLocked={Boolean(ragConfig.enabled && ragConfig.rag_session_id && !ragConfigDirty)}
+        config={ragConfig}
+        chatModels={ragOptions?.chat_models ?? []}
+        rerankModels={ragOptions?.rerank_models ?? []}
+        knowledgeBases={ragOptions?.knowledge_bases ?? []}
+        onClose={() => setRagPanelOpen(false)}
+        onToggleEnabled={(enabled) => void handleToggleRag(enabled)}
+        onConfigChange={(config) => {
+          setRagConfig(config);
+          setRagConfigDirty(true);
+        }}
+        onSave={() => void saveRagConfig()}
+      />
     </AppShell>
   );
 }
