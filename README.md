@@ -63,6 +63,8 @@ General-purpose AI analytics assistant. Ask questions about structured data in n
 - Read-only Impala query execution with SQL guardrails
 - Generic enough to reuse across different banking or enterprise customers
 - Deployed as two separate Cloudera AI Applications (backend + frontend)
+- Optional RAG Studio integration for document-grounded answers, with per-session configuration stored in backend memory
+- RAG answers can surface source cards with an `Open Source PDF` action when source metadata is available
 
 See [`ask-data/docs/project-state.md`](ask-data/docs/project-state.md) for full implementation and deployment details.
 

@@ -143,6 +143,8 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
 - Welcome screen with Cloudera logo + 3 starter prompt cards
 - Chat messages: user bubble (dark navy) + assistant answer card (white surface)
 - RAG-backed answers can render a structured source list under the answer card when source metadata is available
+- Assistant answers now sanitize raw RAG citation markup before rendering
+- Assistant answers can render cleaner paragraphs, lists, and simple pipe-table content instead of plain monospaced text blocks
 - Loading state: animated bouncing dots
 - "New Conversation" button in sidebar footer resets session
 - RAG config lives in a separate modal, not in the chat input area
@@ -204,6 +206,9 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
 - [x] Footer actions in RAG config modal no longer easily clip off-screen
 - [x] Frontend can fall back to hardcoded RAG KB/model defaults if live `/rag/options` is still failing in a stale backend deployment
 - [x] Answer card supports rendering structured RAG sources instead of raw source objects
+- [x] Answer card now uses a bot emoji marker instead of the earlier plus icon
+- [x] User/assistant message alignment has been adjusted to feel more balanced in wide chat layouts
+- [x] RAG source cards now prefer an `Open Source PDF` action instead of implying guaranteed inline preview
 
 ### Backend
 - [x] Implemented and deployed
@@ -214,6 +219,7 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
 - [x] RAG session creation working with complete payload
 - [x] Human-readable validation errors added for incomplete RAG config
 - [x] RAG source extraction added from chat history into a structured `sources` payload for UI rendering
+- [x] RAG answer text is sanitized to strip citation anchor markup before the response is sent to the frontend
 
 ### Demo readiness
 - [x] End-to-end flow working
@@ -222,10 +228,12 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
   - Knowledge base: `BPJS-Claim-Knowledge (291)`
   - Chat model: `meta.llama3-8b-instruct-v1:0`
 - [x] Source rendering support added for RAG answers
+- [x] Cleaner display support added for list/table-style answers in the main chat card
 - [ ] Backend runtime env vars need to be set per customer environment
 - [ ] CAI backend should be redeployed with the latest null-safe `/rag/options` parser
 - [ ] Until redeployed, frontend may rely on hardcoded fallback options if live `/rag/options` still fails
 - [ ] RAG source card rendering depends on the exact `chat-history` payload shape returned by the target RAG Studio instance
+- [ ] `Open Source PDF` behavior still depends on upstream RAG file download headers; some documents may open inline while others may download directly
 
 ---
 

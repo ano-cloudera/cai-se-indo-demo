@@ -223,7 +223,7 @@ export function AnswerCard({ answer, sources = [] }: AnswerCardProps) {
                       </p>
                       <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-[var(--color-ink-subtle)]">
                         {formatScore(source.score) ? <span>Relevance: {formatScore(source.score)}</span> : null}
-                        {source.document_id ? <span>Document reference available</span> : null}
+                        {source.document_id ? <span>PDF source available</span> : null}
                       </div>
                     </div>
                     {source.preview_url ? (
@@ -234,10 +234,14 @@ export function AnswerCard({ answer, sources = [] }: AnswerCardProps) {
                           rel="noreferrer"
                           className="rounded-[12px] border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-1.5 text-xs font-semibold text-[var(--color-ink-muted)] transition hover:border-[var(--color-action-primary)] hover:text-[var(--color-action-primary)]"
                         >
-                          Preview PDF
+                          Open Source PDF
                         </a>
                       </div>
-                    ) : null}
+                    ) : (
+                      <span className="shrink-0 rounded-[12px] border border-[var(--color-border-soft)] bg-white/50 px-3 py-1.5 text-xs font-medium text-[var(--color-ink-subtle)]">
+                        PDF link unavailable
+                      </span>
+                    )}
                   </div>
                 </div>
               ))}
