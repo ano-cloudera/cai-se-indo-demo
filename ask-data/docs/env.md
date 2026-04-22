@@ -40,6 +40,13 @@ Important:
 - `AGENT_BASE_URL`
 - `RAG_TIMEOUT_SECONDS`
 
+### Guardrails AI
+
+- `GUARDRAILS_ENABLED`
+- `GUARDRAILS_API_KEY`
+- `GUARDRAILS_BASE_URL`
+- `GUARDRAILS_FAIL_OPEN`
+
 ### Session and memory
 
 - `SESSION_BACKEND`
@@ -71,6 +78,9 @@ Important:
 - For CAI Application hosting, `CDSW_APP_PORT` should be preferred when present.
 - Recommended `DB_NAME` for the current CAI demo is `cai_sdx_se_indonesia`.
 - Set either `RAG_BASE_URL` or `AGENT_BASE_URL` to the RAG Studio application base URL when enabling the optional knowledge-base workflow.
+- Set `GUARDRAILS_ENABLED=true` to activate request screening. `GUARDRAILS_API_KEY` is required when Guardrails is enabled.
+- `GUARDRAILS_BASE_URL` is optional in the current implementation. If omitted, the app still uses built-in heuristic screening for prompt injection, sensitive-data requests, and obvious off-domain prompts.
+- `GUARDRAILS_FAIL_OPEN` defaults to `true`, meaning the app will continue with local heuristics if a remote Guardrails endpoint is unreachable.
 - Current shared external data location is `s3a://go01-demo/user/cai-demo-se-indonesia/data/`.
 - Recommended `SQL_ALLOWED_TABLES` value is `customers,deposits,credits,fraud_transactions`.
 - No secrets should be hardcoded into source files.

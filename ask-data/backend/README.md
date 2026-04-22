@@ -41,6 +41,10 @@ It is designed to run in Cloudera AI sessions and Applications, using Impala for
 - `AZURE_OPENAI_MODEL`
 - `RAG_BASE_URL` or `AGENT_BASE_URL`
 - `RAG_TIMEOUT_SECONDS`
+- `GUARDRAILS_ENABLED`
+- `GUARDRAILS_API_KEY`
+- `GUARDRAILS_BASE_URL`
+- `GUARDRAILS_FAIL_OPEN`
 - `SESSION_BACKEND`
 - `SESSION_TTL_MINUTES`
 - `MEMORY_MAX_HISTORY`
@@ -90,5 +94,8 @@ The launcher reads `CDSW_APP_PORT` first, then `PORT`, then falls back to `8080`
 - generated SQL is validated before execution
 - dangerous keywords and multi-statement SQL are blocked
 - answer generation is grounded in result previews, not hidden data access
+- when `GUARDRAILS_ENABLED=true`, the backend screens prompts before SQL or RAG execution
+- if `GUARDRAILS_BASE_URL` is omitted, the backend runs in `local-only` guardrails mode using built-in enterprise safety rules
+- if `GUARDRAILS_BASE_URL` is set, the backend attempts remote Guardrails validation and still respects `GUARDRAILS_FAIL_OPEN`
 - when RAG Studio is configured and enabled per chat session, `POST /chat/answer` can route to a saved RAG session instead of the default SQL flow
 - this app remains more general-purpose than `fraud-ai-assistant`

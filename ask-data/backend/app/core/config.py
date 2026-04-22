@@ -77,6 +77,10 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("RAG_BASE_URL", "AGENT_BASE_URL"),
     )
     rag_timeout_seconds: int = Field(default=60, alias="RAG_TIMEOUT_SECONDS")
+    guardrails_enabled: bool = Field(default=False, alias="GUARDRAILS_ENABLED")
+    guardrails_api_key: str = Field(default="", alias="GUARDRAILS_API_KEY")
+    guardrails_base_url: str = Field(default="", alias="GUARDRAILS_BASE_URL")
+    guardrails_fail_open: bool = Field(default=True, alias="GUARDRAILS_FAIL_OPEN")
 
     @property
     def is_impala_configured(self) -> bool:
@@ -119,6 +123,20 @@ class Settings(BaseSettings):
     @property
     def is_rag_configured(self) -> bool:
         return bool(self.rag_base_url.strip())
+
+    @property
+    def is_guardrails_configured(self) -> bool:
+        return self.guardrails_enabled and bool(self.guardrails_api_key.strip())
+
+    @property
+    def guardrails_mode(self) -> str:
+        if not self.guardrails_enabled:
+            return "disabled"
+        if self.guardrails_base_url.strip():
+            return "remote"
+        if self.guardrails_api_key.strip():
+            return "local-only"
+        return "misconfigured"
 
 
 @lru_cache

@@ -39,6 +39,8 @@ from app.services.session_store import InMemorySessionStore
 from app.services.sql_executor import SQLExecutionError, SQLExecutorService
 from app.services.sql_generator import SQLGeneratorService
 from app.services.sql_guardrails import SQLValidationError
+from app.services.guardrails_service import GuardrailsDecision, GuardrailsService, GuardrailsServiceError
+from app.services.visualization_service import VisualizationService
 
 settings = get_settings()
 logger = logging.getLogger(__name__)
@@ -49,6 +51,8 @@ sql_executor = SQLExecutorService(settings=settings)
 answer_generator = AnswerGeneratorService(settings=settings)
 conversation_generator = ConversationGeneratorService(settings=settings)
 rag_client = RagClient(settings=settings) if settings.is_rag_configured else None
+guardrails_service = GuardrailsService(settings=settings)
+visualization_service = VisualizationService()
 
 logger.info("ask-data backend startup complete")
 
@@ -73,6 +77,7 @@ def read_root() -> dict[str, object]:
         "app": "ask-data",
         "environment": settings.app_env,
         "database": settings.impala_db,
+        "guardrails": guardrails_service.get_runtime_status(),
         "docs": "/docs",
     }
 
@@ -84,6 +89,7 @@ def health() -> dict[str, object]:
         "service": "ask-data-backend",
         "environment": settings.app_env,
         "debug": settings.app_debug,
+        "guardrails": guardrails_service.get_runtime_status(),
     }
 
 
@@ -132,7 +138,81 @@ def _store_result_preview(session_id: str | None, execution_result: dict[str, ob
     )
 
 
+def _maybe_block_with_guardrails(question: str) -> GuardrailsDecision | None:
+    if not settings.guardrails_enabled:
+        return None
+
+    decision = guardrails_service.screen_question(question)
+    if decision.action == "block":
+        return decision
+    return None
+
+
+def _guardrails_block_response(
+    payload: ChatQueryRequest,
+    decision: GuardrailsDecision,
+) -> dict[str, object]:
+    answer = decision.message or build_processing_fallback_answer(payload.question)
+    if payload.session_id:
+        memory_store.append_user_message(payload.session_id, payload.question)
+        memory_store.append_assistant_message(payload.session_id, answer)
+        memory_store.set_last_answer(payload.session_id, answer)
+        memory_store.set_last_intent(payload.session_id, "guardrails-block")
+
+    return {
+        "session_id": payload.session_id,
+        "original_question": payload.question,
+        "answer": answer,
+        "generated_sql": "",
+        "executed_sql": "",
+        "columns": [],
+        "rows": [],
+        "row_count": 0,
+        "truncated": False,
+        "limit_applied": False,
+        "metadata": {
+            "guardrails_action": decision.action,
+            "guardrails_reason": decision.reason,
+            **decision.metadata,
+        },
+        "visualization": None,
+    }
+
+
+def _apply_output_guardrails(
+    payload: ChatQueryRequest,
+    answer: str,
+) -> tuple[str, dict[str, object]]:
+    if not settings.guardrails_enabled:
+        return answer, {}
+
+    decision = guardrails_service.protect_answer_text(payload.question, answer)
+    if decision.action == "block":
+        return (
+            decision.message or build_processing_fallback_answer(payload.question),
+            {
+                "guardrails_action": decision.action,
+                "guardrails_reason": decision.reason,
+                **decision.metadata,
+            },
+        )
+    if decision.action == "redact":
+        return (
+            decision.message or answer,
+            {
+                "guardrails_action": decision.action,
+                "guardrails_reason": decision.reason,
+                **decision.metadata,
+            },
+        )
+    return decision.message or answer, {}
+
+
 def _run_chat_flow(payload: ChatQueryRequest) -> dict[str, object]:
+    blocked_decision = _maybe_block_with_guardrails(payload.question)
+    if blocked_decision is not None:
+        return _guardrails_block_response(payload, blocked_decision)
+
     session_memory = None
     if payload.session_id:
         session_memory = memory_store.get_or_create_session(payload.session_id)
@@ -165,6 +245,7 @@ def _run_chat_flow(payload: ChatQueryRequest) -> dict[str, object]:
             "truncated": False,
             "limit_applied": False,
             "metadata": {},
+            "visualization": None,
         }
 
     try:
@@ -196,8 +277,21 @@ def _run_chat_flow(payload: ChatQueryRequest) -> dict[str, object]:
             "truncated": False,
             "limit_applied": False,
             "metadata": {},
+            "visualization": None,
         }
 
+    result_decision = guardrails_service.screen_result_columns(
+        question=payload.question,
+        columns=execution_result["columns"],
+    )
+    if result_decision.action == "block":
+        return _guardrails_block_response(payload, result_decision)
+
+    visualization = visualization_service.build_visualization(
+        question=payload.question,
+        columns=execution_result["columns"],
+        rows=execution_result["rows"],
+    )
     answer = answer_generator.generate_answer(
         original_question=payload.question,
         executed_sql=execution_result["executed_sql"],
@@ -207,6 +301,7 @@ def _run_chat_flow(payload: ChatQueryRequest) -> dict[str, object]:
         truncated=execution_result["truncated"],
         limit_applied=execution_result["limit_applied"],
     )
+    answer, output_guardrails_metadata = _apply_output_guardrails(payload, answer)
     _store_result_preview(payload.session_id, execution_result)
     if payload.session_id:
         memory_store.append_user_message(payload.session_id, payload.question)
@@ -232,7 +327,9 @@ def _run_chat_flow(payload: ChatQueryRequest) -> dict[str, object]:
         "metadata": {
             "model": generated["model"],
             "deployment": generated["deployment"],
+            **output_guardrails_metadata,
         },
+        "visualization": visualization.model_dump() if visualization is not None else None,
     }
 
 
@@ -281,6 +378,19 @@ def _validate_rag_config(payload: RagSessionConfigRequest) -> None:
 
 
 def _run_rag_chat_flow(payload: ChatQueryRequest) -> dict[str, object]:
+    blocked_decision = _maybe_block_with_guardrails(payload.question)
+    if blocked_decision is not None:
+        blocked_payload = _guardrails_block_response(payload, blocked_decision)
+        return {
+            "session_id": blocked_payload["session_id"],
+            "original_question": blocked_payload["original_question"],
+            "answer": blocked_payload["answer"],
+            "mode": "guardrails-block",
+            "sources": [],
+            "metadata": blocked_payload.get("metadata", {}),
+            "visualization": None,
+        }
+
     if rag_client is None:
         raise RagClientError("RAG Studio is not configured for this backend.")
     if not payload.session_id:
@@ -299,6 +409,7 @@ def _run_rag_chat_flow(payload: ChatQueryRequest) -> dict[str, object]:
         question=payload.question,
     )
     answer = str(rag_result["answer"])
+    answer, output_guardrails_metadata = _apply_output_guardrails(payload, answer)
     sources = rag_client.get_sources(
         session_id=rag_config.rag_session_id,
         response_id=(
@@ -320,6 +431,8 @@ def _run_rag_chat_flow(payload: ChatQueryRequest) -> dict[str, object]:
         "answer": answer,
         "mode": "rag",
         "sources": sources,
+        "metadata": output_guardrails_metadata,
+        "visualization": None,
     }
 
 
@@ -358,6 +471,8 @@ def chat_query(payload: ChatQueryRequest) -> ChatQueryResponse:
     except SQLValidationError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except SQLExecutionError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+    except GuardrailsServiceError as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
@@ -421,7 +536,7 @@ def chat_answer(payload: ChatQueryRequest) -> ChatAnswerResponse:
             response_payload = _run_rag_chat_flow(payload)
         else:
             response_payload = _run_chat_flow(payload)
-    except (ValueError, SQLValidationError, SQLExecutionError):
+    except (ValueError, SQLValidationError, SQLExecutionError, GuardrailsServiceError):
         fallback_answer = build_processing_fallback_answer(payload.question)
         if payload.session_id:
             memory_store.append_user_message(payload.session_id, payload.question)
@@ -435,6 +550,8 @@ def chat_answer(payload: ChatQueryRequest) -> ChatAnswerResponse:
             "answer": fallback_answer,
             "mode": "fallback",
             "sources": [],
+            "metadata": {},
+            "visualization": None,
         }
     except Exception:
         fallback_answer = build_processing_fallback_answer(payload.question)
@@ -450,6 +567,8 @@ def chat_answer(payload: ChatQueryRequest) -> ChatAnswerResponse:
             "answer": fallback_answer,
             "mode": "fallback",
             "sources": [],
+            "metadata": {},
+            "visualization": None,
         }
 
     return ChatAnswerResponse(
@@ -458,4 +577,6 @@ def chat_answer(payload: ChatQueryRequest) -> ChatAnswerResponse:
         answer=response_payload["answer"],
         mode=response_payload.get("mode"),
         sources=response_payload.get("sources", []),
+        metadata=response_payload.get("metadata", {}),
+        visualization=response_payload.get("visualization"),
     )

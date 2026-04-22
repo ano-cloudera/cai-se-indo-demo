@@ -21,3 +21,21 @@ class SettingsTestCase(unittest.TestCase):
         self.assertEqual(settings.app_env, "test")
         self.assertEqual(settings.impala_db, "default")
         self.assertTrue(settings.is_impala_configured)
+
+    def test_guardrails_flag_requires_api_key(self) -> None:
+        settings = Settings(
+            GUARDRAILS_ENABLED=True,
+            GUARDRAILS_API_KEY="demo-key",
+        )
+
+        self.assertTrue(settings.is_guardrails_configured)
+        self.assertEqual(settings.guardrails_mode, "local-only")
+
+    def test_guardrails_remote_mode_when_base_url_exists(self) -> None:
+        settings = Settings(
+            GUARDRAILS_ENABLED=True,
+            GUARDRAILS_API_KEY="demo-key",
+            GUARDRAILS_BASE_URL="https://guardrails.example.com",
+        )
+
+        self.assertEqual(settings.guardrails_mode, "remote")

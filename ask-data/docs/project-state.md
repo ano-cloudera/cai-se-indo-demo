@@ -29,10 +29,10 @@ removing all BNI-specific references so it can be reused across different bankin
 
 1. User opens the frontend (Ask the Data UI)
 2. User asks a question in natural language (e.g. "What is the total deposit balance right now?")
-3. Frontend calls `/chat/answer` on the backend
+3. Frontend calls `/chat/query` for the standard SQL flow and `/chat/answer` for RAG-backed answers
 4. Backend builds a prompt, generates SQL via Azure OpenAI, executes it against Impala/CDW
-5. Backend returns a natural language answer
-6. Frontend renders the answer in a chat-style panel
+5. Backend returns a natural language answer plus optional visualization metadata when the SQL result is chartable
+6. Frontend renders the answer in a chat-style panel and can render a chart card from the backend visualization spec
 
 ### Optional RAG Studio Flow
 
@@ -94,8 +94,8 @@ All join on `customer_id`. No orphan records. Date fields in `YYYY-MM-DD` format
 | `GET /rag/options` | Load available RAG Studio KB + model options |
 | `GET /rag/config/{session_id}` | Load saved RAG config for one chat session |
 | `POST /rag/config` | Save RAG config and create backing RAG session |
-| `POST /chat/answer` | Main demo endpoint — returns `session_id`, `original_question`, `answer` |
-| `POST /chat/query` | Debug endpoint — returns full payload with SQL and rows |
+| `POST /chat/answer` | Main answer endpoint for RAG-aware chat — returns `session_id`, `original_question`, `answer`, guardrails metadata, and optional sources |
+| `POST /chat/query` | SQL answer endpoint — returns answer, SQL, rows, metadata, and optional visualization spec |
 | `POST /sql/generate` | SQL-only generation for debugging |
 
 **Session memory:** In-memory only (acceptable for demo; no persistence required).
@@ -107,6 +107,38 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
 **Deployment entry:** `backend/backend_entry.py`
 - Resolves paths via `os.getcwd()` (not `__file__`, which is unavailable in JupyterWSG context)
 - Launches Uvicorn via `subprocess` (not `uvicorn.run()`) to avoid running event loop conflict
+
+### Guardrails and response safety
+- Optional Guardrails config is now supported through env vars:
+  - `GUARDRAILS_ENABLED`
+  - `GUARDRAILS_API_KEY`
+  - `GUARDRAILS_BASE_URL`
+  - `GUARDRAILS_FAIL_OPEN`
+- If `GUARDRAILS_BASE_URL` is not set, the backend runs in `local-only` guardrails mode
+- If `GUARDRAILS_BASE_URL` is set, the backend can attempt remote Guardrails validation while still honoring `GUARDRAILS_FAIL_OPEN`
+- Input-side screening can block:
+  - prompt injection / jailbreak-style prompts
+  - obvious out-of-scope prompts
+  - requests for raw sensitive customer data
+  - abusive/toxic prompts
+- Output-side protection can:
+  - block sensitive result-column shapes before answer narration
+  - redact email / phone / long numeric identifiers from final answer text
+  - return guardrails metadata for the frontend so the UI can explain blocks or redactions
+
+### Visualization generation
+- Visualization intent is now generated in the backend, not guessed in the frontend
+- Backend returns a visualization spec with:
+  - chart `type`
+  - chart `title`
+  - `x_key`
+  - `y_key`
+  - normalized `series`
+- Current supported chart modes:
+  - `bar` for comparisons
+  - `line` for temporal trends
+  - `pie` for small composition-style result sets
+- Non-chartable query results return no visualization spec and render as answer-only
 
 ---
 
@@ -135,21 +167,26 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
 | `StarterCard` | `components/starter-card.tsx` | Clickable prompt suggestion cards |
 | `NoticePanel` | `components/notice-panel.tsx` | Error / empty state notices |
 | `RagConfigModal` | `components/rag-config-modal.tsx` | Per-session RAG Studio config panel |
+| `UserMessageCard` | `components/user-message-card.tsx` | Branded user bubble with avatar tile |
+| `ResultChartCard` | `components/result-chart-card.tsx` | Renders backend-provided bar/line/pie visualization specs |
 | `AppShell` | `components/ui/shell.tsx` | Layout: sidebar + topbar + main |
 
 ### UI features
 - Dark navy fixed sidebar with Cloudera logo + nav
 - Topbar shows: breadcrumb, database connection status (green when live), latest opened datetime, refresh button, `RAG Studio`, `Clear Session`
 - Welcome screen with Cloudera logo + 3 starter prompt cards
-- Chat messages: user bubble (dark navy) + assistant answer card (white surface)
+- Chat messages: styled user bubble with human avatar + assistant answer card (white surface)
 - RAG-backed answers can render a structured source list under the answer card when source metadata is available
 - Assistant answers now sanitize raw RAG citation markup before rendering
 - Assistant answers can render cleaner paragraphs, lists, and simple pipe-table content instead of plain monospaced text blocks
+- SQL-backed answers can render backend-selected charts for trend/comparison/composition questions
+- Guardrails blocks or redactions can render an explanatory notice below the assistant answer
 - Loading state: animated bouncing dots
 - "New Conversation" button in sidebar footer resets session
 - RAG config lives in a separate modal, not in the chat input area
 - Layout has been adjusted to be more responsive on narrower screens
 - RAG modal locks page scroll on open and avoids repeated option reloads to reduce visible modal flicker/glitch
+- Topbar can show current guardrails mode from `/health` when available (`Guardrails Local` / `Guardrails Remote`)
 
 ### Starter prompts (generic, not BNI-specific)
 1. "What is the total deposit balance right now?"
@@ -160,7 +197,10 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
 - Frontend proxies backend calls through `/api/backend`
 - Proxy upstream uses `BACKEND_API_BASE_URL` or `NEXT_PUBLIC_API_BASE_URL`
 - Typed API client in `lib/api.ts`
-- Calls `POST /chat/answer` → expects `{ session_id, original_question, answer }`
+- Standard SQL chat now calls `POST /chat/query`
+- RAG-enabled chat still uses `POST /chat/answer`
+- Both response types can include guardrails metadata
+- SQL query responses can include backend-generated visualization specs
 - Also calls `GET /rag/options`, `GET /rag/config/{session_id}`, and `POST /rag/config`
 
 **Deployment entry:** `frontend/frontend_entry.py`
@@ -184,6 +224,10 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
 - Impala / CDW connection: host, port, database, auth
 - Azure OpenAI: endpoint, key, deployment name, model name
 - `RAG_BASE_URL` or `AGENT_BASE_URL` for RAG Studio integration
+- `GUARDRAILS_ENABLED`
+- `GUARDRAILS_API_KEY`
+- `GUARDRAILS_BASE_URL`
+- `GUARDRAILS_FAIL_OPEN`
 
 ### Frontend (set in Cloudera AI)
 - `BACKEND_API_BASE_URL` or `NEXT_PUBLIC_API_BASE_URL` — full URL of the backend Application
@@ -208,6 +252,10 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
 - [x] Answer card supports rendering structured RAG sources instead of raw source objects
 - [x] Answer card now uses a bot emoji marker instead of the earlier plus icon
 - [x] User/assistant message alignment has been adjusted to feel more balanced in wide chat layouts
+- [x] User bubble has been upgraded to a more polished human-style card with avatar marker
+- [x] Frontend now renders backend-provided visualization cards for chartable SQL answers
+- [x] Frontend can explain guardrails blocks or redactions inline in the chat UI
+- [x] Topbar can display backend-reported guardrails runtime mode
 - [x] RAG source cards now prefer an `Open Source PDF` action instead of implying guaranteed inline preview
 
 ### Backend
@@ -220,6 +268,11 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
 - [x] Human-readable validation errors added for incomplete RAG config
 - [x] RAG source extraction added from chat history into a structured `sources` payload for UI rendering
 - [x] RAG answer text is sanitized to strip citation anchor markup before the response is sent to the frontend
+- [x] Guardrails service added for input screening, output redaction, and result-shape blocking
+- [x] `/health` and `/` now expose guardrails runtime mode/status
+- [x] Backend visualization service now returns explicit chart specs for SQL answers
+- [x] `guardrails-ai` dependency added and backend test environment verified in Python 3.11
+- [x] Backend tests updated and passing locally (`21 tests`)
 
 ### Demo readiness
 - [x] End-to-end flow working
@@ -229,11 +282,15 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
   - Chat model: `meta.llama3-8b-instruct-v1:0`
 - [x] Source rendering support added for RAG answers
 - [x] Cleaner display support added for list/table-style answers in the main chat card
+- [x] Local frontend build verified successfully with the workspace-installed Node runtime
 - [ ] Backend runtime env vars need to be set per customer environment
-- [ ] CAI backend should be redeployed with the latest null-safe `/rag/options` parser
+- [ ] CAI backend should be redeployed with the latest guardrails + visualization changes
+- [ ] CAI frontend should be redeployed with the latest visualization + guardrails UI changes
 - [ ] Until redeployed, frontend may rely on hardcoded fallback options if live `/rag/options` still fails
 - [ ] RAG source card rendering depends on the exact `chat-history` payload shape returned by the target RAG Studio instance
 - [ ] `Open Source PDF` behavior still depends on upstream RAG file download headers; some documents may open inline while others may download directly
+- [ ] Remote Guardrails mode still requires `GUARDRAILS_BASE_URL`; otherwise backend runs in `local-only` mode
+- [ ] Frontend/CAI smoke test still needed for guardrails badge and backend-driven visualization behavior in deployed Applications
 
 ---
 
@@ -246,7 +303,8 @@ When resuming in a new session, assume:
 4. Backend: FastAPI, deployed as CAI Application, CORS middleware removed
 5. Frontend: Next.js 15, deployed as CAI Application, indigo+navy design system
 6. Runtime config lives in Cloudera AI env vars — do not touch `.env.example` for runtime
-7. Major deployment blockers already solved — focus on polish or feature additions
+7. Guardrails and backend-driven visualization are now part of the latest state
+8. Major deployment blockers already solved — focus on CAI validation, polish, or feature additions
 
 ---
 

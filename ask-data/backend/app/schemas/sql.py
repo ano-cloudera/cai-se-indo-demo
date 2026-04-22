@@ -29,12 +29,22 @@ class AnswerSource(BaseModel):
     download_url: str | None = None
 
 
+class VisualizationSpec(BaseModel):
+    type: str | None = None
+    title: str | None = None
+    x_key: str | None = None
+    y_key: str | None = None
+    series: list[dict[str, Any]] = Field(default_factory=list)
+
+
 class ChatAnswerResponse(BaseModel):
     session_id: str | None = None
     original_question: str
     answer: str
     mode: str | None = None
     sources: list[AnswerSource] = Field(default_factory=list)
+    metadata: dict[str, Any] = Field(default_factory=dict)
+    visualization: VisualizationSpec | None = None
 
 
 class SQLExecutionResponse(BaseModel):
@@ -67,3 +77,4 @@ class ChatQueryResponse(BaseModel):
     truncated: bool = False
     limit_applied: bool = False
     metadata: dict[str, Any] = Field(default_factory=dict)
+    visualization: VisualizationSpec | None = None

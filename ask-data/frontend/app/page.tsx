@@ -8,7 +8,10 @@ import { BrandLogo } from "@/components/brand-logo";
 import { ChatInputPanel } from "@/components/chat-input-panel";
 import { NoticePanel } from "@/components/notice-panel";
 import { RagConfigModal } from "@/components/rag-config-modal";
+import { ResultChartCard } from "@/components/result-chart-card";
 import { StarterCard } from "@/components/starter-card";
+import { StatusBadge } from "@/components/status-badge";
+import { UserMessageCard } from "@/components/user-message-card";
 import {
   AppShell,
   AppSidebar,
@@ -18,10 +21,11 @@ import {
 import {
   apiClient,
   type AnswerSource,
-  type ChatAnswerResponse,
+  type ChatResponsePayload,
   type HealthResponse,
   type RagOptionsResponse,
   type RagSessionConfig,
+  type VisualizationSpec,
 } from "@/lib/api";
 import { createNewSessionId, getOrCreateSessionId } from "@/lib/session";
 
@@ -30,6 +34,8 @@ interface ChatMessage {
   role: "user" | "assistant";
   content: string;
   sources?: AnswerSource[];
+  metadata?: Record<string, unknown>;
+  visualization?: VisualizationSpec | null;
 }
 
 interface ChatState {
@@ -127,6 +133,60 @@ function withFallbackRagOptions(options: RagOptionsResponse): RagOptionsResponse
       options.knowledge_bases.length > 0
         ? options.knowledge_bases
         : fallbackRagOptions.knowledge_bases,
+  };
+}
+
+function getGuardrailsNotice(metadata: Record<string, unknown> | undefined) {
+  const action = typeof metadata?.guardrails_action === "string" ? metadata.guardrails_action : null;
+  if (!action) return null;
+
+  if (action === "block") {
+    return {
+      title: "Response Limited By Guardrails",
+      message: "This request was blocked because it could expose sensitive data or bypass safety controls.",
+      tone: "error" as const,
+    };
+  }
+
+  if (action === "redact") {
+    return {
+      title: "Sensitive Content Was Masked",
+      message: "The assistant removed sensitive details from the answer before returning it.",
+      tone: "empty" as const,
+    };
+  }
+
+  return null;
+}
+
+function getGuardrailsStatusBadge(health: HealthState) {
+  const guardrails = health.app?.guardrails;
+  if (!guardrails?.enabled || !guardrails.mode) return null;
+
+  if (guardrails.mode === "remote") {
+    return {
+      label: "Guardrails Remote",
+      tone: "success" as const,
+    };
+  }
+
+  if (guardrails.mode === "local-only") {
+    return {
+      label: "Guardrails Local",
+      tone: "warning" as const,
+    };
+  }
+
+  if (guardrails.mode === "misconfigured") {
+    return {
+      label: "Guardrails Needs Setup",
+      tone: "danger" as const,
+    };
+  }
+
+  return {
+    label: "Guardrails Off",
+    tone: "neutral" as const,
   };
 }
 
@@ -317,15 +377,17 @@ export default function HomePage() {
     }));
 
     try {
-      const response: ChatAnswerResponse = await apiClient.chatAnswer({
-        question: trimmed,
-        session_id: sessionId,
-      });
+      const response: ChatResponsePayload = ragConfig.enabled && ragConfig.rag_session_id
+        ? { kind: "answer", ...(await apiClient.chatAnswer({ question: trimmed, session_id: sessionId })) }
+        : { kind: "query", ...(await apiClient.chatQuery({ question: trimmed, session_id: sessionId })) };
+
       const assistantMessage: ChatMessage = {
         id: `assistant-${Date.now()}`,
         role: "assistant",
         content: response.answer,
-        sources: response.sources ?? [],
+        sources: response.kind === "answer" ? response.sources ?? [] : [],
+        metadata: response.metadata ?? {},
+        visualization: response.visualization ?? null,
       };
       setState((cur) => ({
         ...cur,
@@ -460,6 +522,7 @@ export default function HomePage() {
     : health.error || health.db?.status !== "ok"
       ? "bg-rose-500"
       : "bg-emerald-400";
+  const guardrailsBadge = getGuardrailsStatusBadge(health);
 
   const header = (
     <AppTopHeader
@@ -528,6 +591,11 @@ export default function HomePage() {
               {ragConfig.enabled && ragConfig.rag_session_id ? "RAG active" : "RAG Studio ready"}
             </span>
           ) : null}
+          {guardrailsBadge ? (
+            <div className="hidden sm:block">
+              <StatusBadge label={guardrailsBadge.label} tone={guardrailsBadge.tone} />
+            </div>
+          ) : null}
         </div>
       }
     />
@@ -586,22 +654,29 @@ export default function HomePage() {
               </div>
             ) : (
               <div className="mx-auto flex w-full max-w-5xl flex-col gap-5">
-                {state.messages.map((message) =>
-                  message.role === "user" ? (
-                    <div key={message.id} className="flex w-full justify-end">
-                      <div
-                        className="w-full max-w-[42rem] rounded-[18px] px-4 py-3 text-sm leading-6 text-white shadow-panel lg:max-w-[75%]"
-                        style={{ background: "linear-gradient(135deg, #06293e 0%, #08004d 100%)" }}
-                      >
-                        {message.content}
-                      </div>
-                    </div>
+                {state.messages.map((message) => {
+                  const guardrailsNotice = getGuardrailsNotice(message.metadata);
+
+                  return message.role === "user" ? (
+                    <UserMessageCard key={message.id} content={message.content} />
                   ) : (
-                    <div key={message.id} className="flex w-full justify-start">
+                    <div key={message.id} className="flex w-full flex-col items-start gap-4">
                       <AnswerCard answer={message.content} sources={message.sources} />
+                      {guardrailsNotice ? (
+                        <div className="w-full max-w-[56rem]">
+                          <NoticePanel
+                            title={guardrailsNotice.title}
+                            message={guardrailsNotice.message}
+                            tone={guardrailsNotice.tone}
+                          />
+                        </div>
+                      ) : null}
+                      {message.visualization?.type ? (
+                        <ResultChartCard visualization={message.visualization} />
+                      ) : null}
                     </div>
-                  ),
-                )}
+                  );
+                })}
 
                 {state.loading ? (
                   <section className="w-full max-w-[56rem] rounded-[var(--radius-panel)] border border-[var(--color-border-soft)] bg-[var(--color-surface)] p-5 shadow-panel">

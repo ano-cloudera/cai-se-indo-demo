@@ -5,6 +5,13 @@ export interface HealthResponse {
   debug?: boolean;
   database?: string;
   result?: number | null;
+  guardrails?: {
+    enabled?: boolean;
+    configured?: boolean;
+    mode?: string;
+    remote_endpoint_configured?: boolean;
+    fail_open?: boolean;
+  };
 }
 
 export interface SQLGenerateResponse {
@@ -25,6 +32,14 @@ export interface SQLExecuteResponse {
   limit_applied: boolean;
 }
 
+export interface VisualizationSpec {
+  type?: "bar" | "line" | "pie" | null;
+  title?: string | null;
+  x_key?: string | null;
+  y_key?: string | null;
+  series: Array<Record<string, unknown>>;
+}
+
 export interface ChatQueryResponse {
   session_id: string | null;
   original_question: string;
@@ -37,6 +52,7 @@ export interface ChatQueryResponse {
   truncated: boolean;
   limit_applied: boolean;
   metadata: Record<string, unknown>;
+  visualization?: VisualizationSpec | null;
 }
 
 export interface ChatAnswerResponse {
@@ -45,7 +61,13 @@ export interface ChatAnswerResponse {
   answer: string;
   mode?: string | null;
   sources?: AnswerSource[];
+  metadata?: Record<string, unknown>;
+  visualization?: VisualizationSpec | null;
 }
+
+export type ChatResponsePayload =
+  | ({ kind: "answer" } & ChatAnswerResponse)
+  | ({ kind: "query" } & ChatQueryResponse);
 
 export interface AnswerSource {
   title: string;
