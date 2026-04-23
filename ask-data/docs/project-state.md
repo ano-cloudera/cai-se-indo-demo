@@ -120,6 +120,7 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
   - prompt injection / jailbreak-style prompts
   - obvious out-of-scope prompts
   - requests for raw sensitive customer data
+  - Indonesian PII requests such as `nomor hp`, `email nasabah`, `alamat nasabah`, `customer_id`, and `id nasabah`
   - abusive/toxic prompts
 - Output-side protection can:
   - block sensitive result-column shapes before answer narration
@@ -187,7 +188,7 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
 - Assistant answers can render cleaner paragraphs, lists, and simple pipe-table content instead of plain monospaced text blocks
 - SQL-backed answers can render backend-selected charts for trend/comparison/composition questions
 - SQL-backed answers can also expose a compact summary table as an alternate visual view
-- Guardrails blocks or redactions can render a stronger explanatory notice below the assistant answer
+- Guardrails blocks or redactions render a stronger warning notice below the assistant answer, including a policy badge and safe aggregate follow-up suggestion
 - Line charts now render with a cleaner analytical treatment:
   - clearer Y-axis reading
   - lighter trend line styling with less visual clutter
@@ -199,7 +200,7 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
 - RAG config lives in a separate modal, not in the chat input area
 - Layout has been adjusted to be more responsive on narrower screens
 - RAG modal locks page scroll on open, supports `Escape`/backdrop close, uses sticky header/footer, and avoids repeated option reloads to reduce visible modal flicker/glitch
-- Topbar can show current guardrails mode from `/health` when available (`Guardrails Local` / `Guardrails Remote`)
+- Guardrails runtime mode remains available from `/health`, but the topbar no longer shows a persistent `Guardrails Local/Remote` badge to keep the demo UI cleaner
 
 ### Starter prompts (generic, not BNI-specific)
 1. "What is the total deposit balance right now?"
@@ -272,8 +273,9 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
 - [x] Frontend now renders backend-provided visualization cards for chartable SQL answers
 - [x] Frontend can explain guardrails blocks or redactions inline in the chat UI
 - [x] Guardrails notice UX now looks more intentional with policy-oriented wording, badges, and safer follow-up suggestions
+- [x] Sensitive Indonesian PII prompts such as `nomor hp`, `email nasabah`, and `customer_id` are blocked by local guardrails
 - [x] Line chart visualization has been upgraded from a simple decorative line into a more comprehensive analytical chart treatment
-- [x] Topbar can display backend-reported guardrails runtime mode
+- [x] Topbar guardrails mode badge was removed from the visible UI; `/health` remains the source for runtime status
 - [x] RAG source cards now prefer an `Open Source PDF` action instead of implying guaranteed inline preview
 
 ### Backend

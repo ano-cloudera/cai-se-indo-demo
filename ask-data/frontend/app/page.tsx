@@ -143,9 +143,9 @@ function getGuardrailsNotice(metadata: Record<string, unknown> | undefined) {
   if (action === "block") {
     return {
       title: "Sensitive Data Request Blocked",
-      message: "This request was restricted because it asked for personally identifiable or protected customer information.",
+      message: "This request was restricted because it asked for personally identifiable or protected customer information. No sensitive customer data was retrieved or displayed.",
       badgeLabel: "Guardrails",
-      suggestion: "Try asking for aggregate insights instead, such as customer counts by city, average balance by segment, or total outstanding credit by region.",
+      suggestion: "Try asking for aggregate insights instead, such as customer counts by city, average balance by segment, or total deposit by region.",
       tone: "warning" as const,
     };
   }
@@ -161,37 +161,6 @@ function getGuardrailsNotice(metadata: Record<string, unknown> | undefined) {
   }
 
   return null;
-}
-
-function getGuardrailsStatusBadge(health: HealthState) {
-  const guardrails = health.app?.guardrails;
-  if (!guardrails?.enabled || !guardrails.mode) return null;
-
-  if (guardrails.mode === "remote") {
-    return {
-      label: "Guardrails Remote",
-      tone: "success" as const,
-    };
-  }
-
-  if (guardrails.mode === "local-only") {
-    return {
-      label: "Guardrails Local",
-      tone: "warning" as const,
-    };
-  }
-
-  if (guardrails.mode === "misconfigured") {
-    return {
-      label: "Guardrails Needs Setup",
-      tone: "danger" as const,
-    };
-  }
-
-  return {
-    label: "Guardrails Off",
-    tone: "neutral" as const,
-  };
 }
 
 const initialChatState: ChatState = {
@@ -549,7 +518,6 @@ export default function HomePage() {
     : health.error || health.db?.status !== "ok"
       ? "bg-rose-500"
       : "bg-emerald-400";
-  const guardrailsBadge = getGuardrailsStatusBadge(health);
 
   const header = (
     <AppTopHeader
@@ -621,11 +589,6 @@ export default function HomePage() {
             <span className="hidden rounded-[var(--radius-pill)] bg-[rgba(92,99,242,0.12)] px-3 py-1.5 text-xs font-semibold text-[#4953d3] sm:inline-flex">
               {ragConfig.enabled && ragConfig.rag_session_id ? "RAG active" : "RAG Studio ready"}
             </span>
-          ) : null}
-          {guardrailsBadge ? (
-            <div className="hidden sm:block">
-              <StatusBadge label={guardrailsBadge.label} tone={guardrailsBadge.tone} />
-            </div>
           ) : null}
         </div>
       }
@@ -699,6 +662,8 @@ export default function HomePage() {
                             title={guardrailsNotice.title}
                             message={guardrailsNotice.message}
                             tone={guardrailsNotice.tone}
+                            badgeLabel={guardrailsNotice.badgeLabel}
+                            suggestion={guardrailsNotice.suggestion}
                           />
                         </div>
                       ) : null}
