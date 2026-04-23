@@ -96,6 +96,17 @@ def resolve_binary(name: str) -> str:
     )
 
 
+def dependencies_need_install(frontend_dir: Path) -> bool:
+    node_modules = frontend_dir / "node_modules"
+    if not node_modules.exists():
+        return True
+
+    # CAI Applications may keep a stale node_modules directory between runs.
+    # Recharts is a production dependency, so force an install when it is missing.
+    required_modules = ["next", "react", "react-dom", "recharts"]
+    return any(not (node_modules / module_name).exists() for module_name in required_modules)
+
+
 def main() -> None:
     logging.basicConfig(
         level=logging.INFO,
@@ -128,7 +139,7 @@ def main() -> None:
     logging.info("Resolved npm: %s", npm_bin)
     logging.info("Resolved node: %s", node_bin)
 
-    if not (frontend_dir / "node_modules").exists():
+    if dependencies_need_install(frontend_dir):
         if (frontend_dir / "package-lock.json").exists():
             run_command([npm_bin, "ci"], cwd=frontend_dir, env=env)
         else:
