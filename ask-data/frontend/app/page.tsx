@@ -229,6 +229,7 @@ export default function HomePage() {
   const [ragPanelOpen, setRagPanelOpen] = useState(false);
   const [ragSaving, setRagSaving] = useState(false);
   const [ragConfigDirty, setRagConfigDirty] = useState(false);
+  const [ragPanelPreparing, setRagPanelPreparing] = useState(false);
   const [openedAt] = useState<string>(() => {
     const now = new Date();
     return now.toLocaleDateString("en-US", { month: "short", day: "numeric" }) +
@@ -313,6 +314,28 @@ export default function HomePage() {
       return;
     }
     await loadRagOptions();
+  }
+
+  async function openRagPanel() {
+    if (ragPanelPreparing) return;
+
+    const hasOptions =
+      Boolean(ragOptions) &&
+      (ragOptions?.chat_models.length ?? 0) > 0 &&
+      (ragOptions?.knowledge_bases.length ?? 0) > 0;
+
+    if (hasOptions) {
+      setRagPanelOpen(true);
+      return;
+    }
+
+    setRagPanelPreparing(true);
+    try {
+      await ensureRagOptionsLoaded();
+      setRagPanelOpen(true);
+    } finally {
+      setRagPanelPreparing(false);
+    }
   }
 
   async function loadSavedRagConfig(sessionId: string) {
@@ -443,7 +466,7 @@ export default function HomePage() {
     setRagConfigDirty(enabled || ragConfigDirty);
 
     if (enabled) {
-      setRagPanelOpen(true);
+      void openRagPanel();
       return;
     }
 
@@ -560,15 +583,13 @@ export default function HomePage() {
           </button>
           <button
             type="button"
-            onClick={() => {
-              setRagPanelOpen(true);
-              void ensureRagOptionsLoaded();
-            }}
+            disabled={ragPanelPreparing}
+            onClick={() => void openRagPanel()}
             className={`inline-flex items-center gap-2 rounded-[var(--radius-pill)] border px-3 py-1.5 text-xs font-semibold transition ${
               ragConfig.enabled && ragConfig.rag_session_id
                 ? "border-emerald-400 bg-emerald-50 text-emerald-700"
                 : "border-[var(--color-border-strong)] bg-[var(--color-surface)] text-[var(--color-ink-muted)] hover:border-[var(--color-action-primary)] hover:text-[var(--color-action-primary)]"
-            }`}
+            } ${ragPanelPreparing ? "cursor-wait opacity-70" : ""}`}
           >
             <span
               className={`relative h-4 w-7 rounded-full transition ${
@@ -581,7 +602,13 @@ export default function HomePage() {
                 }`}
               />
             </span>
-            <span>{ragConfig.enabled && ragConfig.rag_session_id ? "RAG Studio On" : "RAG Studio"}</span>
+            <span>
+              {ragPanelPreparing
+                ? "Opening..."
+                : ragConfig.enabled && ragConfig.rag_session_id
+                  ? "RAG Studio On"
+                  : "RAG Studio"}
+            </span>
           </button>
           <button
             type="button"

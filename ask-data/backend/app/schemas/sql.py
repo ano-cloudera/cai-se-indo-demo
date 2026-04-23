@@ -35,6 +35,9 @@ class VisualizationSpec(BaseModel):
     x_key: str | None = None
     y_key: str | None = None
     series: list[dict[str, Any]] = Field(default_factory=list)
+    table_columns: list[str] = Field(default_factory=list)
+    table_rows: list[dict[str, Any]] = Field(default_factory=list)
+    insight: str | None = None
 
 
 class ChatAnswerResponse(BaseModel):

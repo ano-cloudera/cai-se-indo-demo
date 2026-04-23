@@ -33,11 +33,14 @@ export interface SQLExecuteResponse {
 }
 
 export interface VisualizationSpec {
-  type?: "bar" | "line" | "pie" | null;
+  type?: "bar" | "line" | "pie" | "table" | null;
   title?: string | null;
   x_key?: string | null;
   y_key?: string | null;
   series: Array<Record<string, unknown>>;
+  table_columns?: string[];
+  table_rows?: Array<Record<string, unknown>>;
+  insight?: string | null;
 }
 
 export interface ChatQueryResponse {

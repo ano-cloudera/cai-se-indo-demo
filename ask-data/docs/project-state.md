@@ -134,10 +134,16 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
   - `x_key`
   - `y_key`
   - normalized `series`
+  - optional `table_columns`
+  - optional `table_rows`
+  - optional `insight`
 - Current supported chart modes:
   - `bar` for comparisons
   - `line` for temporal trends
   - `pie` for small composition-style result sets
+  - `table` for result sets that are better shown as a tabular summary
+- Temporal series are now sorted in the backend before plotting
+- Longer temporal series are sampled into representative points instead of simply taking the first rows returned by SQL
 - Non-chartable query results return no visualization spec and render as answer-only
 
 ---
@@ -168,7 +174,7 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
 | `NoticePanel` | `components/notice-panel.tsx` | Error / empty state notices |
 | `RagConfigModal` | `components/rag-config-modal.tsx` | Per-session RAG Studio config panel |
 | `UserMessageCard` | `components/user-message-card.tsx` | Branded user bubble with avatar tile |
-| `ResultChartCard` | `components/result-chart-card.tsx` | Renders backend-provided bar/line/pie visualization specs |
+| `ResultChartCard` | `components/result-chart-card.tsx` | Renders backend-provided chart or table visualizations with a user-toggleable view |
 | `AppShell` | `components/ui/shell.tsx` | Layout: sidebar + topbar + main |
 
 ### UI features
@@ -180,18 +186,19 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
 - Assistant answers now sanitize raw RAG citation markup before rendering
 - Assistant answers can render cleaner paragraphs, lists, and simple pipe-table content instead of plain monospaced text blocks
 - SQL-backed answers can render backend-selected charts for trend/comparison/composition questions
+- SQL-backed answers can also expose a compact summary table as an alternate visual view
 - Guardrails blocks or redactions can render a stronger explanatory notice below the assistant answer
-- Line charts now render with a more analytical treatment:
+- Line charts now render with a cleaner analytical treatment:
   - clearer Y-axis reading
-  - horizontal grid lines
-  - area fill
-  - summary metrics such as latest value and net change
+  - lighter trend line styling with less visual clutter
+  - summary pills such as latest value and net change
   - cleaner date label formatting for temporal series
+  - optional switch between `Chart` and `Table` when both views are available
 - Loading state: animated bouncing dots
 - "New Conversation" button in sidebar footer resets session
 - RAG config lives in a separate modal, not in the chat input area
 - Layout has been adjusted to be more responsive on narrower screens
-- RAG modal locks page scroll on open and avoids repeated option reloads to reduce visible modal flicker/glitch
+- RAG modal locks page scroll on open, supports `Escape`/backdrop close, uses sticky header/footer, and avoids repeated option reloads to reduce visible modal flicker/glitch
 - Topbar can show current guardrails mode from `/health` when available (`Guardrails Local` / `Guardrails Remote`)
 
 ### Starter prompts (generic, not BNI-specific)
@@ -253,11 +260,14 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
 - [x] `Clear Session` implemented
 - [x] Responsive shell and modal behavior improved
 - [x] Modal scroll locking and deferred option loading added to reduce opening glitch
+- [x] RAG modal can now close via `Escape` and backdrop click, with sticky header/footer for more stable long forms
 - [x] Footer actions in RAG config modal no longer easily clip off-screen
 - [x] Frontend can fall back to hardcoded RAG KB/model defaults if live `/rag/options` is still failing in a stale backend deployment
 - [x] Answer card supports rendering structured RAG sources instead of raw source objects
 - [x] Answer card now uses a bot emoji marker instead of the earlier plus icon
 - [x] User/assistant message alignment has been adjusted to feel more balanced in wide chat layouts
+- [x] Backend now sorts temporal chart data before plotting and samples longer series more intelligently
+- [x] Visual insight cards can switch between chart and table views when summary rows are available
 - [x] User bubble has been upgraded to a more polished human-style card with avatar marker
 - [x] Frontend now renders backend-provided visualization cards for chartable SQL answers
 - [x] Frontend can explain guardrails blocks or redactions inline in the chat UI

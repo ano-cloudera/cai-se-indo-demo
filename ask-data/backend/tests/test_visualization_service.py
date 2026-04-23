@@ -12,8 +12,9 @@ class VisualizationServiceTestCase(unittest.TestCase):
             question="Show deposit trend by month",
             columns=["month", "total_deposit_balance"],
             rows=[
-                {"month": "2026-01", "total_deposit_balance": 100},
                 {"month": "2026-02", "total_deposit_balance": 120},
+                {"month": "2026-01", "total_deposit_balance": 100},
+                {"month": "2026-03", "total_deposit_balance": 150},
             ],
         )
 
@@ -21,6 +22,28 @@ class VisualizationServiceTestCase(unittest.TestCase):
         assert spec is not None
         self.assertEqual(spec.type, "line")
         self.assertEqual(spec.x_key, "month")
+        self.assertEqual(spec.series[0]["month"], "2026-01")
+        self.assertEqual(spec.series[-1]["month"], "2026-03")
+        self.assertEqual(spec.table_columns, ["month", "total_deposit_balance"])
+
+    def test_samples_long_temporal_series_evenly(self) -> None:
+        rows = [
+            {"join_date": f"2026-01-{day:02d}", "customer_count": day}
+            for day in range(1, 13)
+        ]
+
+        spec = self.service.build_visualization(
+            question="Show new customers by join date",
+            columns=["join_date", "customer_count"],
+            rows=rows,
+        )
+
+        self.assertIsNotNone(spec)
+        assert spec is not None
+        self.assertEqual(spec.type, "line")
+        self.assertEqual(len(spec.series), 8)
+        self.assertEqual(spec.series[0]["join_date"], "2026-01-01")
+        self.assertEqual(spec.series[-1]["join_date"], "2026-01-12")
 
     def test_builds_bar_chart_for_category_comparison(self) -> None:
         spec = self.service.build_visualization(
@@ -35,6 +58,8 @@ class VisualizationServiceTestCase(unittest.TestCase):
         self.assertIsNotNone(spec)
         assert spec is not None
         self.assertEqual(spec.type, "bar")
+        self.assertEqual(spec.series[0]["city"], "Jakarta")
+        self.assertEqual(spec.table_rows[0]["city"], "Jakarta")
 
     def test_builds_pie_chart_for_small_composition(self) -> None:
         spec = self.service.build_visualization(
