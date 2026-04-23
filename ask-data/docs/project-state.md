@@ -180,7 +180,13 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
 - Assistant answers now sanitize raw RAG citation markup before rendering
 - Assistant answers can render cleaner paragraphs, lists, and simple pipe-table content instead of plain monospaced text blocks
 - SQL-backed answers can render backend-selected charts for trend/comparison/composition questions
-- Guardrails blocks or redactions can render an explanatory notice below the assistant answer
+- Guardrails blocks or redactions can render a stronger explanatory notice below the assistant answer
+- Line charts now render with a more analytical treatment:
+  - clearer Y-axis reading
+  - horizontal grid lines
+  - area fill
+  - summary metrics such as latest value and net change
+  - cleaner date label formatting for temporal series
 - Loading state: animated bouncing dots
 - "New Conversation" button in sidebar footer resets session
 - RAG config lives in a separate modal, not in the chat input area
@@ -255,6 +261,8 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
 - [x] User bubble has been upgraded to a more polished human-style card with avatar marker
 - [x] Frontend now renders backend-provided visualization cards for chartable SQL answers
 - [x] Frontend can explain guardrails blocks or redactions inline in the chat UI
+- [x] Guardrails notice UX now looks more intentional with policy-oriented wording, badges, and safer follow-up suggestions
+- [x] Line chart visualization has been upgraded from a simple decorative line into a more comprehensive analytical chart treatment
 - [x] Topbar can display backend-reported guardrails runtime mode
 - [x] RAG source cards now prefer an `Open Source PDF` action instead of implying guaranteed inline preview
 
@@ -273,6 +281,7 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
 - [x] Backend visualization service now returns explicit chart specs for SQL answers
 - [x] `guardrails-ai` dependency added and backend test environment verified in Python 3.11
 - [x] Backend tests updated and passing locally (`21 tests`)
+- [x] A standalone Azure OpenAI connection test script now exists for local/runtime credential validation
 
 ### Demo readiness
 - [x] End-to-end flow working

@@ -142,17 +142,21 @@ function getGuardrailsNotice(metadata: Record<string, unknown> | undefined) {
 
   if (action === "block") {
     return {
-      title: "Response Limited By Guardrails",
-      message: "This request was blocked because it could expose sensitive data or bypass safety controls.",
-      tone: "error" as const,
+      title: "Sensitive Data Request Blocked",
+      message: "This request was restricted because it asked for personally identifiable or protected customer information.",
+      badgeLabel: "Guardrails",
+      suggestion: "Try asking for aggregate insights instead, such as customer counts by city, average balance by segment, or total outstanding credit by region.",
+      tone: "warning" as const,
     };
   }
 
   if (action === "redact") {
     return {
-      title: "Sensitive Content Was Masked",
-      message: "The assistant removed sensitive details from the answer before returning it.",
-      tone: "empty" as const,
+      title: "Response Sanitized For Privacy",
+      message: "The assistant returned the answer, but sensitive values were masked before display.",
+      badgeLabel: "PII Protected",
+      suggestion: "You can still continue with aggregate or trend questions that do not require direct customer identifiers.",
+      tone: "warning" as const,
     };
   }
 
