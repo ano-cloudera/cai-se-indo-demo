@@ -4,6 +4,7 @@ interface NoticePanelProps {
   tone?: "empty" | "error" | "warning";
   badgeLabel?: string;
   suggestion?: string;
+  compact?: boolean;
 }
 
 const toneClasses: Record<NonNullable<NoticePanelProps["tone"]>, string> = {
@@ -57,23 +58,24 @@ export function NoticePanel({
   tone = "empty",
   badgeLabel,
   suggestion,
+  compact = false,
 }: NoticePanelProps) {
   return (
-    <section className={`rounded-[var(--radius-panel)] border p-5 shadow-panel ${toneClasses[tone]}`}>
-      <div className="flex items-start gap-3">
-        <ToneIcon tone={tone} />
+    <section className={`rounded-[var(--radius-panel)] border shadow-panel ${compact ? "p-3 sm:p-4" : "p-5"} ${toneClasses[tone]}`}>
+      <div className={`flex items-start ${compact ? "gap-2.5" : "gap-3"}`}>
+        {compact ? null : <ToneIcon tone={tone} />}
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="text-sm font-semibold">{title}</h3>
+            <h3 className={`${compact ? "text-xs" : "text-sm"} font-semibold`}>{title}</h3>
             {badgeLabel ? (
               <span className={`inline-flex rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] ${badgeClasses[tone]}`}>
                 {badgeLabel}
               </span>
             ) : null}
           </div>
-          <p className="mt-1.5 text-sm leading-6 opacity-85">{message}</p>
+          <p className={`${compact ? "mt-1 text-xs leading-5" : "mt-1.5 text-sm leading-6"} opacity-85`}>{message}</p>
           {suggestion ? (
-            <p className="mt-3 text-sm font-medium leading-6 opacity-90">
+            <p className={`${compact ? "mt-1.5 text-xs leading-5" : "mt-3 text-sm leading-6"} font-medium opacity-90`}>
               {suggestion}
             </p>
           ) : null}

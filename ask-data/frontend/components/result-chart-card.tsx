@@ -1,6 +1,20 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Line,
+  LineChart,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 import { DataTable, TableCard, TableCell, TableHeadCell } from "@/components/ui/table";
 import type { VisualizationSpec } from "@/lib/api";
@@ -17,6 +31,14 @@ interface ResultChartCardProps {
 function formatValue(value: number): string {
   return new Intl.NumberFormat("en-US", {
     maximumFractionDigits: value >= 100 ? 0 : 2,
+  }).format(value);
+}
+
+function formatCompactValue(value: number): string {
+  return new Intl.NumberFormat("en-US", {
+    notation: "compact",
+    compactDisplay: "short",
+    maximumFractionDigits: Math.abs(value) >= 1_000 ? 1 : 2,
   }).format(value);
 }
 
@@ -51,37 +73,6 @@ function isNumericLike(value: unknown): boolean {
   return typeof value === "number" || (typeof value === "string" && value.trim() !== "" && Number.isFinite(Number(value)));
 }
 
-function toNumber(value: unknown): number {
-  return typeof value === "number" ? value : Number(value);
-}
-
-function buildLineGeometry(points: DataPoint[]) {
-  const width = 100;
-  const height = 56;
-  const leftPad = 6;
-  const rightPad = 3;
-  const topPad = 8;
-  const bottomPad = 8;
-  const values = points.map((point) => point.value);
-  const max = Math.max(...values, 1);
-  const min = Math.min(...values, 0);
-  const range = Math.max(max - min, 1);
-
-  const coords = points.map((point, index) => {
-    const x = points.length === 1
-      ? width / 2
-      : leftPad + (index / (points.length - 1)) * (width - leftPad - rightPad);
-    const y = topPad + ((max - point.value) / range) * (height - topPad - bottomPad);
-    return { ...point, x, y };
-  });
-
-  const linePath = coords
-    .map((point, index) => `${index === 0 ? "M" : "L"} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`)
-    .join(" ");
-
-  return { width, height, coords, linePath, min, max };
-}
-
 function buildXAxisTicks(points: DataPoint[]): DataPoint[] {
   if (points.length <= 4) return points;
   const indices = new Set([
@@ -97,6 +88,8 @@ function buildYAxisTicks(min: number, max: number): number[] {
   if (max === min) return [max, min];
   return [max, min + (max - min) / 2, min];
 }
+
+const pieColors = ["#5c63f2", "#ff7a2f", "#16a34a", "#0ea5e9", "#f59e0b", "#db2777"];
 
 function renderViewToggle(
   activeView: "chart" | "table",
@@ -192,8 +185,6 @@ export function ResultChartCard({ visualization }: ResultChartCardProps) {
   const lastPoint = boundedPoints[boundedPoints.length - 1];
   const delta = firstPoint && lastPoint ? lastPoint.value - firstPoint.value : 0;
   const trendDirection = delta > 0 ? "Upward trend" : delta < 0 ? "Soft decline" : "Stable trend";
-  const lineGeometry = kind === "line" && boundedPoints.length >= 2 ? buildLineGeometry(boundedPoints) : null;
-  const yAxisTicks = lineGeometry ? buildYAxisTicks(lineGeometry.min, lineGeometry.max) : [];
   const xAxisTicks = buildXAxisTicks(boundedPoints);
   const max = boundedPoints.length > 0 ? Math.max(...boundedPoints.map((point) => point.value), 1) : 1;
   const min = boundedPoints.length > 0 ? Math.min(...boundedPoints.map((point) => point.value)) : 0;
@@ -202,8 +193,8 @@ export function ResultChartCard({ visualization }: ResultChartCardProps) {
 
   return (
     <section className="w-full max-w-[56rem] rounded-[var(--radius-panel)] border border-[var(--color-border-soft)] bg-[linear-gradient(180deg,#ffffff_0%,#f7f9ff_100%)] p-5 shadow-panel">
-      <div className="mb-5 flex items-start justify-between gap-4">
-        <div>
+      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-ink-subtle)]">
             Visual Insight
           </p>
@@ -211,10 +202,10 @@ export function ResultChartCard({ visualization }: ResultChartCardProps) {
             {visualization.title ?? "Auto-generated chart from the latest SQL result"}
           </h3>
           {visualization.insight ? (
-            <p className="mt-2 max-w-2xl text-sm text-[var(--color-ink-muted)]">{visualization.insight}</p>
+            <p className="mt-2 max-w-2xl text-xs leading-5 text-[var(--color-ink-muted)] sm:text-sm">{visualization.insight}</p>
           ) : null}
         </div>
-        <div className="flex flex-col items-end gap-2">
+        <div className="flex shrink-0 flex-row items-center gap-2 sm:flex-col sm:items-end">
           <span className="rounded-full bg-[rgba(92,99,242,0.1)] px-3 py-1 text-xs font-semibold text-[#4953d3]">
             {kind === "line" ? "Trend view" : kind === "pie" ? "Composition view" : kind === "table" ? "Table view" : "Comparison view"}
           </span>
@@ -225,123 +216,136 @@ export function ResultChartCard({ visualization }: ResultChartCardProps) {
       {activeView === "table" ? renderTableView(tableColumns, tableRows) : null}
 
       {activeView === "chart" && kind === "bar" ? (
-        <div className="space-y-3">
-          {boundedPoints.map((point) => (
-            <div key={point.label} className="grid grid-cols-[minmax(0,10rem)_1fr_auto] items-center gap-3">
-              <p className="truncate text-sm font-medium text-[var(--color-ink-muted)]">{point.label}</p>
-              <div className="h-3 overflow-hidden rounded-full bg-[#e8ecf8]">
-                <div
-                  className="h-full rounded-full bg-[linear-gradient(90deg,#5c63f2_0%,#7b82ff_100%)]"
-                  style={{ width: `${Math.max((point.value / max) * 100, 8)}%` }}
-                />
-              </div>
-              <p className="text-sm font-semibold text-[var(--color-ink-strong)]">{formatValue(point.value)}</p>
-            </div>
-          ))}
+        <div className="h-72 rounded-[18px] border border-[var(--color-border-soft)] bg-white/80 px-3 py-4">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={boundedPoints} margin={{ top: 8, right: 18, bottom: 8, left: 12 }}>
+              <CartesianGrid stroke="#e3e8f4" strokeDasharray="4 4" vertical={false} />
+              <XAxis
+                dataKey="label"
+                tick={{ fill: "#747887", fontSize: 11, fontWeight: 600 }}
+                tickFormatter={formatAxisLabel}
+                tickLine={false}
+                axisLine={{ stroke: "#dfe5f3" }}
+                interval={0}
+              />
+              <YAxis
+                tick={{ fill: "#747887", fontSize: 11, fontWeight: 600 }}
+                tickFormatter={formatCompactValue}
+                tickLine={false}
+                axisLine={false}
+                width={64}
+              />
+              <Tooltip
+                cursor={{ fill: "rgba(92,99,242,0.08)" }}
+                formatter={(value) => [formatCompactValue(Number(value)), yKey ?? "Value"]}
+                labelFormatter={(label) => formatAxisLabel(String(label))}
+              />
+              <Bar dataKey="value" radius={[8, 8, 0, 0]} fill="#5c63f2" />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
       ) : null}
 
-      {activeView === "chart" && kind === "line" && lineGeometry ? (
+      {activeView === "chart" && kind === "line" ? (
         <div className="rounded-[18px] border border-[var(--color-border-soft)] bg-white/80 p-4">
           <div className="mb-4 flex flex-wrap gap-2">
             <span className="rounded-full bg-[var(--color-surface)] px-3 py-1.5 text-xs font-semibold text-[var(--color-ink-muted)]">
-              Latest {lastPoint ? formatValue(lastPoint.value) : "-"}
+              Latest {lastPoint ? formatCompactValue(lastPoint.value) : "-"}
             </span>
             <span className={`rounded-full px-3 py-1.5 text-xs font-semibold ${
               delta >= 0 ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"
             }`}>
-              {delta >= 0 ? "+" : ""}{formatValue(delta)} vs start
+              {delta >= 0 ? "+" : ""}{formatCompactValue(delta)} vs start
             </span>
             <span className="rounded-full bg-[rgba(92,99,242,0.08)] px-3 py-1.5 text-xs font-semibold text-[#4953d3]">
               {trendDirection}
             </span>
           </div>
 
-          <div className="grid gap-3 lg:grid-cols-[2.5rem_minmax(0,1fr)]">
-            <div className="hidden lg:flex lg:flex-col lg:justify-between lg:py-1">
-              {yAxisTicks.map((tick, index) => (
-                <span key={`${tick}-${index}`} className="text-right text-xs font-medium text-[var(--color-ink-subtle)]">
-                  {formatValue(tick)}
-                </span>
-              ))}
-            </div>
-            <div>
-              <div className="h-56 w-full rounded-[16px] border border-[var(--color-border-soft)] bg-[linear-gradient(180deg,#fcfdff_0%,#f7f9ff_100%)] p-4">
-                <svg
-                  viewBox={`0 0 ${lineGeometry.width} ${lineGeometry.height}`}
-                  className="h-full w-full overflow-visible"
-                  preserveAspectRatio="none"
-                  aria-hidden
-                >
-                  <defs>
-                    <linearGradient id="chartStroke" x1="0" x2="1" y1="0" y2="0">
-                      <stop offset="0%" stopColor="#5c63f2" />
-                      <stop offset="100%" stopColor="#ff7a2f" />
-                    </linearGradient>
-                  </defs>
+          <div className="h-64 rounded-[16px] border border-[var(--color-border-soft)] bg-[linear-gradient(180deg,#fcfdff_0%,#f7f9ff_100%)] px-2 py-4">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={boundedPoints} margin={{ top: 12, right: 24, bottom: 10, left: 8 }}>
+                <CartesianGrid stroke="#e3e8f4" strokeDasharray="4 4" vertical={false} />
+                <XAxis
+                  dataKey="label"
+                  tick={{ fill: "#747887", fontSize: 11, fontWeight: 600 }}
+                  tickFormatter={formatAxisLabel}
+                  tickLine={false}
+                  axisLine={{ stroke: "#dfe5f3" }}
+                  interval="preserveStartEnd"
+                  minTickGap={22}
+                />
+                <YAxis
+                  domain={["dataMin", "dataMax"]}
+                  tick={{ fill: "#747887", fontSize: 11, fontWeight: 600 }}
+                  tickFormatter={formatCompactValue}
+                  tickLine={false}
+                  axisLine={false}
+                  width={72}
+                />
+                <Tooltip
+                  formatter={(value) => [formatCompactValue(Number(value)), yKey ?? "Value"]}
+                  labelFormatter={(label) => formatAxisLabel(String(label))}
+                  contentStyle={{
+                    border: "1px solid #dfe5f3",
+                    borderRadius: "14px",
+                    boxShadow: "0 18px 40px rgba(15,23,42,0.12)",
+                    fontSize: "12px",
+                  }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="value"
+                  stroke="#5c63f2"
+                  strokeWidth={2.5}
+                  dot={{ r: 2.5, strokeWidth: 1.5, fill: "#ffffff", stroke: "#5c63f2" }}
+                  activeDot={{ r: 4, strokeWidth: 2, fill: "#ffffff", stroke: "#ff7a2f" }}
+                  isAnimationActive={false}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
 
-                  {[14, 28, 42].map((y) => (
-                    <path
-                      key={y}
-                      d={`M 0 ${y} H ${lineGeometry.width}`}
-                      stroke="#dfe5f3"
-                      strokeWidth="0.7"
-                      strokeDasharray="3 4"
-                    />
-                  ))}
-
-                  <path
-                    d={lineGeometry.linePath}
-                    fill="none"
-                    stroke="url(#chartStroke)"
-                    strokeWidth="2.2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-
-                  {lineGeometry.coords.map((point) => (
-                    <g key={point.label}>
-                      <circle cx={point.x} cy={point.y} r="1.7" fill="white" stroke="#5c63f2" strokeWidth="1.2" />
-                    </g>
-                  ))}
-                </svg>
-              </div>
-
-              <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                {xAxisTicks.map((point) => (
-                  <div key={point.label} className="min-w-0 rounded-[14px] border border-[var(--color-border-soft)] bg-white/70 px-3 py-2">
-                    <p className="truncate text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--color-ink-subtle)]">
-                      {formatAxisLabel(point.label)}
-                    </p>
-                    <p className="mt-1 text-sm font-semibold text-[var(--color-ink-strong)]">{formatValue(point.value)}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {xAxisTicks.map((point) => (
+              <span key={point.label} className="rounded-full bg-[var(--color-surface-muted)] px-3 py-1 text-xs font-semibold text-[var(--color-ink-subtle)]">
+                {formatAxisLabel(point.label)} · {formatCompactValue(point.value)}
+              </span>
+            ))}
           </div>
         </div>
       ) : null}
 
       {activeView === "chart" && kind === "pie" ? (
-        <div className="grid gap-3 sm:grid-cols-2">
-          {boundedPoints.map((point) => {
-            const percent = total > 0 ? (point.value / total) * 100 : 0;
-            return (
-              <div key={point.label} className="rounded-[16px] border border-[var(--color-border-soft)] bg-[var(--color-surface)] p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="truncate text-sm font-semibold text-[var(--color-ink-strong)]">{point.label}</p>
-                  <span className="text-sm font-semibold text-[#4953d3]">{percent.toFixed(1)}%</span>
+        <div className="grid gap-4 rounded-[18px] border border-[var(--color-border-soft)] bg-white/80 p-4 lg:grid-cols-[18rem_minmax(0,1fr)]">
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={boundedPoints} dataKey="value" nameKey="label" innerRadius={58} outerRadius={92} paddingAngle={2}>
+                  {boundedPoints.map((point, index) => (
+                    <Cell key={point.label} fill={pieColors[index % pieColors.length]} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  formatter={(value) => [formatCompactValue(Number(value)), yKey ?? "Value"]}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="space-y-3">
+            {boundedPoints.map((point, index) => {
+              const percent = total > 0 ? (point.value / total) * 100 : 0;
+              return (
+                <div key={point.label} className="flex items-center justify-between gap-3 rounded-[14px] border border-[var(--color-border-soft)] bg-[var(--color-surface)] px-3 py-2">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: pieColors[index % pieColors.length] }} />
+                    <p className="truncate text-sm font-semibold text-[var(--color-ink-strong)]">{point.label}</p>
+                  </div>
+                  <span className="shrink-0 text-sm font-semibold text-[#4953d3]">{percent.toFixed(1)}%</span>
                 </div>
-                <div className="mt-3 h-3 overflow-hidden rounded-full bg-[#e8ecf8]">
-                  <div
-                    className="h-full rounded-full bg-[linear-gradient(90deg,#ff7a2f_0%,#5c63f2_100%)]"
-                    style={{ width: `${Math.max(percent, 6)}%` }}
-                  />
-                </div>
-                <p className="mt-3 text-sm text-[var(--color-ink-muted)]">Value {formatValue(point.value)}</p>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       ) : null}
 
@@ -351,7 +355,7 @@ export function ResultChartCard({ visualization }: ResultChartCardProps) {
             {boundedPoints.length} plotted points
           </span>
           <span className="rounded-full bg-[var(--color-surface-muted)] px-3 py-1">
-            Range {formatValue(min)} to {formatValue(max)}
+            Range {formatCompactValue(min)} to {formatCompactValue(max)}
           </span>
         </div>
       ) : null}

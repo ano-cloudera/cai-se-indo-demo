@@ -142,20 +142,20 @@ function getGuardrailsNotice(metadata: Record<string, unknown> | undefined) {
 
   if (action === "block") {
     return {
-      title: "Sensitive Data Request Blocked",
-      message: "This request was restricted because it asked for personally identifiable or protected customer information. No sensitive customer data was retrieved or displayed.",
+      title: "Sensitive Data Blocked",
+      message: "PII request blocked. No sensitive customer data was retrieved or shown.",
       badgeLabel: "Guardrails",
-      suggestion: "Try asking for aggregate insights instead, such as customer counts by city, average balance by segment, or total deposit by region.",
+      suggestion: "Try aggregate insights by city, segment, product, or region.",
       tone: "warning" as const,
     };
   }
 
   if (action === "redact") {
     return {
-      title: "Response Sanitized For Privacy",
-      message: "The assistant returned the answer, but sensitive values were masked before display.",
+      title: "Response Sanitized",
+      message: "Sensitive values were masked before display.",
       badgeLabel: "PII Protected",
-      suggestion: "You can still continue with aggregate or trend questions that do not require direct customer identifiers.",
+      suggestion: "Continue with aggregate or trend questions.",
       tone: "warning" as const,
     };
   }
@@ -664,6 +664,7 @@ export default function HomePage() {
                             tone={guardrailsNotice.tone}
                             badgeLabel={guardrailsNotice.badgeLabel}
                             suggestion={guardrailsNotice.suggestion}
+                            compact
                           />
                         </div>
                       ) : null}
