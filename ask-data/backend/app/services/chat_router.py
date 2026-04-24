@@ -37,10 +37,8 @@ GREETING_PATTERNS = (
 )
 
 ACKNOWLEDGEMENT_PATTERNS = (
-    r"\b(makasih|terima kasih|thanks|thank you)\b",
-    r"\b(mantap|bagus|keren|sip|oke|ok|baik)\b",
-    r"\b(makasih ya|terima kasih ya|thank you ya|thanks ya)\b",
-    r"\b(mantap banget|bagus banget|keren banget)\b",
+    r"^\s*(makasih|terima kasih|thanks|thank you)(\s+ya)?\s*$",
+    r"^\s*(mantap|bagus|keren|sip|oke|ok|baik)(\s+banget)?\s*$",
 )
 
 FAREWELL_PATTERNS = (
@@ -77,6 +75,22 @@ DATA_DOMAIN_MARKERS = (
     "total",
     "berapa",
     "berapa banyak",
+    "tren",
+    "trend",
+    "grafik",
+    "chart",
+    "linechart",
+    "line chart",
+    "bar chart",
+    "pie chart",
+    "visualisasi",
+    "visualization",
+    "per bulan",
+    "bulanan",
+    "tampilkan",
+    "keluarkan",
+    "keluarin",
+    "keluar kan",
 )
 
 
