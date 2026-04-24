@@ -145,13 +145,14 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
   - `table` for result sets that are better shown as a tabular summary
 - Temporal series are now sorted in the backend before plotting
 - Longer temporal series are sampled into representative points instead of simply taking the first rows returned by SQL
+- Chart-oriented follow-up prompts such as `linechart aja`, `tampilkan grafik`, and `keluarkan aja` are now routed into SQL/data flow instead of being treated as generic conversation
 - Non-chartable query results return no visualization spec and render as answer-only
 
 ---
 
 ## 6. Frontend
 
-**Stack:** Next.js 15 (App Router), Tailwind CSS 3, TypeScript, Inter + Manrope fonts
+**Stack:** Next.js 15 (App Router), Tailwind CSS 3, TypeScript, Inter + Manrope fonts, Recharts
 
 ### Design system (adopted from fraud-ai-assistant project)
 - **Sidebar:** Dark navy (`#08004D`) with indigo accent (`#5c63f2`)
@@ -188,13 +189,15 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
 - Assistant answers can render cleaner paragraphs, lists, and simple pipe-table content instead of plain monospaced text blocks
 - SQL-backed answers can render backend-selected charts for trend/comparison/composition questions
 - SQL-backed answers can also expose a compact summary table as an alternate visual view
-- Guardrails blocks or redactions render a stronger warning notice below the assistant answer, including a policy badge and safe aggregate follow-up suggestion
-- Line charts now render with a cleaner analytical treatment:
-  - clearer Y-axis reading
-  - lighter trend line styling with less visual clutter
-  - summary pills such as latest value and net change
-  - cleaner date label formatting for temporal series
+- Guardrails blocks or redactions render a stronger warning notice below the assistant answer, including a policy badge, shorter copy, and safe aggregate follow-up suggestion
+- Visual insight charts are now rendered with Recharts rather than custom SVG primitives
+- Line charts now render with a more standard dashboard treatment:
+  - responsive container with standard axes, grid, and tooltip
+  - compact number formatting for large values (for example `13.3B`, `484.8B`)
+  - lighter marker styling and cleaner trend presentation
   - optional switch between `Chart` and `Table` when both views are available
+- Bar charts now render as a standard chart instead of a manual progress-bar list
+- Composition visuals now render as a donut chart with a compact legend
 - Loading state: animated bouncing dots
 - "New Conversation" button in sidebar footer resets session
 - RAG config lives in a separate modal, not in the chat input area
@@ -219,7 +222,7 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
 
 **Deployment entry:** `frontend/frontend_entry.py`
 - Resolves port from `CDSW_APP_PORT`
-- Runs `npm install` + `next build` + `next start`
+- Runs dependency install/build/start and now re-installs dependencies when required modules such as `recharts` are missing from a stale `node_modules` directory in CAI
 
 ---
 
@@ -273,8 +276,10 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
 - [x] Frontend now renders backend-provided visualization cards for chartable SQL answers
 - [x] Frontend can explain guardrails blocks or redactions inline in the chat UI
 - [x] Guardrails notice UX now looks more intentional with policy-oriented wording, badges, and safer follow-up suggestions
+- [x] Guardrails warning layout has been compacted so policy notices take less vertical space in chat
 - [x] Sensitive Indonesian PII prompts such as `nomor hp`, `email nasabah`, and `customer_id` are blocked by local guardrails
-- [x] Line chart visualization has been upgraded from a simple decorative line into a more comprehensive analytical chart treatment
+- [x] Chart rendering now uses Recharts for a more standard enterprise dashboard look and feel
+- [x] Line chart values now use compact formatting to reduce clipping on large balances
 - [x] Topbar guardrails mode badge was removed from the visible UI; `/health` remains the source for runtime status
 - [x] RAG source cards now prefer an `Open Source PDF` action instead of implying guaranteed inline preview
 
@@ -291,8 +296,9 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
 - [x] Guardrails service added for input screening, output redaction, and result-shape blocking
 - [x] `/health` and `/` now expose guardrails runtime mode/status
 - [x] Backend visualization service now returns explicit chart specs for SQL answers
+- [x] Chat router now keeps chart-related follow-up prompts in SQL/data flow instead of misclassifying them as generic conversation
 - [x] `guardrails-ai` dependency added and backend test environment verified in Python 3.11
-- [x] Backend tests updated and passing locally (`21 tests`)
+- [x] Backend tests updated and passing locally (`28 tests`)
 - [x] A standalone Azure OpenAI connection test script now exists for local/runtime credential validation
 
 ### Demo readiness
@@ -304,14 +310,15 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
 - [x] Source rendering support added for RAG answers
 - [x] Cleaner display support added for list/table-style answers in the main chat card
 - [x] Local frontend build verified successfully with the workspace-installed Node runtime
+- [x] Local frontend build verified successfully after adding Recharts
 - [ ] Backend runtime env vars need to be set per customer environment
 - [ ] CAI backend should be redeployed with the latest guardrails + visualization changes
-- [ ] CAI frontend should be redeployed with the latest visualization + guardrails UI changes
+- [ ] CAI frontend should be redeployed with the latest visualization + guardrails UI changes, including the Recharts dependency install fix
 - [ ] Until redeployed, frontend may rely on hardcoded fallback options if live `/rag/options` still fails
 - [ ] RAG source card rendering depends on the exact `chat-history` payload shape returned by the target RAG Studio instance
 - [ ] `Open Source PDF` behavior still depends on upstream RAG file download headers; some documents may open inline while others may download directly
 - [ ] Remote Guardrails mode still requires `GUARDRAILS_BASE_URL`; otherwise backend runs in `local-only` mode
-- [ ] Frontend/CAI smoke test still needed for guardrails badge and backend-driven visualization behavior in deployed Applications
+- [ ] Frontend/CAI smoke test still needed for backend-driven visualization behavior and chart-followup routing in deployed Applications
 
 ---
 
