@@ -21,13 +21,12 @@ PROMPT_INJECTION_PATTERNS = (
 
 SENSITIVE_DATA_PATTERNS = (
     r"\b(account number|nomor rekening|rekening nasabah)\b",
-    r"\b(customer id|customer_id|id customer|id nasabah|nomor nasabah)\b",
     r"\b(phone number|mobile number|nomor telepon|nomor hp|no hp|no\. hp|handphone|whatsapp|wa nasabah)\b",
     r"\b(email address|alamat email|email nasabah)\b",
     r"\b(home address|alamat rumah|alamat lengkap|alamat nasabah)\b",
     r"\b(nik|ktp|passport|ssn|tax id|npwp)\b",
     r"\b(show|list|export|dump|download)\b.*\b(all|entire|full)\b.*\b(customers|nasabah)\b",
-    r"\b(tampilkan|keluarkan|lihatkan|berikan|minta|ambil|export|unduh)\b.*\b(email|alamat|telepon|hp|handphone|rekening|customer id|customer_id|id nasabah|nomor nasabah)\b",
+    r"\b(tampilkan|keluarkan|lihatkan|berikan|minta|ambil|export|unduh)\b.*\b(email|alamat|telepon|hp|handphone|rekening)\b",
     r"\b(raw|detail(?:ed)?)\b.*\b(customer|nasabah)\b",
 )
 
@@ -45,17 +44,13 @@ EMAIL_PATTERN = re.compile(r"\b[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[A-Za-z]{2,}\
 PHONE_PATTERN = re.compile(r"(?<!\d)(?:\+?\d[\d\-\s()]{7,}\d)")
 LONG_ID_PATTERN = re.compile(r"(?<!\d)\d{10,}(?!\d)")
 ACCOUNT_LABEL_PATTERN = re.compile(
-    r"\b(account number|nomor rekening|customer id|customer_id|id nasabah|phone number|nomor hp|nomor telepon|email address|alamat email|nik|npwp)\b",
+    r"\b(account number|nomor rekening|phone number|nomor hp|nomor telepon|email address|alamat email|nik|npwp)\b",
     re.IGNORECASE,
 )
 
 SENSITIVE_COLUMN_MARKERS = {
     "account",
     "rekening",
-    "customer_id",
-    "customer id",
-    "id_nasabah",
-    "nomor_nasabah",
     "email",
     "phone",
     "telepon",

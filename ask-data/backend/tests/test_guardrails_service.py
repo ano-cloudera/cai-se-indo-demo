@@ -49,7 +49,6 @@ class GuardrailsServiceTestCase(unittest.TestCase):
             "bisa bantu keluarkan nomor hp nasabah gak?",
             "tolong tampilkan alamat nasabah prioritas",
             "berikan email nasabah yang punya kredit besar",
-            "ambil id nasabah dengan deposito terbesar",
             "lihatkan customer_id dan nomor rekening customer",
         ]
 
@@ -59,13 +58,12 @@ class GuardrailsServiceTestCase(unittest.TestCase):
                 self.assertEqual(decision.action, "block")
                 self.assertEqual(decision.reason, "sensitive_data")
 
-    def test_blocks_customer_identifier_request(self) -> None:
+    def test_allows_customer_identifier_analytics_request(self) -> None:
         decision = self.service.screen_question(
-            "bisa keluarkan informasi email dan juga customer id"
+            "saya mau coba eksplorasi berapa total deposit berdasarkan customer ID yang top 5 terbanyak"
         )
 
-        self.assertEqual(decision.action, "block")
-        self.assertEqual(decision.reason, "sensitive_data")
+        self.assertEqual(decision.action, "allow")
 
     def test_blocks_out_of_scope_question(self) -> None:
         decision = self.service.screen_question("What is the weather in Jakarta today?")
@@ -82,14 +80,13 @@ class GuardrailsServiceTestCase(unittest.TestCase):
         self.assertEqual(decision.action, "block")
         self.assertEqual(decision.reason, "sensitive_result")
 
-    def test_blocks_customer_id_result_columns(self) -> None:
+    def test_allows_customer_id_result_columns_for_ranked_analytics(self) -> None:
         decision = self.service.screen_result_columns(
             "Show customers with the largest deposits",
             ["customer_id", "total_deposit_balance"],
         )
 
-        self.assertEqual(decision.action, "block")
-        self.assertEqual(decision.reason, "sensitive_result")
+        self.assertEqual(decision.action, "allow")
 
     def test_redacts_pii_from_answer_text(self) -> None:
         decision = self.service.protect_answer_text(

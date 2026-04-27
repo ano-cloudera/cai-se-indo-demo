@@ -120,12 +120,13 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
   - prompt injection / jailbreak-style prompts
   - obvious out-of-scope prompts
   - requests for raw sensitive customer data
-  - Indonesian PII requests such as `nomor hp`, `email nasabah`, `alamat nasabah`, `customer_id`, and `id nasabah`
+  - Indonesian PII requests such as `nomor hp`, `email nasabah`, `alamat nasabah`, and `nomor rekening`
   - abusive/toxic prompts
 - Output-side protection can:
   - block sensitive result-column shapes before answer narration
   - redact email / phone / long numeric identifiers from final answer text
   - return guardrails metadata for the frontend so the UI can explain blocks or redactions
+- `customer_id` is now treated as an analytics identifier rather than hard-blocked PII, so ranked per-customer portfolio exploration can still work while true contact/account PII remains blocked
 
 ### Visualization generation
 - Visualization intent is now generated in the backend, not guessed in the frontend
@@ -277,7 +278,8 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
 - [x] Frontend can explain guardrails blocks or redactions inline in the chat UI
 - [x] Guardrails notice UX now looks more intentional with policy-oriented wording, badges, and safer follow-up suggestions
 - [x] Guardrails warning layout has been compacted so policy notices take less vertical space in chat
-- [x] Sensitive Indonesian PII prompts such as `nomor hp`, `email nasabah`, and `customer_id` are blocked by local guardrails
+- [x] Sensitive Indonesian PII prompts such as `nomor hp`, `email nasabah`, `alamat nasabah`, and `nomor rekening` are blocked by local guardrails
+- [x] `customer_id` is now allowed for ranked analytics exploration instead of being hard-blocked like direct contact/account PII
 - [x] Chart rendering now uses Recharts for a more standard enterprise dashboard look and feel
 - [x] Line chart values now use compact formatting to reduce clipping on large balances
 - [x] Topbar guardrails mode badge was removed from the visible UI; `/health` remains the source for runtime status
