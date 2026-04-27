@@ -28,3 +28,15 @@ class SQLGuardrailsTestCase(unittest.TestCase):
 
         with self.assertRaises(SQLValidationError):
             validate_and_prepare_sql("SELECT * FROM transactions", settings=settings)
+
+    def test_rejects_date_format_function(self) -> None:
+        settings = Settings(
+            DB_NAME="demo_db",
+            SQL_ALLOWED_TABLES="customers,deposits,credits,fraud_transactions",
+        )
+
+        with self.assertRaises(SQLValidationError):
+            validate_and_prepare_sql(
+                "SELECT date_format(cast(join_date as date), 'yyyy-MM') FROM customers",
+                settings=settings,
+            )

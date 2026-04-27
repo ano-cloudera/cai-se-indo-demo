@@ -21,3 +21,5 @@ class PromptContextTestCase(unittest.TestCase):
         self.assertIn("customers.customer_id = credits.customer_id", prompt_view["system_prompt"])
         self.assertIn("customers.customer_id = fraud_transactions.customer_id", prompt_view["system_prompt"])
         self.assertIn("top customers by balance", prompt_view["system_prompt"])
+        self.assertIn("substr(date_column, 1, 7)", prompt_view["system_prompt"])
+        self.assertIn("Do not use date_format()", prompt_view["system_prompt"])

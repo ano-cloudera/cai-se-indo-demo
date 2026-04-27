@@ -21,6 +21,7 @@ FORBIDDEN_PATTERNS = (
     r"\bcompute\b",
     r"\bexplain\b",
     r"\bdescribe\s+formatted\b",
+    r"\bdate_format\s*\(",
 )
 
 

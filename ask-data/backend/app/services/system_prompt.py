@@ -43,5 +43,9 @@ SQL generation rules:
 - If deposits and credits must both be combined in one answer, be careful to avoid double counting caused by two one-to-many joins from customers.
 - If fraud_transactions is joined to deposits or credits through customers, aggregate first to avoid multiplying rows across multiple one-to-many tables.
 - If the question is broad, produce a practical preview query that can be safely limited.
+- Date columns such as join_date, birth_date, maturity_date, disbursement_date, and transaction_date are stored as strings in YYYY-MM-DD format.
+- For month-level grouping in Impala, prefer expressions like substr(date_column, 1, 7) instead of date_format().
+- For date filtering such as "last 6 months", prefer cast(date_column as date) with Impala-compatible functions like add_months(current_date(), -6) when needed.
+- Do not use date_format(); assume it is unavailable in the target Impala environment.
 - Respect that SQL execution is validated later by guardrails; do not try to bypass them.
 """.strip()
