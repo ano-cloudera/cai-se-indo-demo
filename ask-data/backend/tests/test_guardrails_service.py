@@ -65,6 +65,13 @@ class GuardrailsServiceTestCase(unittest.TestCase):
 
         self.assertEqual(decision.action, "allow")
 
+    def test_allows_aggregate_customer_trend_request(self) -> None:
+        decision = self.service.screen_question(
+            "saya mau tau dong berapa total customer kita selama 6 bulan kebelakang"
+        )
+
+        self.assertEqual(decision.action, "allow")
+
     def test_blocks_out_of_scope_question(self) -> None:
         decision = self.service.screen_question("What is the weather in Jakarta today?")
 

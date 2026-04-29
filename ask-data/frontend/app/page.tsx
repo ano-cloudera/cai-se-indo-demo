@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { AnswerCard } from "@/components/answer-card";
 import { BrandLogo } from "@/components/brand-logo";
@@ -185,6 +185,7 @@ const navItems = [
 ];
 
 export default function HomePage() {
+  const submitInFlightRef = useRef(false);
   const [state, setState] = useState<ChatState>(initialChatState);
   const [health, setHealth] = useState<HealthState>({
     loading: true,
@@ -350,6 +351,7 @@ export default function HomePage() {
   async function submitQuestion(input: string) {
     const trimmed = input.trim();
     const sessionId = state.sessionId || getOrCreateSessionId();
+    if (submitInFlightRef.current) return;
     if (!trimmed) {
       setState((cur) => ({ ...cur, error: "Please enter a question first." }));
       return;
@@ -363,6 +365,7 @@ export default function HomePage() {
     }
 
     const userMessage: ChatMessage = { id: `user-${Date.now()}`, role: "user", content: trimmed };
+    submitInFlightRef.current = true;
     setState((cur) => ({
       ...cur,
       sessionId,
@@ -397,6 +400,8 @@ export default function HomePage() {
         loading: false,
         error: error instanceof Error ? toFriendlyErrorMessage(error.message) : "Request could not be processed right now.",
       }));
+    } finally {
+      submitInFlightRef.current = false;
     }
   }
 

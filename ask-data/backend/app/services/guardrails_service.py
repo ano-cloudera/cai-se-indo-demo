@@ -65,6 +65,12 @@ SENSITIVE_COLUMN_MARKERS = {
     "ssn",
 }
 
+AGGREGATE_CUSTOMER_ALLOW_PATTERNS = (
+    r"\b(total|jumlah|count|berapa)\b.*\b(customer|customers|nasabah)\b",
+    r"\b(customer|customers|nasabah)\b.*\b(per bulan|bulanan|by month|monthly|per segment|by segment|per city|by city|per region|by region)\b",
+    r"\b(tren|trend)\b.*\b(customer|customers|nasabah)\b",
+)
+
 BLOCK_REASON_MESSAGES = {
     "prompt_injection": (
         "I can help with deposit, credit, and customer analytics, but I can't follow requests that bypass system rules or safety controls.",
@@ -184,6 +190,9 @@ class GuardrailsService:
 
     def _heuristic_screen(self, question: str) -> GuardrailsDecision:
         lowered = question.lower()
+
+        if any(re.search(pattern, lowered) for pattern in AGGREGATE_CUSTOMER_ALLOW_PATTERNS):
+            return GuardrailsDecision(action="allow", metadata={"provider": "heuristic-aggregate-allow"})
 
         if any(re.search(pattern, lowered) for pattern in PROMPT_INJECTION_PATTERNS):
             return self._blocked("prompt_injection", question)
