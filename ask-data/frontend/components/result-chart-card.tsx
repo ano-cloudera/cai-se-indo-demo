@@ -294,7 +294,7 @@ export function ResultChartCard({ visualization }: ResultChartCardProps) {
                   }}
                 />
                 <Line
-                  type="monotone"
+                  type="linear"
                   dataKey="value"
                   stroke="#5c63f2"
                   strokeWidth={2.5}

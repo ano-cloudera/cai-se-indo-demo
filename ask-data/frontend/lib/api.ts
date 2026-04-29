@@ -4,6 +4,7 @@ export interface HealthResponse {
   environment?: string;
   debug?: boolean;
   database?: string;
+  session_backend?: string;
   result?: number | null;
   guardrails?: {
     enabled?: boolean;
@@ -131,6 +132,51 @@ export interface RagSessionConfig {
   query_configuration: RagQueryConfiguration;
 }
 
+export interface SessionMessage {
+  role: "system" | "user" | "assistant";
+  content: string;
+  timestamp: string;
+}
+
+export interface ResultPreviewContext {
+  columns: string[];
+  rows: Array<Record<string, unknown>>;
+  row_count: number;
+  truncated: boolean;
+  captured_at: string;
+}
+
+export interface SessionStatePayload {
+  session_id: string;
+  messages: SessionMessage[];
+  last_generated_sql?: string | null;
+  last_answer?: string | null;
+  last_result_preview?: ResultPreviewContext | null;
+  last_intent?: string | null;
+  rag_config?: RagSessionConfig | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SessionSummary {
+  session_id: string;
+  title: string;
+  message_count: number;
+  last_user_message?: string | null;
+  last_assistant_message?: string | null;
+  last_intent?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SessionListResponse {
+  sessions: SessionSummary[];
+}
+
+export interface SessionDetailResponse {
+  session: SessionStatePayload;
+}
+
 function getApiBaseUrl(): string {
   return "/api/backend";
 }
@@ -230,5 +276,9 @@ export const apiClient = {
       method: "POST",
       body: JSON.stringify(payload),
     }),
+  listSessions: (limit = 20) =>
+    request<SessionListResponse>(`/sessions?limit=${limit}`),
+  getSession: (sessionId: string) =>
+    request<SessionDetailResponse>(`/sessions/${sessionId}`),
   getBaseUrl: getApiBaseUrl,
 };

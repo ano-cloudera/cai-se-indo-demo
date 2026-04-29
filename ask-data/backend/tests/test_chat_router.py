@@ -4,9 +4,11 @@ from app.services.chat_router import (
     build_acknowledgement_answer,
     build_farewell_answer,
     build_greeting_answer,
+    extract_visualization_preference,
     is_acknowledgement,
     is_farewell,
     is_greeting_or_smalltalk,
+    is_visualization_followup,
     looks_like_data_request,
 )
 
@@ -32,6 +34,12 @@ class ChatRouterTestCase(unittest.TestCase):
         self.assertTrue(looks_like_data_request("dalam bentuk linechart aja"))
         self.assertTrue(looks_like_data_request("keluarkan aja udah"))
         self.assertTrue(looks_like_data_request("tampilkan grafik tren bulanan"))
+
+    def test_visualization_followup_detection(self) -> None:
+        self.assertTrue(is_visualization_followup("bisa ubah dalam bentuk barchart kah?"))
+        self.assertEqual(extract_visualization_preference("bisa ubah dalam bentuk barchart kah?"), "bar")
+        self.assertTrue(is_visualization_followup("jadikan table saja"))
+        self.assertEqual(extract_visualization_preference("jadikan table saja"), "table")
 
     def test_farewell_is_detected(self) -> None:
         self.assertTrue(is_farewell("sampai jumpa"))

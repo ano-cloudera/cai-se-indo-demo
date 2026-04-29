@@ -93,6 +93,18 @@ DATA_DOMAIN_MARKERS = (
     "keluar kan",
 )
 
+VISUALIZATION_FOLLOWUP_PATTERNS = (
+    (r"\b(bar chart|barchart)\b", "bar"),
+    (r"\b(line chart|linechart)\b", "line"),
+    (r"\b(pie chart|piechart|donut chart|donutchart)\b", "pie"),
+    (r"\b(table|tabel)\b", "table"),
+)
+
+VISUALIZATION_INTENT_PATTERNS = (
+    r"\b(ubah|ganti|jadikan|dalam bentuk|tampilkan|show|render)\b",
+    r"\b(chart|grafik|visualisasi|table|tabel)\b",
+)
+
 
 def is_indonesian_text(text: str) -> bool:
     lowered = normalize_text(text)
@@ -117,6 +129,22 @@ def is_farewell(text: str) -> bool:
 def looks_like_data_request(text: str) -> bool:
     lowered = normalize_text(text)
     return any(marker in lowered for marker in DATA_DOMAIN_MARKERS)
+
+
+def extract_visualization_preference(text: str) -> str | None:
+    lowered = normalize_text(text)
+    for pattern, preferred_type in VISUALIZATION_FOLLOWUP_PATTERNS:
+        if re.search(pattern, lowered):
+            return preferred_type
+    return None
+
+
+def is_visualization_followup(text: str) -> bool:
+    lowered = normalize_text(text)
+    preferred_type = extract_visualization_preference(lowered)
+    if preferred_type is None:
+        return False
+    return any(re.search(pattern, lowered) for pattern in VISUALIZATION_INTENT_PATTERNS)
 
 
 def normalize_text(text: str) -> str:

@@ -58,3 +58,22 @@ class SessionMemoryState(BaseModel):
     rag_config: RagSessionConfigState | None = None
     created_at: datetime = Field(default_factory=utc_now)
     updated_at: datetime = Field(default_factory=utc_now)
+
+
+class SessionSummaryResponse(BaseModel):
+    session_id: str
+    title: str
+    message_count: int = 0
+    last_user_message: str | None = None
+    last_assistant_message: str | None = None
+    last_intent: str | None = None
+    created_at: datetime
+    updated_at: datetime
+
+
+class SessionListResponse(BaseModel):
+    sessions: list[SessionSummaryResponse] = Field(default_factory=list)
+
+
+class SessionDetailResponse(BaseModel):
+    session: SessionMemoryState

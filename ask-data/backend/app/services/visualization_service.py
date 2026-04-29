@@ -126,6 +126,7 @@ class VisualizationService:
         question: str,
         columns: list[str],
         rows: list[dict[str, Any]],
+        preferred_type: str | None = None,
     ) -> VisualizationSpec | None:
         if len(columns) < 2 or len(rows) < 2:
             return None
@@ -181,6 +182,18 @@ class VisualizationService:
 
         if len(series) < 2 and chart_type != "table":
             chart_type = "table"
+
+        if preferred_type in {"bar", "line", "pie", "table"}:
+            if preferred_type == "pie" and len(series) > 5:
+                chart_type = "bar"
+            elif preferred_type == "line" and len(series) >= 2:
+                chart_type = "line"
+            elif preferred_type == "bar" and len(series) >= 2:
+                chart_type = "bar"
+            elif preferred_type == "table":
+                chart_type = "table"
+            elif preferred_type == "pie" and len(series) >= 2:
+                chart_type = "pie"
 
         return VisualizationSpec(
             type=chart_type,

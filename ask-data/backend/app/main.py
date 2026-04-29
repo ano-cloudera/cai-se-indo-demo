@@ -15,6 +15,7 @@ from app.schemas.rag import (
     RagSessionConfigRequest,
     RagSessionConfigResponse,
 )
+from app.schemas.session import SessionDetailResponse, SessionListResponse
 from app.schemas.sql import (
     ChatAnswerResponse,
     ChatQueryRequest,
@@ -28,14 +29,16 @@ from app.services.memory_store import SessionMemoryStore
 from app.services.answer_generator import AnswerGeneratorService
 from app.services.chat_router import (
     build_processing_fallback_answer,
+    extract_visualization_preference,
     is_greeting_or_smalltalk,
+    is_visualization_followup,
     looks_like_data_request,
     is_acknowledgement,
     is_farewell,
 )
 from app.services.rag_client import RagClient, RagClientError
 from app.services.conversation_generator import ConversationGeneratorService
-from app.services.session_store import InMemorySessionStore
+from app.services.session_store import InMemorySessionStore, SQLiteSessionStore
 from app.services.sql_executor import SQLExecutionError, SQLExecutorService
 from app.services.sql_generator import SQLGeneratorService
 from app.services.sql_guardrails import SQLValidationError
@@ -44,7 +47,15 @@ from app.services.visualization_service import VisualizationService
 
 settings = get_settings()
 logger = logging.getLogger(__name__)
-session_store = InMemorySessionStore(settings)
+
+
+def _build_session_store():
+    if settings.session_backend.strip().lower() == "sqlite":
+        return SQLiteSessionStore(settings)
+    return InMemorySessionStore(settings)
+
+
+session_store = _build_session_store()
 memory_store = SessionMemoryStore(session_store=session_store, settings=settings)
 sql_generator = SQLGeneratorService(memory_store=memory_store, settings=settings)
 sql_executor = SQLExecutorService(settings=settings)
@@ -78,6 +89,7 @@ def read_root() -> dict[str, object]:
         "environment": settings.app_env,
         "database": settings.impala_db,
         "guardrails": guardrails_service.get_runtime_status(),
+        "session_backend": settings.session_backend,
         "docs": "/docs",
     }
 
@@ -90,6 +102,7 @@ def health() -> dict[str, object]:
         "environment": settings.app_env,
         "debug": settings.app_debug,
         "guardrails": guardrails_service.get_runtime_status(),
+        "session_backend": settings.session_backend,
     }
 
 
@@ -123,6 +136,20 @@ def list_tables() -> dict[str, object]:
         "count": len(tables),
         "tables": tables,
     }
+
+
+@app.get("/sessions", response_model=SessionListResponse)
+def list_sessions(limit: int = 20) -> SessionListResponse:
+    safe_limit = max(1, min(limit, 50))
+    return SessionListResponse(sessions=memory_store.list_sessions(limit=safe_limit))
+
+
+@app.get("/sessions/{session_id}", response_model=SessionDetailResponse)
+def get_session(session_id: str) -> SessionDetailResponse:
+    session = memory_store.get_session_state(session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="Session not found.")
+    return SessionDetailResponse(session=session)
 
 
 def _store_result_preview(session_id: str | None, execution_result: dict[str, object]) -> None:
@@ -208,6 +235,78 @@ def _apply_output_guardrails(
     return decision.message or answer, {}
 
 
+def _build_visualization_followup_answer(question: str, preferred_type: str) -> str:
+    preferred_label = {
+        "bar": "bar chart",
+        "line": "line chart",
+        "pie": "pie chart",
+        "table": "table",
+    }.get(preferred_type, "chart")
+
+    if " " not in preferred_label and preferred_label.endswith("chart"):
+        preferred_label = preferred_label.replace("chart", " chart")
+
+    if "table" == preferred_type:
+        if " " in question.lower() or any(token in question.lower() for token in ("tabel", "table")):
+            return "Saya menampilkan ulang hasil terakhir dalam bentuk tabel agar lebih mudah dibandingkan."
+        return "The latest result has been reformatted as a table for easier review."
+
+    if any(word in question.lower() for word in ("ubah", "ganti", "jadikan", "tampilkan", "bentuk", "grafik", "chart")):
+        return f"Saya menampilkan ulang hasil terakhir dalam bentuk {preferred_label} tanpa mengubah data dasarnya."
+    return f"The latest result has been re-rendered as a {preferred_label} without changing the underlying data."
+
+
+def _maybe_handle_visualization_followup(
+    payload: ChatQueryRequest,
+    session_memory,
+) -> dict[str, object] | None:
+    if not payload.session_id or session_memory is None:
+        return None
+    if not is_visualization_followup(payload.question):
+        return None
+    if session_memory.last_result_preview is None or not session_memory.last_result_preview.rows:
+        return None
+
+    preferred_type = extract_visualization_preference(payload.question)
+    if preferred_type is None:
+        return None
+
+    preview = session_memory.last_result_preview
+    visualization = visualization_service.build_visualization(
+        question=payload.question,
+        columns=preview.columns,
+        rows=preview.rows,
+        preferred_type=preferred_type,
+    )
+    if visualization is None:
+        return None
+
+    answer = _build_visualization_followup_answer(payload.question, visualization.type or preferred_type)
+    if payload.session_id:
+        memory_store.append_user_message(payload.session_id, payload.question)
+        memory_store.append_assistant_message(payload.session_id, answer)
+        memory_store.set_last_answer(payload.session_id, answer)
+        memory_store.set_last_intent(payload.session_id, "visualization-followup")
+
+    return {
+        "session_id": payload.session_id,
+        "original_question": payload.question,
+        "answer": answer,
+        "generated_sql": session_memory.last_generated_sql or "",
+        "executed_sql": session_memory.last_generated_sql or "",
+        "columns": preview.columns,
+        "rows": preview.rows,
+        "row_count": preview.row_count,
+        "truncated": preview.truncated,
+        "limit_applied": False,
+        "metadata": {
+            "visualization_followup": True,
+            "preferred_chart_type": preferred_type,
+        },
+        "visualization": visualization.model_dump(),
+    }
+
+
 def _run_chat_flow(payload: ChatQueryRequest) -> dict[str, object]:
     blocked_decision = _maybe_block_with_guardrails(payload.question)
     if blocked_decision is not None:
@@ -216,6 +315,10 @@ def _run_chat_flow(payload: ChatQueryRequest) -> dict[str, object]:
     session_memory = None
     if payload.session_id:
         session_memory = memory_store.get_or_create_session(payload.session_id)
+
+    visualization_followup_response = _maybe_handle_visualization_followup(payload, session_memory)
+    if visualization_followup_response is not None:
+        return visualization_followup_response
 
     if (
         is_greeting_or_smalltalk(payload.question)

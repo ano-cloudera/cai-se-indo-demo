@@ -63,7 +63,11 @@ class Settings(BaseSettings):
         default="",
         validation_alias=AliasChoices("AZURE_OPENAI_MODEL"),
     )
-    session_backend: str = Field(default="memory", alias="SESSION_BACKEND")
+    session_backend: str = Field(default="sqlite", alias="SESSION_BACKEND")
+    session_sqlite_path: str = Field(
+        default="data/ask_data_sessions.db",
+        alias="SESSION_SQLITE_PATH",
+    )
     session_ttl_minutes: int = Field(default=30, alias="SESSION_TTL_MINUTES")
     memory_max_history: int = Field(default=10, alias="MEMORY_MAX_HISTORY")
     sql_default_limit: int = Field(default=100, alias="SQL_DEFAULT_LIMIT")

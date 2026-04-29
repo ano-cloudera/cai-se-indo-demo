@@ -9,15 +9,16 @@ from app.schemas.session import (
     RagSessionConfigState,
     ResultPreviewContext,
     SessionMemoryState,
+    SessionSummaryResponse,
     utc_now,
 )
-from app.services.session_store import InMemorySessionStore
+from app.services.session_store import InMemorySessionStore, SessionStore
 
 
 class SessionMemoryStore:
     def __init__(
         self,
-        session_store: InMemorySessionStore | None = None,
+        session_store: SessionStore | None = None,
         settings: Settings | None = None,
     ) -> None:
         self.settings = settings or get_settings()
@@ -89,6 +90,9 @@ class SessionMemoryStore:
 
     def get_session_state(self, session_id: str) -> SessionMemoryState | None:
         return self.session_store.get_session(session_id)
+
+    def list_sessions(self, limit: int = 20) -> list[SessionSummaryResponse]:
+        return self.session_store.list_sessions(limit=limit)
 
     def set_rag_config(
         self,

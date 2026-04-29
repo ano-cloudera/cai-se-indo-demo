@@ -50,6 +50,7 @@ Important:
 ### Session and memory
 
 - `SESSION_BACKEND`
+- `SESSION_SQLITE_PATH`
 - `SESSION_TTL_MINUTES`
 - `MEMORY_MAX_HISTORY`
 
@@ -81,6 +82,7 @@ Important:
 - Set `GUARDRAILS_ENABLED=true` to activate request screening. `GUARDRAILS_API_KEY` is required when Guardrails is enabled.
 - `GUARDRAILS_BASE_URL` is optional in the current implementation. If omitted, the app still uses built-in heuristic screening for prompt injection, sensitive-data requests, and obvious off-domain prompts.
 - `GUARDRAILS_FAIL_OPEN` defaults to `true`, meaning the app will continue with local heuristics if a remote Guardrails endpoint is unreachable.
+- `SESSION_BACKEND` now defaults to `sqlite`. Set `SESSION_SQLITE_PATH` if you want the session database stored outside the default `data/ask_data_sessions.db` location.
 - Current shared external data location is `s3a://go01-demo/user/cai-demo-se-indonesia/data/`.
 - Recommended `SQL_ALLOWED_TABLES` value is `customers,deposits,credits,fraud_transactions`.
 - No secrets should be hardcoded into source files.

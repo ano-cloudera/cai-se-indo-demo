@@ -61,6 +61,22 @@ class VisualizationServiceTestCase(unittest.TestCase):
         self.assertEqual(spec.series[0]["city"], "Jakarta")
         self.assertEqual(spec.table_rows[0]["city"], "Jakarta")
 
+    def test_honors_bar_override_for_temporal_series(self) -> None:
+        spec = self.service.build_visualization(
+            question="Ubah ke barchart",
+            columns=["month", "total_outstanding_credit"],
+            rows=[
+                {"month": "2026-01", "total_outstanding_credit": 100},
+                {"month": "2026-02", "total_outstanding_credit": 120},
+            ],
+            preferred_type="bar",
+        )
+
+        self.assertIsNotNone(spec)
+        assert spec is not None
+        self.assertEqual(spec.type, "bar")
+        self.assertEqual(spec.series[0]["month"], "2026-01")
+
     def test_builds_pie_chart_for_small_composition(self) -> None:
         spec = self.service.build_visualization(
             question="Show customer composition by segment",

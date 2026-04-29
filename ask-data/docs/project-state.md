@@ -40,7 +40,7 @@ removing all BNI-specific references so it can be reused across different bankin
 2. User enables RAG for the current chat session
 3. User selects knowledge base, model, and optional advanced settings
 4. Frontend saves config via backend
-5. Backend creates a backing RAG session and stores it in in-memory session state
+5. Backend creates a backing RAG session and stores it in per-session state
 6. Subsequent chat requests in that session can be routed to RAG instead of the default SQL flow
 
 ---
@@ -98,8 +98,23 @@ All join on `customer_id`. No orphan records. Date fields in `YYYY-MM-DD` format
 | `POST /chat/query` | SQL answer endpoint — returns answer, SQL, rows, metadata, and optional visualization spec |
 | `POST /sql/generate` | SQL-only generation for debugging |
 
-**Session memory:** In-memory only (acceptable for demo; no persistence required).
-This now also stores per-session RAG configuration and RAG session IDs.
+**Session memory:** SQLite-backed by default with an in-memory fallback.
+This now stores per-session chat history, last SQL/result context, visualization follow-up context, and RAG configuration/session IDs.
+Recommended CAI backend env values for the current deployment:
+- `SESSION_BACKEND=sqlite`
+- `SESSION_SQLITE_PATH=data/ask_data_sessions.db`
+- `SESSION_TTL_MINUTES=30`
+- `MEMORY_MAX_HISTORY=10`
+
+**Session endpoints:**
+| Endpoint | Purpose |
+|---|---|
+| `GET /sessions` | List recent saved sessions |
+| `GET /sessions/{session_id}` | Reload one saved session and its working memory |
+
+**Validation note:**
+- `GET /health` now includes `session_backend`
+- expected value for the current deployment is `sqlite`
 
 **CORS:** FastAPI CORSMiddleware is removed. Cloudera Application proxy handles CORS headers.
 Do not re-add middleware unless thoroughly tested — it caused duplicate CORS headers in the past.
@@ -147,6 +162,7 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
 - Temporal series are now sorted in the backend before plotting
 - Longer temporal series are sampled into representative points instead of simply taking the first rows returned by SQL
 - Chart-oriented follow-up prompts such as `linechart aja`, `tampilkan grafik`, and `keluarkan aja` are now routed into SQL/data flow instead of being treated as generic conversation
+- Visualization-only follow-up prompts such as `ubah ke barchart`, `jadikan line chart`, and `tampilkan sebagai table` now reuse the latest SQL result instead of generating a new query, so only the presentation changes
 - Non-chartable query results return no visualization spec and render as answer-only
 
 ---
@@ -201,6 +217,7 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
 - Composition visuals now render as a donut chart with a compact legend
 - Loading state: animated bouncing dots
 - "New Conversation" button in sidebar footer resets session
+- Sidebar now shows recent saved sessions from the backend store and can reopen an earlier conversation
 - RAG config lives in a separate modal, not in the chat input area
 - Layout has been adjusted to be more responsive on narrower screens
 - RAG modal locks page scroll on open, supports `Escape`/backdrop close, uses sticky header/footer, and avoids repeated option reloads to reduce visible modal flicker/glitch
@@ -219,6 +236,7 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
 - RAG-enabled chat still uses `POST /chat/answer`
 - Both response types can include guardrails metadata
 - SQL query responses can include backend-generated visualization specs
+- Frontend can reload persisted chat history through the backend session APIs and keep the active session in local storage
 - Also calls `GET /rag/options`, `GET /rag/config/{session_id}`, and `POST /rag/config`
 
 **Deployment entry:** `frontend/frontend_entry.py`
@@ -246,6 +264,10 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
 - `GUARDRAILS_API_KEY`
 - `GUARDRAILS_BASE_URL`
 - `GUARDRAILS_FAIL_OPEN`
+- `SESSION_BACKEND`
+- `SESSION_SQLITE_PATH`
+- `SESSION_TTL_MINUTES`
+- `MEMORY_MAX_HISTORY`
 
 ### Frontend (set in Cloudera AI)
 - `BACKEND_API_BASE_URL` or `NEXT_PUBLIC_API_BASE_URL` — full URL of the backend Application
@@ -278,6 +300,8 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
 - [x] Frontend can explain guardrails blocks or redactions inline in the chat UI
 - [x] Guardrails notice UX now looks more intentional with policy-oriented wording, badges, and safer follow-up suggestions
 - [x] Guardrails warning layout has been compacted so policy notices take less vertical space in chat
+- [x] Session persistence now works through SQLite by default, with recent sessions shown in the sidebar
+- [x] Backend CAI configuration now includes explicit SQLite session env values (`SESSION_BACKEND`, `SESSION_SQLITE_PATH`, `SESSION_TTL_MINUTES`, `MEMORY_MAX_HISTORY`)
 - [x] Sensitive Indonesian PII prompts such as `nomor hp`, `email nasabah`, `alamat nasabah`, and `nomor rekening` are blocked by local guardrails
 - [x] `customer_id` is now allowed for ranked analytics exploration instead of being hard-blocked like direct contact/account PII
 - [x] Chart rendering now uses Recharts for a more standard enterprise dashboard look and feel
@@ -292,6 +316,7 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
 - [x] `/chat/answer` endpoint working
 - [x] RAG config endpoints implemented
 - [x] RAG session creation working with complete payload
+- [x] `/health` now reports the active session backend so SQLite activation can be validated after deploy
 - [x] Human-readable validation errors added for incomplete RAG config
 - [x] RAG source extraction added from chat history into a structured `sources` payload for UI rendering
 - [x] RAG answer text is sanitized to strip citation anchor markup before the response is sent to the frontend

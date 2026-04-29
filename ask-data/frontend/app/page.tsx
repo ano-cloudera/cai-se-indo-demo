@@ -25,9 +25,16 @@ import {
   type HealthResponse,
   type RagOptionsResponse,
   type RagSessionConfig,
+  type SessionStatePayload,
+  type SessionSummary,
   type VisualizationSpec,
 } from "@/lib/api";
-import { createNewSessionId, getOrCreateSessionId } from "@/lib/session";
+import {
+  createNewSessionId,
+  getCurrentSessionId,
+  getOrCreateSessionId,
+  setCurrentSessionId,
+} from "@/lib/session";
 
 interface ChatMessage {
   id: string;
@@ -50,6 +57,12 @@ interface HealthState {
   loading: boolean;
   app: HealthResponse | null;
   db: HealthResponse | null;
+  error: string;
+}
+
+interface SessionsState {
+  loading: boolean;
+  items: SessionSummary[];
   error: string;
 }
 
@@ -163,11 +176,32 @@ function getGuardrailsNotice(metadata: Record<string, unknown> | undefined) {
   return null;
 }
 
+function mapStoredSessionToMessages(session: SessionStatePayload): ChatMessage[] {
+  return session.messages
+    .filter(
+      (
+        message,
+      ): message is SessionStatePayload["messages"][number] & { role: "user" | "assistant" } =>
+        message.role === "user" || message.role === "assistant",
+    )
+    .map((message, index) => ({
+      id: `${message.role}-${session.session_id}-${index}-${message.timestamp}`,
+      role: message.role,
+      content: message.content,
+    }));
+}
+
 const initialChatState: ChatState = {
   sessionId: "",
   question: "",
   messages: [],
   loading: false,
+  error: "",
+};
+
+const initialSessionsState: SessionsState = {
+  loading: true,
+  items: [],
   error: "",
 };
 
@@ -187,6 +221,7 @@ const navItems = [
 export default function HomePage() {
   const submitInFlightRef = useRef(false);
   const [state, setState] = useState<ChatState>(initialChatState);
+  const [sessions, setSessions] = useState<SessionsState>(initialSessionsState);
   const [health, setHealth] = useState<HealthState>({
     loading: true,
     app: null,
@@ -207,13 +242,19 @@ export default function HomePage() {
   });
 
   useEffect(() => {
-    const sessionId = getOrCreateSessionId();
+    const sessionId = getCurrentSessionId() || getOrCreateSessionId();
+    setCurrentSessionId(sessionId);
     setState((cur) => ({ ...cur, sessionId }));
     setRagConfig(defaultRagConfig(sessionId));
+    void loadSessionHistory(sessionId);
   }, []);
 
   useEffect(() => {
     void refreshHealth();
+  }, []);
+
+  useEffect(() => {
+    void refreshSessions();
   }, []);
 
   useEffect(() => {
@@ -241,6 +282,57 @@ export default function HomePage() {
         error: error instanceof Error ? error.message : "Unable to reach the backend.",
       });
     }
+  }
+
+  async function refreshSessions() {
+    setSessions((cur) => ({ ...cur, loading: true, error: "" }));
+    try {
+      const response = await apiClient.listSessions(20);
+      setSessions({
+        loading: false,
+        items: response.sessions,
+        error: "",
+      });
+    } catch (error) {
+      setSessions({
+        loading: false,
+        items: [],
+        error: error instanceof Error ? error.message : "Unable to load saved sessions.",
+      });
+    }
+  }
+
+  async function loadSessionHistory(sessionId: string) {
+    try {
+      const response = await apiClient.getSession(sessionId);
+      const restoredMessages = mapStoredSessionToMessages(response.session);
+      setState((cur) => ({
+        ...cur,
+        sessionId,
+        messages: restoredMessages,
+        error: "",
+      }));
+    } catch {
+      setState((cur) => ({ ...cur, sessionId, messages: [] }));
+    }
+  }
+
+  async function handleSelectSession(sessionId: string) {
+    if (!sessionId || sessionId === state.sessionId) return;
+    setCurrentSessionId(sessionId);
+    setState((cur) => ({
+      ...cur,
+      sessionId,
+      question: "",
+      loading: false,
+      error: "",
+      messages: [],
+    }));
+    setRagPanelOpen(false);
+    setRagConfig(defaultRagConfig(sessionId));
+    setRagConfigDirty(false);
+    await loadSessionHistory(sessionId);
+    await loadSavedRagConfig(sessionId);
   }
 
   async function loadRagOptions() {
@@ -402,6 +494,7 @@ export default function HomePage() {
       }));
     } finally {
       submitInFlightRef.current = false;
+      void refreshSessions();
     }
   }
 
@@ -466,6 +559,7 @@ export default function HomePage() {
 
   function handleNewChat() {
     const sessionId = createNewSessionId();
+    setCurrentSessionId(sessionId);
     setState({ ...initialChatState, sessionId });
     setRagConfig(defaultRagConfig(sessionId));
     setRagPanelOpen(false);
@@ -474,6 +568,7 @@ export default function HomePage() {
 
   function handleClearSession() {
     const sessionId = createNewSessionId();
+    setCurrentSessionId(sessionId);
     setState({ ...initialChatState, sessionId });
     setRagConfig(defaultRagConfig(sessionId));
     setRagPanelOpen(false);
@@ -493,6 +588,35 @@ export default function HomePage() {
           >
             + New Conversation
           </button>
+          <div className="mt-4">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-white/45">
+              Recent Sessions
+            </p>
+            <div className="mt-2 space-y-2">
+              {sessions.items.slice(0, 4).map((session) => (
+                <button
+                  key={session.session_id}
+                  type="button"
+                  onClick={() => void handleSelectSession(session.session_id)}
+                  className={`w-full rounded-[12px] border px-3 py-2 text-left transition ${
+                    state.sessionId === session.session_id
+                      ? "border-[#6c74ff] bg-white/10"
+                      : "border-white/8 bg-white/[0.03] hover:border-white/20 hover:bg-white/[0.06]"
+                  }`}
+                >
+                  <p className="truncate text-[12px] font-semibold text-white/90">{session.title}</p>
+                  <p className="mt-1 truncate text-[10px] text-white/45">
+                    {session.last_user_message || "Open saved conversation"}
+                  </p>
+                </button>
+              ))}
+              {!sessions.loading && sessions.items.length === 0 ? (
+                <p className="rounded-[12px] border border-dashed border-white/10 px-3 py-2 text-[10px] text-white/35">
+                  No saved sessions yet.
+                </p>
+              ) : null}
+            </div>
+          </div>
           <div className="mt-4 flex items-center gap-2">
             <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/10">
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
