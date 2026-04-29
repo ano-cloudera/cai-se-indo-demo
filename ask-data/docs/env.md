@@ -34,6 +34,15 @@ Important:
 - `AZURE_OPENAI_DEPLOYMENT`
 - `AZURE_OPENAI_MODEL`
 
+### Amazon Bedrock
+
+- `AWS_DEFAULT_REGION`
+- `BEDROCK_REGION`
+- `BEDROCK_MODEL_ID`
+- `BEDROCK_MODEL_NAME`
+- `AWS_ACCESS_KEY_ID`
+- `AWS_SECRET_ACCESS_KEY`
+
 ### RAG Studio
 
 - `RAG_BASE_URL`
@@ -83,6 +92,7 @@ Important:
 - `GUARDRAILS_BASE_URL` is optional in the current implementation. If omitted, the app still uses built-in heuristic screening for prompt injection, sensitive-data requests, and obvious off-domain prompts.
 - `GUARDRAILS_FAIL_OPEN` defaults to `true`, meaning the app will continue with local heuristics if a remote Guardrails endpoint is unreachable.
 - `SESSION_BACKEND` now defaults to `sqlite`. Set `SESSION_SQLITE_PATH` if you want the session database stored outside the default `data/ask_data_sessions.db` location.
+- Azure OpenAI remains the default non-RAG provider. If Bedrock credentials and model env vars are set, the frontend can offer a per-session provider switch without changing the RAG Studio flow.
 - Current shared external data location is `s3a://go01-demo/user/cai-demo-se-indonesia/data/`.
 - Recommended `SQL_ALLOWED_TABLES` value is `customers,deposits,credits,fraud_transactions`.
 - No secrets should be hardcoded into source files.

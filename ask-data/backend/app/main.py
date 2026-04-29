@@ -10,6 +10,11 @@ from app.db.connection import (
     check_impala_health,
     run_query,
 )
+from app.schemas.llm import (
+    LLMProviderOptionsResponse,
+    LLMProviderSelectionRequest,
+    LLMProviderSelectionResponse,
+)
 from app.schemas.rag import (
     RagOptionsResponse,
     RagSessionConfigRequest,
@@ -38,6 +43,8 @@ from app.services.chat_router import (
 )
 from app.services.rag_client import RagClient, RagClientError
 from app.services.conversation_generator import ConversationGeneratorService
+from app.services.llm_provider_service import LLMProviderService
+from app.services.llm_router import LLMRouter
 from app.services.session_store import InMemorySessionStore, SQLiteSessionStore
 from app.services.sql_executor import SQLExecutionError, SQLExecutorService
 from app.services.sql_generator import SQLGeneratorService
@@ -57,10 +64,16 @@ def _build_session_store():
 
 session_store = _build_session_store()
 memory_store = SessionMemoryStore(session_store=session_store, settings=settings)
-sql_generator = SQLGeneratorService(memory_store=memory_store, settings=settings)
+llm_provider_service = LLMProviderService(settings=settings)
+llm_router = LLMRouter(settings=settings, provider_service=llm_provider_service)
+sql_generator = SQLGeneratorService(
+    llm_router=llm_router,
+    memory_store=memory_store,
+    settings=settings,
+)
 sql_executor = SQLExecutorService(settings=settings)
-answer_generator = AnswerGeneratorService(settings=settings)
-conversation_generator = ConversationGeneratorService(settings=settings)
+answer_generator = AnswerGeneratorService(llm_router=llm_router, settings=settings)
+conversation_generator = ConversationGeneratorService(llm_router=llm_router, settings=settings)
 rag_client = RagClient(settings=settings) if settings.is_rag_configured else None
 guardrails_service = GuardrailsService(settings=settings)
 visualization_service = VisualizationService()
@@ -90,6 +103,7 @@ def read_root() -> dict[str, object]:
         "database": settings.impala_db,
         "guardrails": guardrails_service.get_runtime_status(),
         "session_backend": settings.session_backend,
+        "llm_providers": [option.provider for option in llm_provider_service.list_options().options],
         "docs": "/docs",
     }
 
@@ -103,6 +117,7 @@ def health() -> dict[str, object]:
         "debug": settings.app_debug,
         "guardrails": guardrails_service.get_runtime_status(),
         "session_backend": settings.session_backend,
+        "llm_providers": [option.provider for option in llm_provider_service.list_options().options],
     }
 
 
@@ -150,6 +165,28 @@ def get_session(session_id: str) -> SessionDetailResponse:
     if session is None:
         raise HTTPException(status_code=404, detail="Session not found.")
     return SessionDetailResponse(session=session)
+
+
+@app.get("/llm/providers", response_model=LLMProviderOptionsResponse)
+def get_llm_provider_options(session_id: str | None = None) -> LLMProviderOptionsResponse:
+    session_memory = memory_store.get_session_state(session_id) if session_id else None
+    return llm_provider_service.list_options(
+        session_id=session_id,
+        session_memory=session_memory,
+    )
+
+
+@app.post("/llm/providers/select", response_model=LLMProviderSelectionResponse)
+def select_llm_provider(payload: LLMProviderSelectionRequest) -> LLMProviderSelectionResponse:
+    session = memory_store.get_or_create_session(payload.session_id)
+    session = llm_provider_service.apply_selection(session, payload.provider)
+    persisted = memory_store.set_llm_selection(payload.session_id, session.llm_selection)
+    return LLMProviderSelectionResponse(
+        session_id=payload.session_id,
+        active_provider=persisted.llm_selection.provider,
+        active_model_id=persisted.llm_selection.model_id,
+        active_model_name=persisted.llm_selection.model_name,
+    )
 
 
 def _store_result_preview(session_id: str | None, execution_result: dict[str, object]) -> None:
@@ -403,6 +440,7 @@ def _run_chat_flow(payload: ChatQueryRequest) -> dict[str, object]:
         row_count=execution_result["row_count"],
         truncated=execution_result["truncated"],
         limit_applied=execution_result["limit_applied"],
+        memory=session_memory,
     )
     answer, output_guardrails_metadata = _apply_output_guardrails(payload, answer)
     _store_result_preview(payload.session_id, execution_result)
@@ -428,6 +466,7 @@ def _run_chat_flow(payload: ChatQueryRequest) -> dict[str, object]:
         "truncated": execution_result["truncated"],
         "limit_applied": execution_result["limit_applied"],
         "metadata": {
+            "provider": generated["provider"],
             "model": generated["model"],
             "deployment": generated["deployment"],
             **output_guardrails_metadata,

@@ -2,12 +2,13 @@ from __future__ import annotations
 
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.schemas.session import RagQueryConfiguration
 
 
 class RagModelOption(BaseModel):
+    model_config = ConfigDict(protected_namespaces=())
     model_id: str
     name: str
     available: bool = True
@@ -26,6 +27,7 @@ class RagKnowledgeBaseOption(BaseModel):
 
 
 class RagOptionsResponse(BaseModel):
+    model_config = ConfigDict(protected_namespaces=())
     enabled: bool
     model_source: str | None = None
     chat_models: list[RagModelOption] = Field(default_factory=list)

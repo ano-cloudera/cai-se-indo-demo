@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { AnswerCard } from "@/components/answer-card";
 import { BrandLogo } from "@/components/brand-logo";
 import { ChatInputPanel } from "@/components/chat-input-panel";
+import { DemoBriefingModal } from "@/components/demo-briefing-modal";
 import { NoticePanel } from "@/components/notice-panel";
 import { RagConfigModal } from "@/components/rag-config-modal";
 import { ResultChartCard } from "@/components/result-chart-card";
@@ -23,6 +24,8 @@ import {
   type AnswerSource,
   type ChatResponsePayload,
   type HealthResponse,
+  type LLMProviderOption,
+  type LLMProviderSelectionResponse,
   type RagOptionsResponse,
   type RagSessionConfig,
   type SessionStatePayload,
@@ -65,6 +68,16 @@ interface SessionsState {
   items: SessionSummary[];
   error: string;
 }
+
+interface LLMProvidersState {
+  loading: boolean;
+  options: LLMProviderOption[];
+  activeProvider: string;
+  activeModelName: string;
+  error: string;
+}
+
+const DEMO_BRIEFING_STORAGE_KEY = "ask-data-demo-briefing-seen";
 
 const defaultRagConfig = (sessionId: string): RagSessionConfig => ({
   session_id: sessionId,
@@ -205,6 +218,14 @@ const initialSessionsState: SessionsState = {
   error: "",
 };
 
+const initialLlmProvidersState: LLMProvidersState = {
+  loading: true,
+  options: [],
+  activeProvider: "azure",
+  activeModelName: "",
+  error: "",
+};
+
 const navItems = [
   {
     key: "assistant",
@@ -218,10 +239,70 @@ const navItems = [
   },
 ];
 
+const demoBriefingSections = [
+  {
+    id: "use-case",
+    label: "Use Case",
+    title: "How This AI Analytics Experience Is Positioned",
+    body:
+      "Ask the Data is designed to show how business and analytics teams can explore portfolio questions through natural language while preserving governance, explainability, and operational speed in one experience.",
+    bullets: [
+      "Users can ask portfolio questions in plain language instead of waiting for manual SQL support.",
+      "The application converts those questions into governed analytics across customer, deposit, and credit data.",
+      "The workflow is designed for both business exploration and analyst productivity, not only for technical users.",
+      "The same experience can support operational reviews, relationship planning, and executive portfolio discussions.",
+    ],
+  },
+  {
+    id: "data-scope",
+    label: "Data Scope",
+    title: "What Data Domains Are Included In The Demo",
+    body:
+      "The demo is intentionally focused on three connected data domains so the audience understands the analytical scope before they begin asking questions.",
+    bullets: [
+      "Customer data provides profile, segment, city, and lifecycle context for each portfolio relationship.",
+      "Deposit data supports analysis of balances, maturity timing, and concentration by geography or segment.",
+      "Credit data supports analysis of exposure, outstanding balances, and overall portfolio quality.",
+      "The three domains are linked through customer relationships so cross-domain exploration is possible.",
+    ],
+  },
+  {
+    id: "business-value",
+    label: "Business Value",
+    title: "What Business Value This Solution Can Deliver",
+    body:
+      "This solution is positioned as an AI analytics layer that can reduce time-to-insight while keeping governance and operational boundaries intact.",
+    bullets: [
+      "Analysts and relationship teams can move from question to answer faster without relying on manual report preparation.",
+      "Leaders can explore live portfolio questions during review meetings instead of depending only on static reporting packs.",
+      "Guardrails help reduce the risk of exposing direct personal data during self-service usage.",
+      "Structured answers and visual outputs make the results easier to validate, explain, and discuss with stakeholders.",
+    ],
+  },
+  {
+    id: "how-to-demo",
+    label: "How To Demo",
+    title: "How Sales Teams And Users Can Run The Demo",
+    body:
+      "The recommended self-service flow is to begin with broad aggregate questions, then move into trends, rankings, and governed follow-up requests while keeping the conversation anchored on business outcomes.",
+    bullets: [
+      "Start with total balances or total customer questions to establish credibility and context.",
+      "Move into one trend or comparison example to show visual insight generation and follow-up flexibility.",
+      "Use one sensitive request example to demonstrate governance controls and policy enforcement.",
+      "Open RAG Studio only when the customer asks for policy-aware or document-grounded responses.",
+    ],
+  },
+] as const;
+
 export default function HomePage() {
   const submitInFlightRef = useRef(false);
   const [state, setState] = useState<ChatState>(initialChatState);
   const [sessions, setSessions] = useState<SessionsState>(initialSessionsState);
+  const [llmProviders, setLlmProviders] = useState<LLMProvidersState>(initialLlmProvidersState);
+  const [demoBriefingOpen, setDemoBriefingOpen] = useState(false);
+  const [activeBriefingSection, setActiveBriefingSection] = useState<string>(
+    demoBriefingSections[0].id,
+  );
   const [health, setHealth] = useState<HealthState>({
     loading: true,
     app: null,
@@ -247,6 +328,11 @@ export default function HomePage() {
     setState((cur) => ({ ...cur, sessionId }));
     setRagConfig(defaultRagConfig(sessionId));
     void loadSessionHistory(sessionId);
+
+    const seenBriefing = window.localStorage.getItem(DEMO_BRIEFING_STORAGE_KEY);
+    if (!seenBriefing) {
+      setDemoBriefingOpen(true);
+    }
   }, []);
 
   useEffect(() => {
@@ -264,6 +350,7 @@ export default function HomePage() {
   useEffect(() => {
     if (!state.sessionId) return;
     void loadSavedRagConfig(state.sessionId);
+    void loadLlmProviders(state.sessionId);
   }, [state.sessionId]);
 
   async function refreshHealth() {
@@ -299,6 +386,56 @@ export default function HomePage() {
         items: [],
         error: error instanceof Error ? error.message : "Unable to load saved sessions.",
       });
+    }
+  }
+
+  async function loadLlmProviders(sessionId: string) {
+    setLlmProviders((cur) => ({ ...cur, loading: true, error: "" }));
+    try {
+      const response = await apiClient.getLlmProviders(sessionId);
+      setLlmProviders({
+        loading: false,
+        options: response.options,
+        activeProvider: response.active_provider,
+        activeModelName: response.active_model_name || "",
+        error: "",
+      });
+    } catch (error) {
+      setLlmProviders({
+        loading: false,
+        options: [],
+        activeProvider: "azure",
+        activeModelName: "",
+        error: error instanceof Error ? error.message : "Unable to load model providers.",
+      });
+    }
+  }
+
+  async function handleLlmProviderChange(nextProvider: string) {
+    const sessionId = state.sessionId || getOrCreateSessionId();
+    setLlmProviders((cur) => ({ ...cur, loading: true, error: "" }));
+    try {
+      const response: LLMProviderSelectionResponse = await apiClient.selectLlmProvider({
+        session_id: sessionId,
+        provider: nextProvider,
+      });
+      setLlmProviders((cur) => ({
+        ...cur,
+        loading: false,
+        activeProvider: response.active_provider,
+        activeModelName: response.active_model_name || "",
+      }));
+      await refreshSessions();
+    } catch (error) {
+      setLlmProviders((cur) => ({
+        ...cur,
+        loading: false,
+        error: error instanceof Error ? error.message : "Unable to switch model provider.",
+      }));
+      setState((cur) => ({
+        ...cur,
+        error: error instanceof Error ? toFriendlyErrorMessage(error.message) : "Unable to switch model provider.",
+      }));
     }
   }
 
@@ -398,6 +535,18 @@ export default function HomePage() {
     } finally {
       setRagPanelPreparing(false);
     }
+  }
+
+  function openDemoBriefing(sectionId?: string) {
+    if (sectionId) {
+      setActiveBriefingSection(sectionId);
+    }
+    setDemoBriefingOpen(true);
+  }
+
+  function closeDemoBriefing() {
+    window.localStorage.setItem(DEMO_BRIEFING_STORAGE_KEY, "true");
+    setDemoBriefingOpen(false);
   }
 
   async function loadSavedRagConfig(sessionId: string) {
@@ -561,6 +710,7 @@ export default function HomePage() {
     const sessionId = createNewSessionId();
     setCurrentSessionId(sessionId);
     setState({ ...initialChatState, sessionId });
+    setLlmProviders(initialLlmProvidersState);
     setRagConfig(defaultRagConfig(sessionId));
     setRagPanelOpen(false);
     setRagConfigDirty(false);
@@ -570,6 +720,7 @@ export default function HomePage() {
     const sessionId = createNewSessionId();
     setCurrentSessionId(sessionId);
     setState({ ...initialChatState, sessionId });
+    setLlmProviders(initialLlmProvidersState);
     setRagConfig(defaultRagConfig(sessionId));
     setRagPanelOpen(false);
     setRagConfigDirty(false);
@@ -671,6 +822,30 @@ export default function HomePage() {
             </svg>
             Latest opened: {openedAt}
           </span>
+          {llmProviders.options.length > 0 ? (
+            <label className="flex items-center gap-2 rounded-[var(--radius-pill)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-1.5 text-xs text-[var(--color-ink-muted)]">
+              <span className="hidden font-semibold sm:inline">AI Model</span>
+              <select
+                value={llmProviders.activeProvider}
+                disabled={llmProviders.loading}
+                onChange={(event) => void handleLlmProviderChange(event.target.value)}
+                className="bg-transparent text-xs font-semibold text-[var(--color-ink-muted)] outline-none"
+              >
+                {llmProviders.options.map((option) => (
+                  <option key={option.provider} value={option.provider}>
+                    {option.label} · {option.model_name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => openDemoBriefing()}
+            className="rounded-[var(--radius-pill)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-1.5 text-xs font-semibold text-[var(--color-ink-muted)] transition hover:border-[var(--color-action-primary)] hover:text-[var(--color-action-primary)]"
+          >
+            Demo Guide
+          </button>
           <button
             type="button"
             onClick={() => void refreshHealth()}
@@ -719,6 +894,11 @@ export default function HomePage() {
               {ragConfig.enabled && ragConfig.rag_session_id ? "RAG active" : "RAG Studio ready"}
             </span>
           ) : null}
+          {llmProviders.activeModelName ? (
+            <span className="hidden rounded-[var(--radius-pill)] bg-[rgba(8,0,77,0.06)] px-3 py-1.5 text-xs font-semibold text-[var(--color-ink-muted)] xl:inline-flex">
+              {llmProviders.activeModelName}
+            </span>
+          ) : null}
         </div>
       }
     />
@@ -755,6 +935,59 @@ export default function HomePage() {
                   <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-[var(--color-ink-muted)]">
                     I&apos;m here to help you analyze deposit and credit data quickly using natural language. If you need answers grounded in policy or operational documents, enable RAG Studio from the top bar first.
                   </p>
+                  <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => openDemoBriefing("use-case")}
+                      className="rounded-[var(--radius-pill)] bg-[var(--color-action-primary)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--color-action-primary-hover)]"
+                    >
+                      Open Demo Briefing
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => openDemoBriefing("business-value")}
+                      className="rounded-[var(--radius-pill)] border border-[var(--color-border-strong)] bg-white px-4 py-2 text-sm font-semibold text-[var(--color-ink-muted)] transition hover:border-[var(--color-action-primary)] hover:text-[var(--color-action-primary)]"
+                    >
+                      View Business Value
+                    </button>
+                  </div>
+                </section>
+
+                <section className="mt-6 rounded-[18px] border border-[var(--color-border-soft)] bg-white p-5">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--color-ink-subtle)]">
+                        Self-Service Menu
+                      </p>
+                      <h4 className="mt-2 font-headline text-xl font-bold text-[var(--color-ink-strong)]">
+                        Help Sales And Users Understand The Demo Fast
+                      </h4>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => openDemoBriefing()}
+                      className="rounded-[var(--radius-pill)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-4 py-2 text-sm font-semibold text-[var(--color-ink-muted)] transition hover:border-[var(--color-action-primary)] hover:text-[var(--color-action-primary)]"
+                    >
+                      Open Full Guide
+                    </button>
+                  </div>
+                  <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                    {demoBriefingSections.map((section) => (
+                      <button
+                        key={section.id}
+                        type="button"
+                        onClick={() => openDemoBriefing(section.id)}
+                        className="rounded-[16px] border border-[var(--color-border-soft)] bg-[var(--color-surface-muted)] px-4 py-4 text-left transition hover:border-[var(--color-action-primary)] hover:bg-[rgba(92,99,242,0.05)]"
+                      >
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--color-ink-subtle)]">
+                          {section.label}
+                        </p>
+                        <p className="mt-2 text-sm leading-6 text-[var(--color-ink-muted)]">
+                          {section.body}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
                 </section>
 
                 {/* Starter cards */}
@@ -858,6 +1091,13 @@ export default function HomePage() {
           setRagConfigDirty(true);
         }}
         onSave={() => void saveRagConfig()}
+      />
+      <DemoBriefingModal
+        open={demoBriefingOpen}
+        sections={[...demoBriefingSections]}
+        activeSectionId={activeBriefingSection}
+        onSelectSection={setActiveBriefingSection}
+        onClose={closeDemoBriefing}
       />
     </AppShell>
   );

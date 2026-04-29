@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from app.core.config import Settings, get_settings
+from app.schemas.llm import LLMSelectionState
 from app.schemas.rag import RagSessionConfigRequest
 from app.schemas.session import (
     ChatMessage,
@@ -93,6 +94,19 @@ class SessionMemoryStore:
 
     def list_sessions(self, limit: int = 20) -> list[SessionSummaryResponse]:
         return self.session_store.list_sessions(limit=limit)
+
+    def set_llm_selection(
+        self,
+        session_id: str,
+        selection: LLMSelectionState,
+    ) -> SessionMemoryState:
+        session = self.get_or_create_session(session_id)
+        session.llm_selection = selection
+        return self.session_store.update_session(session)
+
+    def get_llm_selection(self, session_id: str) -> LLMSelectionState | None:
+        session = self.session_store.get_session(session_id)
+        return None if session is None else session.llm_selection
 
     def set_rag_config(
         self,

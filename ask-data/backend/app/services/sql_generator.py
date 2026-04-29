@@ -5,7 +5,7 @@ from typing import Any
 from app.core.config import Settings, get_settings
 from app.schemas.session import SessionMemoryState
 from app.services import sql_guardrails
-from app.services.llm_client import AzureOpenAIClient
+from app.services.llm_router import LLMRouter
 from app.services.memory_store import SessionMemoryStore
 from app.services.prompt_builder import build_text_to_sql_messages
 
@@ -13,18 +13,13 @@ from app.services.prompt_builder import build_text_to_sql_messages
 class SQLGeneratorService:
     def __init__(
         self,
-        llm_client: AzureOpenAIClient | None = None,
+        llm_router: LLMRouter | None = None,
         memory_store: SessionMemoryStore | None = None,
         settings: Settings | None = None,
     ) -> None:
         self.settings = settings or get_settings()
-        self.llm_client = llm_client
+        self.llm_router = llm_router or LLMRouter(self.settings)
         self.memory_store = memory_store
-
-    def _get_llm_client(self) -> AzureOpenAIClient:
-        if self.llm_client is None:
-            self.llm_client = AzureOpenAIClient(self.settings)
-        return self.llm_client
 
     def generate_sql(
         self,
@@ -45,8 +40,12 @@ class SQLGeneratorService:
             memory=active_memory,
             settings=self.settings,
         )
-        raw_generated_sql = self._get_llm_client().chat(messages=messages, temperature=0.0)
+        raw_generated_sql = self.llm_router.get_client(active_memory).chat(
+            messages=messages,
+            temperature=0.0,
+        )
         cleaned_generated_sql = sql_guardrails.normalize_sql(raw_generated_sql)
+        descriptor = self.llm_router.get_descriptor(active_memory)
 
         if session_id and self.memory_store is not None:
             self.memory_store.append_user_message(session_id, cleaned_question)
@@ -59,6 +58,7 @@ class SQLGeneratorService:
             "original_question": cleaned_question,
             "raw_generated_sql": raw_generated_sql,
             "cleaned_generated_sql": cleaned_generated_sql,
-            "model": self.settings.azure_openai_model,
-            "deployment": self.settings.azure_openai_deployment,
+            "model": descriptor.model,
+            "deployment": descriptor.deployment,
+            "provider": descriptor.provider,
         }

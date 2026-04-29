@@ -5,6 +5,7 @@ export interface HealthResponse {
   debug?: boolean;
   database?: string;
   session_backend?: string;
+  llm_providers?: string[];
   result?: number | null;
   guardrails?: {
     enabled?: boolean;
@@ -20,6 +21,7 @@ export interface SQLGenerateResponse {
   original_question: string;
   raw_generated_sql: string;
   cleaned_generated_sql: string;
+  provider?: string | null;
   model: string;
   deployment: string;
 }
@@ -153,6 +155,7 @@ export interface SessionStatePayload {
   last_answer?: string | null;
   last_result_preview?: ResultPreviewContext | null;
   last_intent?: string | null;
+  llm_selection?: LLMSelectionState | null;
   rag_config?: RagSessionConfig | null;
   created_at: string;
   updated_at: string;
@@ -175,6 +178,36 @@ export interface SessionListResponse {
 
 export interface SessionDetailResponse {
   session: SessionStatePayload;
+}
+
+export interface LLMSelectionState {
+  provider: string;
+  model_id?: string | null;
+  model_name?: string | null;
+}
+
+export interface LLMProviderOption {
+  provider: string;
+  label: string;
+  model_id: string;
+  model_name: string;
+  available: boolean;
+  description?: string | null;
+}
+
+export interface LLMProviderOptionsResponse {
+  session_id?: string | null;
+  active_provider: string;
+  active_model_id?: string | null;
+  active_model_name?: string | null;
+  options: LLMProviderOption[];
+}
+
+export interface LLMProviderSelectionResponse {
+  session_id: string;
+  active_provider: string;
+  active_model_id?: string | null;
+  active_model_name?: string | null;
 }
 
 function getApiBaseUrl(): string {
@@ -280,5 +313,14 @@ export const apiClient = {
     request<SessionListResponse>(`/sessions?limit=${limit}`),
   getSession: (sessionId: string) =>
     request<SessionDetailResponse>(`/sessions/${sessionId}`),
+  getLlmProviders: (sessionId?: string) =>
+    request<LLMProviderOptionsResponse>(
+      `/llm/providers${sessionId ? `?session_id=${encodeURIComponent(sessionId)}` : ""}`,
+    ),
+  selectLlmProvider: (payload: { session_id: string; provider: string }) =>
+    request<LLMProviderSelectionResponse>("/llm/providers/select", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
   getBaseUrl: getApiBaseUrl,
 };

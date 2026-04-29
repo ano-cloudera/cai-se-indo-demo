@@ -64,6 +64,7 @@ class SQLGenerationResponse(BaseModel):
     original_question: str
     raw_generated_sql: str
     cleaned_generated_sql: str
+    provider: str | None = None
     model: str
     deployment: str
 

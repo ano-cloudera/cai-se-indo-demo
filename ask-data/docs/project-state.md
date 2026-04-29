@@ -50,7 +50,7 @@ removing all BNI-specific references so it can be reused across different bankin
 | Layer | Technology |
 |---|---|
 | Structured data | Impala / CDW |
-| LLM provider | Azure OpenAI |
+| LLM provider | Azure OpenAI and Amazon Bedrock |
 | Backend | FastAPI + Uvicorn |
 | Frontend | Next.js 15 + Tailwind CSS + TypeScript |
 | Deployment | Cloudera AI Applications |
@@ -91,6 +91,8 @@ All join on `customer_id`. No orphan records. Date fields in `YYYY-MM-DD` format
 |---|---|
 | `GET /health` | App liveness check |
 | `GET /health/db` | Database connectivity check |
+| `GET /llm/providers` | List available non-RAG model providers for the current session |
+| `POST /llm/providers/select` | Persist the active non-RAG model provider for the current session |
 | `GET /rag/options` | Load available RAG Studio KB + model options |
 | `GET /rag/config/{session_id}` | Load saved RAG config for one chat session |
 | `POST /rag/config` | Save RAG config and create backing RAG session |
@@ -99,7 +101,7 @@ All join on `customer_id`. No orphan records. Date fields in `YYYY-MM-DD` format
 | `POST /sql/generate` | SQL-only generation for debugging |
 
 **Session memory:** SQLite-backed by default with an in-memory fallback.
-This now stores per-session chat history, last SQL/result context, visualization follow-up context, and RAG configuration/session IDs.
+This now stores per-session chat history, last SQL/result context, visualization follow-up context, provider/model selection, and RAG configuration/session IDs.
 Recommended CAI backend env values for the current deployment:
 - `SESSION_BACKEND=sqlite`
 - `SESSION_SQLITE_PATH=data/ask_data_sessions.db`
@@ -165,6 +167,16 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
 - Visualization-only follow-up prompts such as `ubah ke barchart`, `jadikan line chart`, and `tampilkan sebagai table` now reuse the latest SQL result instead of generating a new query, so only the presentation changes
 - Non-chartable query results return no visualization spec and render as answer-only
 
+### Multi-provider model routing
+- Non-RAG LLM calls can now route through either Azure OpenAI or Amazon Bedrock
+- Azure remains the safe default provider when both are configured
+- Provider selection is stored per session, so each conversation can keep its own active model provider
+- Current provider selection applies to:
+  - SQL generation
+  - SQL answer narration
+  - general conversation / non-data replies
+- RAG Studio remains separate and continues to use its own model configuration flow
+
 ---
 
 ## 6. Frontend
@@ -194,12 +206,20 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
 | `RagConfigModal` | `components/rag-config-modal.tsx` | Per-session RAG Studio config panel |
 | `UserMessageCard` | `components/user-message-card.tsx` | Branded user bubble with avatar tile |
 | `ResultChartCard` | `components/result-chart-card.tsx` | Renders backend-provided chart or table visualizations with a user-toggleable view |
+| `DemoBriefingModal` | `components/demo-briefing-modal.tsx` | First-open briefing and reusable self-service guide for sales and users |
 | `AppShell` | `components/ui/shell.tsx` | Layout: sidebar + topbar + main |
 
 ### UI features
 - Dark navy fixed sidebar with Cloudera logo + nav
 - Topbar shows: breadcrumb, database connection status (green when live), latest opened datetime, refresh button, `RAG Studio`, `Clear Session`
 - Welcome screen with Cloudera logo + 3 starter prompt cards
+- First-open demo briefing modal now explains:
+  - the demo use case
+  - the available data scope
+  - the business value
+  - the recommended demo flow for sales and self-service users
+- A `Demo Guide` control in the top bar reopens the same briefing at any time
+- The welcome screen now includes a self-service menu so users can understand the use case without spending AI/chat turns
 - Chat messages: styled user bubble with human avatar + assistant answer card (white surface)
 - RAG-backed answers can render a structured source list under the answer card when source metadata is available
 - Assistant answers now sanitize raw RAG citation markup before rendering
@@ -218,6 +238,7 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
 - Loading state: animated bouncing dots
 - "New Conversation" button in sidebar footer resets session
 - Sidebar now shows recent saved sessions from the backend store and can reopen an earlier conversation
+- Topbar now includes a session-scoped `AI Model` dropdown for switching between Azure OpenAI and Bedrock when both providers are configured
 - RAG config lives in a separate modal, not in the chat input area
 - Layout has been adjusted to be more responsive on narrower screens
 - RAG modal locks page scroll on open, supports `Escape`/backdrop close, uses sticky header/footer, and avoids repeated option reloads to reduce visible modal flicker/glitch
@@ -237,6 +258,7 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
 - Both response types can include guardrails metadata
 - SQL query responses can include backend-generated visualization specs
 - Frontend can reload persisted chat history through the backend session APIs and keep the active session in local storage
+- Frontend can load available LLM providers and persist the provider choice per session through backend APIs
 - Also calls `GET /rag/options`, `GET /rag/config/{session_id}`, and `POST /rag/config`
 
 **Deployment entry:** `frontend/frontend_entry.py`
@@ -259,6 +281,12 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
 ### Backend (set in Cloudera AI)
 - Impala / CDW connection: host, port, database, auth
 - Azure OpenAI: endpoint, key, deployment name, model name
+- Bedrock / AWS:
+  - `AWS_DEFAULT_REGION` or `BEDROCK_REGION`
+  - `BEDROCK_MODEL_ID`
+  - `BEDROCK_MODEL_NAME`
+  - `AWS_ACCESS_KEY_ID`
+  - `AWS_SECRET_ACCESS_KEY`
 - `RAG_BASE_URL` or `AGENT_BASE_URL` for RAG Studio integration
 - `GUARDRAILS_ENABLED`
 - `GUARDRAILS_API_KEY`
@@ -302,6 +330,8 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
 - [x] Guardrails warning layout has been compacted so policy notices take less vertical space in chat
 - [x] Session persistence now works through SQLite by default, with recent sessions shown in the sidebar
 - [x] Backend CAI configuration now includes explicit SQLite session env values (`SESSION_BACKEND`, `SESSION_SQLITE_PATH`, `SESSION_TTL_MINUTES`, `MEMORY_MAX_HISTORY`)
+- [x] First-open demo briefing and reusable self-service guide are now part of the frontend experience
+- [x] Non-RAG model selection can now switch between Azure OpenAI and Bedrock per session
 - [x] Sensitive Indonesian PII prompts such as `nomor hp`, `email nasabah`, `alamat nasabah`, and `nomor rekening` are blocked by local guardrails
 - [x] `customer_id` is now allowed for ranked analytics exploration instead of being hard-blocked like direct contact/account PII
 - [x] Chart rendering now uses Recharts for a more standard enterprise dashboard look and feel
@@ -317,6 +347,7 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
 - [x] RAG config endpoints implemented
 - [x] RAG session creation working with complete payload
 - [x] `/health` now reports the active session backend so SQLite activation can be validated after deploy
+- [x] `/llm/providers` and `/llm/providers/select` now expose session-scoped provider selection for Azure OpenAI and Bedrock
 - [x] Human-readable validation errors added for incomplete RAG config
 - [x] RAG source extraction added from chat history into a structured `sources` payload for UI rendering
 - [x] RAG answer text is sanitized to strip citation anchor markup before the response is sent to the frontend

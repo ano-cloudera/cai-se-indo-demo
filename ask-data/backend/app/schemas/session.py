@@ -5,6 +5,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
+from app.schemas.llm import LLMSelectionState
+
 
 def utc_now() -> datetime:
     return datetime.now(timezone.utc)
@@ -55,6 +57,7 @@ class SessionMemoryState(BaseModel):
     last_answer: str | None = None
     last_result_preview: ResultPreviewContext | None = None
     last_intent: str | None = None
+    llm_selection: LLMSelectionState = Field(default_factory=LLMSelectionState)
     rag_config: RagSessionConfigState | None = None
     created_at: datetime = Field(default_factory=utc_now)
     updated_at: datetime = Field(default_factory=utc_now)

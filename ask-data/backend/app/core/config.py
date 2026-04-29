@@ -63,6 +63,20 @@ class Settings(BaseSettings):
         default="",
         validation_alias=AliasChoices("AZURE_OPENAI_MODEL"),
     )
+    bedrock_region: str = Field(
+        default="",
+        validation_alias=AliasChoices("BEDROCK_REGION", "AWS_DEFAULT_REGION"),
+    )
+    bedrock_model_id: str = Field(
+        default="anthropic.claude-sonnet-4-20250514-v1:0",
+        alias="BEDROCK_MODEL_ID",
+    )
+    bedrock_model_name: str = Field(
+        default="Claude Sonnet 4",
+        alias="BEDROCK_MODEL_NAME",
+    )
+    aws_access_key_id: str = Field(default="", alias="AWS_ACCESS_KEY_ID")
+    aws_secret_access_key: str = Field(default="", alias="AWS_SECRET_ACCESS_KEY")
     session_backend: str = Field(default="sqlite", alias="SESSION_BACKEND")
     session_sqlite_path: str = Field(
         default="data/ask_data_sessions.db",
@@ -105,6 +119,14 @@ class Settings(BaseSettings):
             self.azure_openai_api_version,
             self.azure_openai_deployment,
             self.azure_openai_model,
+        )
+        return all(bool(value) for value in required_values)
+
+    @property
+    def is_bedrock_configured(self) -> bool:
+        required_values = (
+            self.bedrock_region,
+            self.bedrock_model_id,
         )
         return all(bool(value) for value in required_values)
 

@@ -12,22 +12,18 @@ from app.services.chat_router import (
     is_greeting_or_smalltalk,
 )
 from app.services.conversation_prompt_builder import build_conversation_messages
-from app.services.llm_client import AzureOpenAIClient, LLMClientError
+from app.services.llm_client import LLMClientError
+from app.services.llm_router import LLMRouter
 
 
 class ConversationGeneratorService:
     def __init__(
         self,
-        llm_client: AzureOpenAIClient | None = None,
+        llm_router: LLMRouter | None = None,
         settings: Settings | None = None,
     ) -> None:
         self.settings = settings or get_settings()
-        self.llm_client = llm_client
-
-    def _get_llm_client(self) -> AzureOpenAIClient:
-        if self.llm_client is None:
-            self.llm_client = AzureOpenAIClient(self.settings)
-        return self.llm_client
+        self.llm_router = llm_router or LLMRouter(self.settings)
 
     def generate_response(
         self,
@@ -52,7 +48,7 @@ class ConversationGeneratorService:
         )
 
         try:
-            return self._get_llm_client().chat(messages=messages, temperature=0.6)
+            return self.llm_router.get_client(memory).chat(messages=messages, temperature=0.6)
         except LLMClientError:
             return self._fallback_response(question)
 

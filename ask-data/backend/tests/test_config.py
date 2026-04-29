@@ -39,3 +39,11 @@ class SettingsTestCase(unittest.TestCase):
         )
 
         self.assertEqual(settings.guardrails_mode, "remote")
+
+    def test_bedrock_is_configured_when_region_and_model_exist(self) -> None:
+        settings = Settings(
+            BEDROCK_REGION="us-west-2",
+            BEDROCK_MODEL_ID="anthropic.claude-sonnet-4-20250514-v1:0",
+        )
+
+        self.assertTrue(settings.is_bedrock_configured)
