@@ -250,22 +250,47 @@ const initialAnalyticsState: AnalyticsState = {
 
 const navItems = [
   {
-    key: "assistant",
-    label: "AI Assistant",
+    key: "guide",
+    label: "Demo Guide",
     icon: (
       <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden>
-        <path d="M9 2a7 7 0 1 1 0 14A7 7 0 0 1 9 2Z" stroke="currentColor" strokeWidth="1.6" />
-        <path d="M6.5 10s.5 1.5 2.5 1.5 2.5-1.5 2.5-1.5M7 7h.01M11 7h.01" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+        <path
+          d="M5.25 4.5h6.5a1.75 1.75 0 0 1 1.75 1.75v7.25H7A2.75 2.75 0 0 0 4.25 16V5.5A1 1 0 0 1 5.25 4.5Z"
+          stroke="currentColor"
+          strokeWidth="1.4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M7 6.75h4.25M7 9h4.25M7 11.25h2.75"
+          stroke="currentColor"
+          strokeWidth="1.4"
+          strokeLinecap="round"
+        />
       </svg>
     ),
   },
   {
-    key: "settings",
-    label: "Model Settings",
+    key: "assistant",
+    label: "AI Assistant",
     icon: (
       <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden>
-        <path d="M9 3.2 10.2 2l1.8 1.1 2-.2.8 2 1.7 1-1 1.9.2 2-2 .8-1 1.7-1.9-1-2 .2-.8-2-1.7-1 1-1.9-.2-2 2-.8L9 3.2Z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
-        <circle cx="9" cy="9" r="2.2" stroke="currentColor" strokeWidth="1.2" />
+        <rect
+          x="4.25"
+          y="5"
+          width="9.5"
+          height="7.5"
+          rx="2.2"
+          stroke="currentColor"
+          strokeWidth="1.4"
+        />
+        <path
+          d="M7 14.25h4M9 5V3.5M6.75 8.25h.01M11.25 8.25h.01M7.25 10.75c.35.45.95.75 1.75.75s1.4-.3 1.75-.75"
+          stroke="currentColor"
+          strokeWidth="1.4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
       </svg>
     ),
   },
@@ -274,16 +299,34 @@ const navItems = [
     label: "Usage Dashboard",
     icon: (
       <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden>
-        <path d="M3 14.5h12M4.5 11V7.5M9 11V4.5M13.5 11V8.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        <path
+          d="M3.75 13.75h10.5M5.25 11.75V8.75M9 11.75V5.75M12.75 11.75V7.25"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+        />
+        <path
+          d="m4.5 5.25 2.5-1.5 2 1 3-2"
+          stroke="currentColor"
+          strokeWidth="1.4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
       </svg>
     ),
   },
   {
-    key: "guide",
-    label: "Demo Guide",
+    key: "settings",
+    label: "Model Settings",
     icon: (
       <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden>
-        <path d="M4 4.5A1.5 1.5 0 0 1 5.5 3H14v11.5H5.5A1.5 1.5 0 0 0 4 16V4.5Zm0 0A1.5 1.5 0 0 1 5.5 6H14" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+        <path
+          d="M9 3.5v2M9 12.5v2M14.5 9h-2M5.5 9h-2M12.9 5.1l-1.4 1.4M6.5 11.5l-1.4 1.4M12.9 12.9l-1.4-1.4M6.5 6.5 5.1 5.1"
+          stroke="currentColor"
+          strokeWidth="1.3"
+          strokeLinecap="round"
+        />
+        <circle cx="9" cy="9" r="2.5" stroke="currentColor" strokeWidth="1.4" />
       </svg>
     ),
   },
@@ -295,12 +338,12 @@ const demoBriefingSections = [
     label: "Use Case",
     title: "How This AI Analytics Experience Is Positioned",
     body:
-      "Ask the Data is designed to show how business and analytics teams can explore portfolio questions through natural language while preserving governance, explainability, and operational speed in one experience.",
+      "Ask the Data is framed as an analytics co-pilot for portfolio and relationship teams. The story is not about replacing analysts. It is about reducing the time between a business question and a decision-ready answer while keeping the workflow governed, explainable, and easy to challenge in front of stakeholders.",
     bullets: [
-      "Users can ask portfolio questions in plain language instead of waiting for manual SQL support.",
-      "The application converts those questions into governed analytics across customer, deposit, and credit data.",
-      "The workflow is designed for both business exploration and analyst productivity, not only for technical users.",
-      "The same experience can support operational reviews, relationship planning, and executive portfolio discussions.",
+      "The primary message is speed with control: teams can ask portfolio questions in plain language without waiting for a reporting cycle or ad hoc SQL support.",
+      "The value lands best when positioned for review meetings, pipeline discussions, portfolio monitoring, and relationship planning where follow-up questions happen live.",
+      "The workflow is designed to support business users and analysts together, so the audience sees one shared experience rather than a technical tool for specialists only.",
+      "Every answer can be traced back to structured data, governed logic, and visible follow-up steps, which makes the output easier to validate and easier to defend.",
     ],
   },
   {
@@ -308,12 +351,12 @@ const demoBriefingSections = [
     label: "Data Scope",
     title: "What Data Domains Are Included In The Demo",
     body:
-      "The demo is intentionally focused on three connected data domains so the audience understands the analytical scope before they begin asking questions.",
+      "The demo is intentionally anchored on three connected data domains so the audience understands what the assistant can answer with confidence. This keeps the conversation practical and prevents the session from drifting into unsupported use cases.",
     bullets: [
-      "Customer data provides profile, segment, city, and lifecycle context for each portfolio relationship.",
-      "Deposit data supports analysis of balances, maturity timing, and concentration by geography or segment.",
-      "Credit data supports analysis of exposure, outstanding balances, and overall portfolio quality.",
-      "The three domains are linked through customer relationships so cross-domain exploration is possible.",
+      "Customer data provides the relationship layer, including identity context, segment, city, and lifecycle attributes that help explain who sits behind the portfolio.",
+      "Deposit data supports questions around balances, maturity profile, concentration, and distribution across customer segments or geographies.",
+      "Credit data supports exposure analysis, outstanding balance review, and trend discussions related to financing performance and portfolio quality.",
+      "Because the domains are linked through customer relationships, the audience can move from aggregate portfolio questions into more targeted cross-domain exploration without changing tools.",
     ],
   },
   {
@@ -321,12 +364,12 @@ const demoBriefingSections = [
     label: "Business Value",
     title: "What Business Value This Solution Can Deliver",
     body:
-      "This solution is positioned as an AI analytics layer that can reduce time-to-insight while keeping governance and operational boundaries intact.",
+      "The strongest business value message is not only faster answers. It is faster answers that still respect policy, still preserve trust, and still fit into the way business and analytics teams already work. That makes the solution easier to sponsor and easier to operationalize.",
     bullets: [
-      "Analysts and relationship teams can move from question to answer faster without relying on manual report preparation.",
-      "Leaders can explore live portfolio questions during review meetings instead of depending only on static reporting packs.",
-      "Guardrails help reduce the risk of exposing direct personal data during self-service usage.",
-      "Structured answers and visual outputs make the results easier to validate, explain, and discuss with stakeholders.",
+      "Analysts and relationship managers can move from question to insight faster, reducing the dependency on manually prepared reporting packs for every follow-up request.",
+      "Leadership teams can test hypotheses live during business reviews instead of pausing the conversation until someone prepares another report after the meeting.",
+      "Guardrails and governed SQL generation help reduce the operational risk of self-service analytics, especially when customer-level data is involved.",
+      "Structured answers, charts, and reusable follow-up context make the output easier to communicate across risk, business, and data teams.",
     ],
   },
   {
@@ -334,55 +377,15 @@ const demoBriefingSections = [
     label: "How To Demo",
     title: "How Sales Teams And Users Can Run The Demo",
     body:
-      "The recommended self-service flow is to begin with broad aggregate questions, then move into trends, rankings, and governed follow-up requests while keeping the conversation anchored on business outcomes.",
+      "The best demo flow starts broad, proves reliability quickly, and only then moves into richer visual analysis or governance scenarios. The goal is to build confidence first, then show depth, then show control.",
     bullets: [
-      "Start with total balances or total customer questions to establish credibility and context.",
-      "Move into one trend or comparison example to show visual insight generation and follow-up flexibility.",
-      "Use one sensitive request example to demonstrate governance controls and policy enforcement.",
-      "Open RAG Studio only when the customer asks for policy-aware or document-grounded responses.",
+      "Start with one aggregate question such as total balance, total customers, or portfolio exposure so the audience immediately understands the business relevance.",
+      "Follow with one trend or comparison question to demonstrate visual continuity and show that the conversation can move from answer to analysis without resetting context.",
+      "Use one sensitive request example deliberately to show that the assistant can refuse unsafe asks while still steering the conversation back to acceptable insight paths.",
+      "Introduce RAG Studio only when the customer asks about policy, SOP, or document-grounded responses, so it appears as a deliberate extension rather than a distracting extra feature.",
     ],
   },
 ] as const;
-
-const selfServiceThemes: Record<
-  (typeof demoBriefingSections)[number]["id"],
-  {
-    shell: string;
-    eyebrow: string;
-    accent: string;
-    badge: string;
-    icon: string;
-  }
-> = {
-  "use-case": {
-    shell: "border-sky-200 bg-[linear-gradient(180deg,#f6fbff_0%,#eef7ff_100%)] hover:border-sky-300 hover:bg-[linear-gradient(180deg,#eff8ff_0%,#e8f3ff_100%)]",
-    eyebrow: "text-sky-700",
-    accent: "bg-sky-500",
-    badge: "bg-sky-50 text-sky-700",
-    icon: "M3.5 9.5 6.8 12.8 14.5 5.2",
-  },
-  "data-scope": {
-    shell: "border-emerald-200 bg-[linear-gradient(180deg,#f5fff9_0%,#edf9f2_100%)] hover:border-emerald-300 hover:bg-[linear-gradient(180deg,#effcf5_0%,#e7f6ee_100%)]",
-    eyebrow: "text-emerald-700",
-    accent: "bg-emerald-500",
-    badge: "bg-emerald-50 text-emerald-700",
-    icon: "M4 5.5h10M4 9h10M4 12.5h6",
-  },
-  "business-value": {
-    shell: "border-amber-200 bg-[linear-gradient(180deg,#fffaf1_0%,#fff4de_100%)] hover:border-amber-300 hover:bg-[linear-gradient(180deg,#fff7ea_0%,#fff0d3_100%)]",
-    eyebrow: "text-amber-700",
-    accent: "bg-amber-500",
-    badge: "bg-amber-50 text-amber-700",
-    icon: "M8.25 3 4.5 9.25h3L6.75 15l5.75-8H9.5L13 3h-4.75Z",
-  },
-  "how-to-demo": {
-    shell: "border-rose-200 bg-[linear-gradient(180deg,#fff7f8_0%,#fff0f4_100%)] hover:border-rose-300 hover:bg-[linear-gradient(180deg,#fff3f5_0%,#ffe8ef_100%)]",
-    eyebrow: "text-rose-700",
-    accent: "bg-rose-500",
-    badge: "bg-rose-50 text-rose-700",
-    icon: "M4.5 4.5h9v9h-9zM7 7h4M7 9.5h4",
-  },
-};
 
 export default function HomePage() {
   const submitInFlightRef = useRef(false);
@@ -1106,69 +1109,6 @@ export default function HomePage() {
                       >
                         Review Model Settings
                       </button>
-                    </div>
-                  </section>
-
-                  <section className="mt-6 rounded-[20px] border border-[var(--color-border-soft)] bg-[linear-gradient(180deg,#ffffff_0%,#fbfcff_100%)] p-6 shadow-panel">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--color-ink-subtle)]">
-                          Self-Service Menu
-                        </p>
-                        <h4 className="mt-2 font-headline text-xl font-bold text-[var(--color-ink-strong)]">
-                          Pick The Right Starting Point
-                        </h4>
-                        <p className="mt-2 max-w-3xl text-sm leading-7 text-[var(--color-ink-muted)]">
-                          Open the area that best matches the conversation you want to lead, whether the goal is framing the use case, clarifying the data scope, landing the business value, or guiding the demo flow.
-                        </p>
-                      </div>
-                    </div>
-                    <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                      {demoBriefingSections.map((section, index) => {
-                        const theme = selfServiceThemes[section.id];
-                        return (
-                        <button
-                          key={section.id}
-                          type="button"
-                          onClick={() => openGuideView(section.id)}
-                          className={`group relative overflow-hidden rounded-[20px] border px-5 py-5 text-left shadow-[0_14px_34px_rgba(15,23,42,0.04)] transition ${theme.shell}`}
-                        >
-                          <span className={`absolute inset-x-0 top-0 h-1 ${theme.accent}`} />
-                          <div className="flex items-start justify-between gap-4">
-                            <div>
-                              <p className={`text-[10px] font-semibold uppercase tracking-[0.24em] ${theme.eyebrow}`}>
-                                Section {index + 1}
-                              </p>
-                              <p className="mt-3 font-headline text-[13px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-strong)]">
-                                {section.label}
-                              </p>
-                            </div>
-                            <span className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${theme.badge}`}>
-                              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
-                                <path
-                                  d={theme.icon}
-                                  stroke="currentColor"
-                                  strokeWidth="1.6"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                />
-                              </svg>
-                            </span>
-                          </div>
-                          <p className="mt-4 text-[15px] leading-7 text-[var(--color-ink-muted)]">
-                            {section.body}
-                          </p>
-                          <div className="mt-5 flex items-center justify-between">
-                            <span className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] ${theme.badge}`}>
-                              Open Guide
-                            </span>
-                            <span className="text-sm font-semibold text-[var(--color-ink-strong)] transition group-hover:translate-x-0.5">
-                              Review
-                            </span>
-                          </div>
-                        </button>
-                        );
-                      })}
                     </div>
                   </section>
 
