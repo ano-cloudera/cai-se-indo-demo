@@ -18,6 +18,33 @@ interface DemoBriefingModalProps {
   onClose: () => void;
 }
 
+const sectionTheme: Record<string, { shell: string; kicker: string; pill: string; card: string }> = {
+  "use-case": {
+    shell: "border-sky-200 bg-[linear-gradient(180deg,#f4fbff_0%,#eef7ff_100%)]",
+    kicker: "text-sky-700",
+    pill: "border-sky-200 bg-white text-sky-700",
+    card: "border-sky-100 bg-white",
+  },
+  "data-scope": {
+    shell: "border-emerald-200 bg-[linear-gradient(180deg,#f3fff8_0%,#ebfbf3_100%)]",
+    kicker: "text-emerald-700",
+    pill: "border-emerald-200 bg-white text-emerald-700",
+    card: "border-emerald-100 bg-white",
+  },
+  "business-value": {
+    shell: "border-amber-200 bg-[linear-gradient(180deg,#fffaf0_0%,#fff5df_100%)]",
+    kicker: "text-amber-700",
+    pill: "border-amber-200 bg-white text-amber-700",
+    card: "border-amber-100 bg-white",
+  },
+  "how-to-demo": {
+    shell: "border-rose-200 bg-[linear-gradient(180deg,#fff6f7_0%,#fff0f3_100%)]",
+    kicker: "text-rose-700",
+    pill: "border-rose-200 bg-white text-rose-700",
+    card: "border-rose-100 bg-white",
+  },
+};
+
 export function DemoBriefingModal({
   open,
   sections,
@@ -60,6 +87,7 @@ export function DemoBriefingModal({
 
   const activeSection =
     sections.find((section) => section.id === activeSectionId) ?? sections[0];
+  const theme = sectionTheme[activeSection.id] ?? sectionTheme["use-case"];
 
   return (
     <div
@@ -118,9 +146,9 @@ export function DemoBriefingModal({
         </aside>
 
         <div className="flex min-h-[min(92vh,48rem)] min-w-0 flex-1 flex-col">
-          <div className="flex items-start justify-between border-b border-[var(--color-border-soft)] px-5 py-5 sm:px-7">
+          <div className={`flex items-start justify-between border-b px-5 py-5 sm:px-7 ${theme.shell}`}>
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--color-ink-subtle)]">
+              <p className={`text-[11px] font-semibold uppercase tracking-[0.24em] ${theme.kicker}`}>
                 Demo Briefing
               </p>
               <h3 className="mt-2 font-headline text-[28px] font-bold leading-[1.08] text-[var(--color-ink-strong)]">
@@ -129,6 +157,14 @@ export function DemoBriefingModal({
               <p className="mt-3 max-w-3xl text-sm leading-7 text-[var(--color-ink-muted)]">
                 {activeSection.body}
               </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <span className={`rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] ${theme.pill}`}>
+                  {activeSection.label}
+                </span>
+                <span className="rounded-full border border-white/70 bg-white/70 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-ink-muted)]">
+                  Customer Demo Flow
+                </span>
+              </div>
             </div>
             <button
               type="button"
@@ -141,15 +177,15 @@ export function DemoBriefingModal({
 
           <div className="flex-1 overflow-y-auto px-5 py-5 sm:px-7 sm:py-6">
             <div className="grid gap-5 xl:grid-cols-[1.3fr_0.9fr]">
-              <section className="rounded-[22px] border border-[var(--color-border-soft)] bg-[var(--color-surface-muted)] p-5">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--color-ink-subtle)]">
+              <section className={`rounded-[22px] border p-5 ${theme.shell}`}>
+                <p className={`text-[11px] font-semibold uppercase tracking-[0.24em] ${theme.kicker}`}>
                   What To Tell The Audience
                 </p>
                 <ul className="mt-4 space-y-3">
                   {activeSection.bullets.map((bullet) => (
                     <li
                       key={bullet}
-                      className="rounded-[16px] border border-[var(--color-border-soft)] bg-white px-4 py-3 text-sm leading-7 text-[var(--color-ink-muted)]"
+                      className={`rounded-[16px] border px-4 py-3 text-sm leading-7 text-[var(--color-ink-muted)] ${theme.card}`}
                     >
                       {bullet}
                     </li>
@@ -158,28 +194,28 @@ export function DemoBriefingModal({
               </section>
 
               <section className="space-y-5">
-                <div className="rounded-[22px] border border-[var(--color-border-soft)] bg-[linear-gradient(180deg,#ffffff_0%,#f8f9fd_100%)] p-5">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--color-ink-subtle)]">
+                <div className={`rounded-[22px] border p-5 ${theme.shell}`}>
+                  <p className={`text-[11px] font-semibold uppercase tracking-[0.24em] ${theme.kicker}`}>
                     Suggested Demo Flow
                   </p>
                   <ol className="mt-4 space-y-3 text-sm leading-7 text-[var(--color-ink-muted)]">
-                    <li className="rounded-[16px] border border-[var(--color-border-soft)] bg-white px-4 py-3">
+                    <li className={`rounded-[16px] border px-4 py-3 ${theme.card}`}>
                       Start with one aggregate portfolio question to establish trust and business relevance.
                     </li>
-                    <li className="rounded-[16px] border border-[var(--color-border-soft)] bg-white px-4 py-3">
+                    <li className={`rounded-[16px] border px-4 py-3 ${theme.card}`}>
                       Show one chart-based follow-up to demonstrate visual exploration and analytical continuity.
                     </li>
-                    <li className="rounded-[16px] border border-[var(--color-border-soft)] bg-white px-4 py-3">
+                    <li className={`rounded-[16px] border px-4 py-3 ${theme.card}`}>
                       Demonstrate one blocked sensitive request to highlight governance and policy control.
                     </li>
-                    <li className="rounded-[16px] border border-[var(--color-border-soft)] bg-white px-4 py-3">
+                    <li className={`rounded-[16px] border px-4 py-3 ${theme.card}`}>
                       Close with RAG Studio only if the customer asks for policy-aware or document-grounded responses.
                     </li>
                   </ol>
                 </div>
 
-                <div className="rounded-[22px] border border-[var(--color-border-soft)] bg-[var(--color-surface)] p-5 shadow-[0_12px_24px_rgba(15,23,42,0.05)]">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--color-ink-subtle)]">
+                <div className={`rounded-[22px] border p-5 shadow-[0_12px_24px_rgba(15,23,42,0.05)] ${theme.shell}`}>
+                  <p className={`text-[11px] font-semibold uppercase tracking-[0.24em] ${theme.kicker}`}>
                     Self-Service Prompt Ideas
                   </p>
                   <div className="mt-4 flex flex-wrap gap-2">
@@ -191,7 +227,7 @@ export function DemoBriefingModal({
                     ].map((prompt) => (
                       <span
                         key={prompt}
-                        className="rounded-full border border-[var(--color-border-soft)] bg-[var(--color-surface-muted)] px-3 py-1.5 text-xs font-medium text-[var(--color-ink-muted)]"
+                        className={`rounded-full border px-3 py-1.5 text-xs font-medium ${theme.pill}`}
                       >
                         {prompt}
                       </span>

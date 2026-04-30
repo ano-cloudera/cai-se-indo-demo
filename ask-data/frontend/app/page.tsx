@@ -6,13 +6,14 @@ import { useEffect, useRef, useState } from "react";
 import { AnswerCard } from "@/components/answer-card";
 import { BrandLogo } from "@/components/brand-logo";
 import { ChatInputPanel } from "@/components/chat-input-panel";
+import { DemoGuidePanel } from "@/components/demo-guide-panel";
 import { DemoBriefingModal } from "@/components/demo-briefing-modal";
+import { ModelSettingsPanel } from "@/components/model-settings-panel";
 import { NoticePanel } from "@/components/notice-panel";
 import { RagConfigModal } from "@/components/rag-config-modal";
 import { ResultChartCard } from "@/components/result-chart-card";
 import { StarterCard } from "@/components/starter-card";
-import { StatusBadge } from "@/components/status-badge";
-import { UsageDashboardModal } from "@/components/usage-dashboard-modal";
+import { UsageDashboardPanel } from "@/components/usage-dashboard-panel";
 import { UserMessageCard } from "@/components/user-message-card";
 import {
   AppShell,
@@ -87,7 +88,11 @@ interface AnalyticsState {
   error: string;
 }
 
+type AppView = "assistant" | "settings" | "usage" | "guide";
+
 const DEMO_BRIEFING_STORAGE_KEY = "ask-data-demo-briefing-seen";
+const LLM_PROVIDER_STORAGE_KEY = "ask-data-llm-provider";
+const LLM_MODEL_STORAGE_KEY = "ask-data-llm-model";
 
 const defaultRagConfig = (sessionId: string): RagSessionConfig => ({
   session_id: sessionId,
@@ -254,6 +259,34 @@ const navItems = [
       </svg>
     ),
   },
+  {
+    key: "settings",
+    label: "Model Settings",
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden>
+        <path d="M9 3.2 10.2 2l1.8 1.1 2-.2.8 2 1.7 1-1 1.9.2 2-2 .8-1 1.7-1.9-1-2 .2-.8-2-1.7-1 1-1.9-.2-2 2-.8L9 3.2Z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+        <circle cx="9" cy="9" r="2.2" stroke="currentColor" strokeWidth="1.2" />
+      </svg>
+    ),
+  },
+  {
+    key: "usage",
+    label: "Usage Dashboard",
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden>
+        <path d="M3 14.5h12M4.5 11V7.5M9 11V4.5M13.5 11V8.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+  {
+    key: "guide",
+    label: "Demo Guide",
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden>
+        <path d="M4 4.5A1.5 1.5 0 0 1 5.5 3H14v11.5H5.5A1.5 1.5 0 0 0 4 16V4.5Zm0 0A1.5 1.5 0 0 1 5.5 6H14" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
 ];
 
 const demoBriefingSections = [
@@ -317,7 +350,10 @@ export default function HomePage() {
   const [sessions, setSessions] = useState<SessionsState>(initialSessionsState);
   const [llmProviders, setLlmProviders] = useState<LLMProvidersState>(initialLlmProvidersState);
   const [analytics, setAnalytics] = useState<AnalyticsState>(initialAnalyticsState);
-  const [usageDashboardOpen, setUsageDashboardOpen] = useState(false);
+  const [activeView, setActiveView] = useState<AppView>("assistant");
+  const [draftProvider, setDraftProvider] = useState("azure");
+  const [draftModelId, setDraftModelId] = useState("");
+  const [savingModelSettings, setSavingModelSettings] = useState(false);
   const [demoBriefingOpen, setDemoBriefingOpen] = useState(false);
   const [activeBriefingSection, setActiveBriefingSection] = useState<string>(
     demoBriefingSections[0].id,
@@ -335,11 +371,6 @@ export default function HomePage() {
   const [ragSaving, setRagSaving] = useState(false);
   const [ragConfigDirty, setRagConfigDirty] = useState(false);
   const [ragPanelPreparing, setRagPanelPreparing] = useState(false);
-  const [openedAt] = useState<string>(() => {
-    const now = new Date();
-    return now.toLocaleDateString("en-US", { month: "short", day: "numeric" }) +
-      ", " + now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
-  });
 
   useEffect(() => {
     const sessionId = getCurrentSessionId() || getOrCreateSessionId();
@@ -371,6 +402,12 @@ export default function HomePage() {
     void loadSavedRagConfig(state.sessionId);
     void loadLlmProviders(state.sessionId);
   }, [state.sessionId]);
+
+  useEffect(() => {
+    if (activeView === "usage" && !analytics.loading && !analytics.summary) {
+      void refreshAnalytics();
+    }
+  }, [activeView, analytics.loading, analytics.summary]);
 
   async function refreshHealth() {
     setHealth((cur) => ({ ...cur, loading: true, error: "" }));
@@ -434,7 +471,37 @@ export default function HomePage() {
   async function loadLlmProviders(sessionId: string) {
     setLlmProviders((cur) => ({ ...cur, loading: true, error: "" }));
     try {
-      const response = await apiClient.getLlmProviders(sessionId);
+      let response = await apiClient.getLlmProviders(sessionId);
+      const storedProvider =
+        typeof window !== "undefined" ? window.localStorage.getItem(LLM_PROVIDER_STORAGE_KEY) : null;
+      if (
+        storedProvider &&
+        storedProvider !== response.active_provider &&
+        response.options.some((option) => option.provider === storedProvider)
+      ) {
+        const selected = await apiClient.selectLlmProvider({
+          session_id: sessionId,
+          provider: storedProvider,
+        });
+        response = {
+          ...response,
+          active_provider: selected.active_provider,
+          active_model_id: selected.active_model_id,
+          active_model_name: selected.active_model_name,
+        };
+      }
+      const preferredProvider =
+        storedProvider && response.options.some((option) => option.provider === storedProvider)
+          ? storedProvider
+          : response.active_provider;
+      const preferredModels = response.options.filter((option) => option.provider === preferredProvider);
+      const storedModelId =
+        typeof window !== "undefined" ? window.localStorage.getItem(LLM_MODEL_STORAGE_KEY) : null;
+      const preferredModelId =
+        storedModelId && preferredModels.some((option) => option.model_id === storedModelId)
+          ? storedModelId
+          : preferredModels[0]?.model_id || "";
+
       setLlmProviders({
         loading: false,
         options: response.options,
@@ -442,6 +509,8 @@ export default function HomePage() {
         activeModelName: response.active_model_name || "",
         error: "",
       });
+      setDraftProvider(preferredProvider);
+      setDraftModelId(preferredModelId);
     } catch (error) {
       setLlmProviders({
         loading: false,
@@ -450,13 +519,8 @@ export default function HomePage() {
         activeModelName: "",
         error: error instanceof Error ? error.message : "Unable to load model providers.",
       });
-    }
-  }
-
-  function openUsageDashboard() {
-    setUsageDashboardOpen(true);
-    if (!analytics.summary && !analytics.loading) {
-      void refreshAnalytics();
+      setDraftProvider("azure");
+      setDraftModelId("");
     }
   }
 
@@ -475,9 +539,10 @@ export default function HomePage() {
         activeModelName: response.active_model_name || "",
       }));
       await refreshSessions();
-      if (usageDashboardOpen || analytics.summary) {
+      if (activeView === "usage" || analytics.summary) {
         void refreshAnalytics();
       }
+      return true;
     } catch (error) {
       setLlmProviders((cur) => ({
         ...cur,
@@ -488,6 +553,27 @@ export default function HomePage() {
         ...cur,
         error: error instanceof Error ? toFriendlyErrorMessage(error.message) : "Unable to switch model provider.",
       }));
+      return false;
+    }
+  }
+
+  async function saveModelSettings() {
+    if (!draftProvider) return;
+
+    setSavingModelSettings(true);
+    try {
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(LLM_PROVIDER_STORAGE_KEY, draftProvider);
+        if (draftModelId) {
+          window.localStorage.setItem(LLM_MODEL_STORAGE_KEY, draftModelId);
+        }
+      }
+      const saved = await handleLlmProviderChange(draftProvider);
+      if (saved) {
+        setActiveView("assistant");
+      }
+    } finally {
+      setSavingModelSettings(false);
     }
   }
 
@@ -509,6 +595,7 @@ export default function HomePage() {
   async function handleSelectSession(sessionId: string) {
     if (!sessionId || sessionId === state.sessionId) return;
     setCurrentSessionId(sessionId);
+    setActiveView("assistant");
     setState((cur) => ({
       ...cur,
       sessionId,
@@ -589,11 +676,11 @@ export default function HomePage() {
     }
   }
 
-  function openDemoBriefing(sectionId?: string) {
+  function openGuideView(sectionId?: string) {
     if (sectionId) {
       setActiveBriefingSection(sectionId);
     }
-    setDemoBriefingOpen(true);
+    setActiveView("guide");
   }
 
   function closeDemoBriefing() {
@@ -696,7 +783,7 @@ export default function HomePage() {
     } finally {
       submitInFlightRef.current = false;
       void refreshSessions();
-      if (usageDashboardOpen || analytics.summary) {
+      if (activeView === "usage" || analytics.summary) {
         void refreshAnalytics();
       }
     }
@@ -764,6 +851,7 @@ export default function HomePage() {
   function handleNewChat() {
     const sessionId = createNewSessionId();
     setCurrentSessionId(sessionId);
+    setActiveView("assistant");
     setState({ ...initialChatState, sessionId });
     setLlmProviders(initialLlmProvidersState);
     setRagConfig(defaultRagConfig(sessionId));
@@ -779,12 +867,22 @@ export default function HomePage() {
     setRagConfig(defaultRagConfig(sessionId));
     setRagPanelOpen(false);
     setRagConfigDirty(false);
+    setActiveView("assistant");
   }
 
   const sidebar = (
     <AppSidebar
       brand={<BrandLogo />}
-      items={navItems.map((item) => ({ ...item, active: true, onSelect: undefined }))}
+      items={navItems.map((item) => ({
+        ...item,
+        active: item.key === activeView,
+        onSelect: () => {
+          setActiveView(item.key as AppView);
+          if (item.key === "usage" && !analytics.summary && !analytics.loading) {
+            void refreshAnalytics();
+          }
+        },
+      }))}
       footer={
         <div className="mx-2 rounded-[18px] border border-white/8 bg-white/[0.04] p-4">
           <button
@@ -870,44 +968,6 @@ export default function HomePage() {
       }
       right={
         <div className="flex items-center gap-3">
-          <span className="hidden items-center gap-1 text-xs text-[var(--color-ink-subtle)] sm:flex">
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden>
-              <circle cx="6" cy="6" r="5" stroke="currentColor" strokeWidth="1.4" />
-              <path d="M6 3v3l2 1.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-            </svg>
-            Latest opened: {openedAt}
-          </span>
-          {llmProviders.options.length > 0 ? (
-            <label className="flex items-center gap-2 rounded-[var(--radius-pill)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-1.5 text-xs text-[var(--color-ink-muted)]">
-              <span className="hidden font-semibold sm:inline">AI Model</span>
-              <select
-                value={llmProviders.activeProvider}
-                disabled={llmProviders.loading}
-                onChange={(event) => void handleLlmProviderChange(event.target.value)}
-                className="bg-transparent text-xs font-semibold text-[var(--color-ink-muted)] outline-none"
-              >
-                {llmProviders.options.map((option) => (
-                  <option key={option.provider} value={option.provider}>
-                    {option.label} · {option.model_name}
-                  </option>
-                ))}
-              </select>
-            </label>
-          ) : null}
-          <button
-            type="button"
-            onClick={() => openDemoBriefing()}
-            className="rounded-[var(--radius-pill)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-1.5 text-xs font-semibold text-[var(--color-ink-muted)] transition hover:border-[var(--color-action-primary)] hover:text-[var(--color-action-primary)]"
-          >
-            Demo Guide
-          </button>
-          <button
-            type="button"
-            onClick={openUsageDashboard}
-            className="rounded-[var(--radius-pill)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-1.5 text-xs font-semibold text-[var(--color-ink-muted)] transition hover:border-[var(--color-action-primary)] hover:text-[var(--color-action-primary)]"
-          >
-            Usage Dashboard
-          </button>
           <button
             type="button"
             onClick={() => void refreshHealth()}
@@ -953,12 +1013,7 @@ export default function HomePage() {
           </button>
           {ragOptions?.enabled ? (
             <span className="hidden rounded-[var(--radius-pill)] bg-[rgba(92,99,242,0.12)] px-3 py-1.5 text-xs font-semibold text-[#4953d3] sm:inline-flex">
-              {ragConfig.enabled && ragConfig.rag_session_id ? "RAG active" : "RAG Studio ready"}
-            </span>
-          ) : null}
-          {llmProviders.activeModelName ? (
-            <span className="hidden rounded-[var(--radius-pill)] bg-[rgba(8,0,77,0.06)] px-3 py-1.5 text-xs font-semibold text-[var(--color-ink-muted)] xl:inline-flex">
-              {llmProviders.activeModelName}
+              RAG Studio ready
             </span>
           ) : null}
         </div>
@@ -969,172 +1024,201 @@ export default function HomePage() {
   return (
     <AppShell sidebar={sidebar} header={header}>
       <PageCanvas>
-        {/* Chat area */}
-        <div className="flex min-h-[calc(100vh-var(--space-page-y)*2-6rem)] flex-col gap-4">
-          {/* Messages / Welcome */}
-          <div
-            className="flex-1 overflow-y-auto rounded-[var(--radius-panel)] border border-[var(--color-border-soft)] bg-[var(--color-surface)] p-6 shadow-panel"
-            style={{ minHeight: "400px" }}
-          >
-            {state.messages.length === 0 ? (
-              <div className="mx-auto flex h-full max-w-4xl flex-col">
-                {/* Welcome hero */}
-                <section className="rounded-[18px] border border-[var(--color-border-soft)] bg-[var(--color-surface-muted)] px-8 py-10 text-center">
-                  {/* Cloudera logo */}
-                  <div className="mx-auto mb-5 relative h-10 w-44">
-                    <Image
-                      src="/Cloudera_logo.svg.png"
-                      alt="Cloudera"
-                      fill
-                      className="object-contain"
-                      sizes="176px"
-                      priority
-                    />
-                  </div>
-                  <h3 className="font-headline text-2xl font-bold tracking-tight text-[var(--color-ink-strong)]">
-                    Hello, I am the Data Analyst Assistant.
-                  </h3>
-                  <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-[var(--color-ink-muted)]">
-                    I&apos;m here to help you analyze deposit and credit data quickly using natural language. If you need answers grounded in policy or operational documents, enable RAG Studio from the top bar first.
-                  </p>
-                  <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-                    <button
-                      type="button"
-                      onClick={() => openDemoBriefing("use-case")}
-                      className="rounded-[var(--radius-pill)] bg-[var(--color-action-primary)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--color-action-primary-hover)]"
-                    >
-                      Open Demo Briefing
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => openDemoBriefing("business-value")}
-                      className="rounded-[var(--radius-pill)] border border-[var(--color-border-strong)] bg-white px-4 py-2 text-sm font-semibold text-[var(--color-ink-muted)] transition hover:border-[var(--color-action-primary)] hover:text-[var(--color-action-primary)]"
-                    >
-                      View Business Value
-                    </button>
-                  </div>
-                </section>
-
-                <section className="mt-6 rounded-[18px] border border-[var(--color-border-soft)] bg-white p-5">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--color-ink-subtle)]">
-                        Self-Service Menu
-                      </p>
-                      <h4 className="mt-2 font-headline text-xl font-bold text-[var(--color-ink-strong)]">
-                        Help Sales And Users Understand The Demo Fast
-                      </h4>
+        {activeView === "assistant" ? (
+          <div className="flex min-h-[calc(100vh-var(--space-page-y)*2-6rem)] flex-col gap-4">
+            <div
+              className="flex-1 overflow-y-auto rounded-[var(--radius-panel)] border border-[var(--color-border-soft)] bg-[var(--color-surface)] p-6 shadow-panel"
+              style={{ minHeight: "400px" }}
+            >
+              {state.messages.length === 0 ? (
+                <div className="mx-auto flex h-full max-w-4xl flex-col">
+                  <section className="rounded-[18px] border border-[var(--color-border-soft)] bg-[linear-gradient(180deg,#ffffff_0%,#f5f8ff_100%)] px-8 py-10 text-center">
+                    <div className="mx-auto mb-5 relative h-10 w-44">
+                      <Image
+                        src="/Cloudera_logo.svg.png"
+                        alt="Cloudera"
+                        fill
+                        className="object-contain"
+                        sizes="176px"
+                        priority
+                      />
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => openDemoBriefing()}
-                      className="rounded-[var(--radius-pill)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-4 py-2 text-sm font-semibold text-[var(--color-ink-muted)] transition hover:border-[var(--color-action-primary)] hover:text-[var(--color-action-primary)]"
-                    >
-                      Open Full Guide
-                    </button>
-                  </div>
-                  <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                    {demoBriefingSections.map((section) => (
+                    <h3 className="font-headline text-2xl font-bold tracking-tight text-[var(--color-ink-strong)]">
+                      Hello, I am the Data Analyst Assistant.
+                    </h3>
+                    <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-[var(--color-ink-muted)]">
+                      I&apos;m here to help you analyze deposit and credit data quickly using natural language. If you need answers grounded in policy or operational documents, enable RAG Studio from the top bar first.
+                    </p>
+                    <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
                       <button
-                        key={section.id}
                         type="button"
-                        onClick={() => openDemoBriefing(section.id)}
-                        className="rounded-[16px] border border-[var(--color-border-soft)] bg-[var(--color-surface-muted)] px-4 py-4 text-left transition hover:border-[var(--color-action-primary)] hover:bg-[rgba(92,99,242,0.05)]"
+                        onClick={() => openGuideView("use-case")}
+                        className="rounded-[var(--radius-pill)] bg-[var(--color-action-primary)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--color-action-primary-hover)]"
                       >
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--color-ink-subtle)]">
-                          {section.label}
-                        </p>
-                        <p className="mt-2 text-sm leading-6 text-[var(--color-ink-muted)]">
-                          {section.body}
-                        </p>
+                        Open Demo Guide
                       </button>
-                    ))}
-                  </div>
-                </section>
-
-                {/* Starter cards */}
-                <div className="mt-6 grid gap-4 md:grid-cols-3">
-                  {starterPrompts.map((item) => (
-                    <StarterCard
-                      key={item.title}
-                      title={item.title}
-                      description={item.description}
-                      onClick={() => submitQuestion(item.prompt)}
-                    />
-                  ))}
-                </div>
-
-                {state.error ? (
-                  <div className="mt-5">
-                    <NoticePanel title="Request failed" message={state.error} tone="error" />
-                  </div>
-                ) : null}
-              </div>
-            ) : (
-              <div className="mx-auto flex w-full max-w-5xl flex-col gap-5">
-                {state.messages.map((message) => {
-                  const guardrailsNotice = getGuardrailsNotice(message.metadata);
-
-                  return message.role === "user" ? (
-                    <UserMessageCard key={message.id} content={message.content} />
-                  ) : (
-                    <div key={message.id} className="flex w-full flex-col items-start gap-4">
-                      <AnswerCard answer={message.content} sources={message.sources} />
-                      {guardrailsNotice ? (
-                        <div className="w-full max-w-[56rem]">
-                          <NoticePanel
-                            title={guardrailsNotice.title}
-                            message={guardrailsNotice.message}
-                            tone={guardrailsNotice.tone}
-                            badgeLabel={guardrailsNotice.badgeLabel}
-                            suggestion={guardrailsNotice.suggestion}
-                            compact
-                          />
-                        </div>
-                      ) : null}
-                      {message.visualization?.type ? (
-                        <ResultChartCard visualization={message.visualization} />
-                      ) : null}
-                    </div>
-                  );
-                })}
-
-                {state.loading ? (
-                  <section className="w-full max-w-[56rem] rounded-[var(--radius-panel)] border border-[var(--color-border-soft)] bg-[var(--color-surface)] p-5 shadow-panel">
-                    <div className="flex items-center gap-3">
-                      <span className="inline-flex gap-1">
-                        {[0, 1, 2].map((i) => (
-                          <span
-                            key={i}
-                            className="inline-block h-2 w-2 animate-bounce rounded-full bg-[var(--color-action-primary)]"
-                            style={{ animationDelay: `${i * 0.15}s` }}
-                          />
-                        ))}
-                      </span>
-                      <p className="text-sm text-[var(--color-ink-subtle)]">
-                        Data Analyst Assistant is composing an answer…
-                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActiveView("settings");
+                        }}
+                        className="rounded-[var(--radius-pill)] border border-[var(--color-border-strong)] bg-white px-4 py-2 text-sm font-semibold text-[var(--color-ink-muted)] transition hover:border-[var(--color-action-primary)] hover:text-[var(--color-action-primary)]"
+                      >
+                        Review Model Settings
+                      </button>
                     </div>
                   </section>
-                ) : null}
 
-                {state.error ? (
-                  <NoticePanel title="Request failed" message={state.error} tone="error" />
-                ) : null}
-              </div>
-            )}
+                  <section className="mt-6 rounded-[18px] border border-[var(--color-border-soft)] bg-white p-5">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--color-ink-subtle)]">
+                          Self-Service Menu
+                        </p>
+                        <h4 className="mt-2 font-headline text-xl font-bold text-[var(--color-ink-strong)]">
+                          Pick The Right Starting Point
+                        </h4>
+                      </div>
+                    </div>
+                    <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                      {demoBriefingSections.map((section) => (
+                        <button
+                          key={section.id}
+                          type="button"
+                          onClick={() => openGuideView(section.id)}
+                          className="rounded-[16px] border border-[var(--color-border-soft)] bg-[var(--color-surface-muted)] px-4 py-4 text-left transition hover:border-[var(--color-action-primary)] hover:bg-[rgba(92,99,242,0.05)]"
+                        >
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--color-ink-subtle)]">
+                            {section.label}
+                          </p>
+                          <p className="mt-2 text-sm leading-6 text-[var(--color-ink-muted)]">
+                            {section.body}
+                          </p>
+                        </button>
+                      ))}
+                    </div>
+                  </section>
+
+                  <div className="mt-6 grid gap-4 md:grid-cols-3">
+                    {starterPrompts.map((item) => (
+                      <StarterCard
+                        key={item.title}
+                        title={item.title}
+                        description={item.description}
+                        onClick={() => submitQuestion(item.prompt)}
+                      />
+                    ))}
+                  </div>
+
+                  {state.error ? (
+                    <div className="mt-5">
+                      <NoticePanel title="Request failed" message={state.error} tone="error" />
+                    </div>
+                  ) : null}
+                </div>
+              ) : (
+                <div className="mx-auto flex w-full max-w-5xl flex-col gap-5">
+                  {state.messages.map((message) => {
+                    const guardrailsNotice = getGuardrailsNotice(message.metadata);
+
+                    return message.role === "user" ? (
+                      <UserMessageCard key={message.id} content={message.content} />
+                    ) : (
+                      <div key={message.id} className="flex w-full flex-col items-start gap-4">
+                        <AnswerCard answer={message.content} sources={message.sources} />
+                        {guardrailsNotice ? (
+                          <div className="w-full max-w-[56rem]">
+                            <NoticePanel
+                              title={guardrailsNotice.title}
+                              message={guardrailsNotice.message}
+                              tone={guardrailsNotice.tone}
+                              badgeLabel={guardrailsNotice.badgeLabel}
+                              suggestion={guardrailsNotice.suggestion}
+                              compact
+                            />
+                          </div>
+                        ) : null}
+                        {message.visualization?.type ? (
+                          <ResultChartCard visualization={message.visualization} />
+                        ) : null}
+                      </div>
+                    );
+                  })}
+
+                  {state.loading ? (
+                    <section className="w-full max-w-[56rem] rounded-[var(--radius-panel)] border border-[var(--color-border-soft)] bg-[var(--color-surface)] p-5 shadow-panel">
+                      <div className="flex items-center gap-3">
+                        <span className="inline-flex gap-1">
+                          {[0, 1, 2].map((i) => (
+                            <span
+                              key={i}
+                              className="inline-block h-2 w-2 animate-bounce rounded-full bg-[var(--color-action-primary)]"
+                              style={{ animationDelay: `${i * 0.15}s` }}
+                            />
+                          ))}
+                        </span>
+                        <p className="text-sm text-[var(--color-ink-subtle)]">
+                          Data Analyst Assistant is composing an answer…
+                        </p>
+                      </div>
+                    </section>
+                  ) : null}
+
+                  {state.error ? (
+                    <NoticePanel title="Request failed" message={state.error} tone="error" />
+                  ) : null}
+                </div>
+              )}
+            </div>
+
+            <ChatInputPanel
+              question={state.question}
+              loading={state.loading}
+              starterPrompts={starterPrompts.map((item) => item.prompt)}
+              onQuestionChange={(question) => setState((cur) => ({ ...cur, question, error: "" }))}
+              onStarterSelect={(prompt) => submitQuestion(prompt)}
+              onSubmit={() => submitQuestion(state.question)}
+            />
           </div>
+        ) : null}
 
-          {/* Input */}
-          <ChatInputPanel
-            question={state.question}
-            loading={state.loading}
-            starterPrompts={starterPrompts.map((item) => item.prompt)}
-            onQuestionChange={(question) => setState((cur) => ({ ...cur, question, error: "" }))}
-            onStarterSelect={(prompt) => submitQuestion(prompt)}
-            onSubmit={() => submitQuestion(state.question)}
+        {activeView === "guide" ? (
+          <DemoGuidePanel
+            sections={[...demoBriefingSections]}
+            activeSectionId={activeBriefingSection}
+            onSelectSection={setActiveBriefingSection}
           />
-        </div>
+        ) : null}
+
+        {activeView === "usage" ? (
+          <UsageDashboardPanel
+            loading={analytics.loading}
+            error={analytics.error}
+            summary={analytics.summary}
+            events={analytics.events}
+            onRefresh={() => void refreshAnalytics()}
+          />
+        ) : null}
+
+        {activeView === "settings" ? (
+          <ModelSettingsPanel
+            loading={llmProviders.loading}
+            error={llmProviders.error}
+            options={llmProviders.options}
+            activeProvider={llmProviders.activeProvider}
+            activeModelName={llmProviders.activeModelName}
+            draftProvider={draftProvider}
+            draftModelId={draftModelId}
+            saving={savingModelSettings}
+            onProviderChange={(provider) => {
+              setDraftProvider(provider);
+              const firstModel = llmProviders.options.find((option) => option.provider === provider);
+              setDraftModelId(firstModel?.model_id || "");
+            }}
+            onModelChange={setDraftModelId}
+            onSave={() => void saveModelSettings()}
+          />
+        ) : null}
       </PageCanvas>
       <RagConfigModal
         open={ragPanelOpen}
@@ -1160,15 +1244,6 @@ export default function HomePage() {
         activeSectionId={activeBriefingSection}
         onSelectSection={setActiveBriefingSection}
         onClose={closeDemoBriefing}
-      />
-      <UsageDashboardModal
-        open={usageDashboardOpen}
-        loading={analytics.loading}
-        error={analytics.error}
-        summary={analytics.summary}
-        events={analytics.events}
-        onRefresh={() => void refreshAnalytics()}
-        onClose={() => setUsageDashboardOpen(false)}
       />
     </AppShell>
   );

@@ -228,20 +228,34 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
 | `ResultChartCard` | `components/result-chart-card.tsx` | Renders backend-provided chart or table visualizations with a user-toggleable view |
 | `DemoBriefingModal` | `components/demo-briefing-modal.tsx` | First-open briefing and reusable self-service guide for sales and users |
 | `UsageDashboardModal` | `components/usage-dashboard-modal.tsx` | Read-only observability summary and recent activity view |
+| `DemoGuidePanel` | `components/demo-guide-panel.tsx` | Sidebar-driven demo guide workspace inside the main body |
+| `ModelSettingsPanel` | `components/model-settings-panel.tsx` | Sidebar-driven provider and model settings workspace |
+| `UsageDashboardPanel` | `components/usage-dashboard-panel.tsx` | Sidebar-driven usage dashboard workspace inside the main body |
 | `AppShell` | `components/ui/shell.tsx` | Layout: sidebar + topbar + main |
 
 ### UI features
 - Dark navy fixed sidebar with Cloudera logo + nav
-- Topbar shows: breadcrumb, database connection status (green when live), latest opened datetime, refresh button, `RAG Studio`, `Clear Session`
+- Topbar now intentionally stays minimal and operational: database status, `Refresh status`, `RAG Studio`, `Clear Session`, and `RAG Studio ready`
 - Welcome screen with Cloudera logo + 3 starter prompt cards
 - First-open demo briefing modal now explains:
   - the demo use case
   - the available data scope
   - the business value
   - the recommended demo flow for sales and self-service users
-- A `Demo Guide` control in the top bar reopens the same briefing at any time
+- The left sidebar now includes dedicated workspace views for:
+  - `AI Assistant`
+  - `Model Settings`
+  - `Usage Dashboard`
+  - `Demo Guide`
 - The welcome screen now includes a self-service menu so users can understand the use case without spending AI/chat turns
-- The top bar now includes a `Usage Dashboard` control so sales and delivery teams can review recent adoption and model activity without asking the AI to explain usage
+- The first-open demo briefing popup now uses stronger section-specific color treatment so use case, data scope, business value, and demo flow are easier to distinguish at a glance
+- `Demo Guide` is now also available as a persistent body section rather than only as a modal
+- `Usage Dashboard` is now rendered in the main body workspace instead of a popup
+- `Model Settings` is now rendered in the main body workspace instead of the top bar
+- Model selection now follows a two-step workflow in the body:
+  - choose the provider connection
+  - choose the available model for that provider
+- The preferred model setting is stored locally in the browser and then applied to the active AI session
 - Chat messages: styled user bubble with human avatar + assistant answer card (white surface)
 - RAG-backed answers can render a structured source list under the answer card when source metadata is available
 - Assistant answers now sanitize raw RAG citation markup before rendering
