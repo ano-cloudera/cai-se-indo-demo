@@ -12,6 +12,7 @@ import { RagConfigModal } from "@/components/rag-config-modal";
 import { ResultChartCard } from "@/components/result-chart-card";
 import { StarterCard } from "@/components/starter-card";
 import { StatusBadge } from "@/components/status-badge";
+import { UsageDashboardModal } from "@/components/usage-dashboard-modal";
 import { UserMessageCard } from "@/components/user-message-card";
 import {
   AppShell,
@@ -24,6 +25,8 @@ import {
   type AnswerSource,
   type ChatResponsePayload,
   type HealthResponse,
+  type AnalyticsEventRecord,
+  type AnalyticsSummaryResponse,
   type LLMProviderOption,
   type LLMProviderSelectionResponse,
   type RagOptionsResponse,
@@ -74,6 +77,13 @@ interface LLMProvidersState {
   options: LLMProviderOption[];
   activeProvider: string;
   activeModelName: string;
+  error: string;
+}
+
+interface AnalyticsState {
+  loading: boolean;
+  summary: AnalyticsSummaryResponse | null;
+  events: AnalyticsEventRecord[];
   error: string;
 }
 
@@ -226,6 +236,13 @@ const initialLlmProvidersState: LLMProvidersState = {
   error: "",
 };
 
+const initialAnalyticsState: AnalyticsState = {
+  loading: false,
+  summary: null,
+  events: [],
+  error: "",
+};
+
 const navItems = [
   {
     key: "assistant",
@@ -299,6 +316,8 @@ export default function HomePage() {
   const [state, setState] = useState<ChatState>(initialChatState);
   const [sessions, setSessions] = useState<SessionsState>(initialSessionsState);
   const [llmProviders, setLlmProviders] = useState<LLMProvidersState>(initialLlmProvidersState);
+  const [analytics, setAnalytics] = useState<AnalyticsState>(initialAnalyticsState);
+  const [usageDashboardOpen, setUsageDashboardOpen] = useState(false);
   const [demoBriefingOpen, setDemoBriefingOpen] = useState(false);
   const [activeBriefingSection, setActiveBriefingSection] = useState<string>(
     demoBriefingSections[0].id,
@@ -389,6 +408,29 @@ export default function HomePage() {
     }
   }
 
+  async function refreshAnalytics() {
+    setAnalytics((cur) => ({ ...cur, loading: true, error: "" }));
+    try {
+      const [summary, events] = await Promise.all([
+        apiClient.getAnalyticsSummary(30),
+        apiClient.getAnalyticsEvents(20),
+      ]);
+      setAnalytics({
+        loading: false,
+        summary,
+        events: events.events,
+        error: "",
+      });
+    } catch (error) {
+      setAnalytics({
+        loading: false,
+        summary: null,
+        events: [],
+        error: error instanceof Error ? error.message : "Unable to load usage analytics.",
+      });
+    }
+  }
+
   async function loadLlmProviders(sessionId: string) {
     setLlmProviders((cur) => ({ ...cur, loading: true, error: "" }));
     try {
@@ -411,6 +453,13 @@ export default function HomePage() {
     }
   }
 
+  function openUsageDashboard() {
+    setUsageDashboardOpen(true);
+    if (!analytics.summary && !analytics.loading) {
+      void refreshAnalytics();
+    }
+  }
+
   async function handleLlmProviderChange(nextProvider: string) {
     const sessionId = state.sessionId || getOrCreateSessionId();
     setLlmProviders((cur) => ({ ...cur, loading: true, error: "" }));
@@ -426,6 +475,9 @@ export default function HomePage() {
         activeModelName: response.active_model_name || "",
       }));
       await refreshSessions();
+      if (usageDashboardOpen || analytics.summary) {
+        void refreshAnalytics();
+      }
     } catch (error) {
       setLlmProviders((cur) => ({
         ...cur,
@@ -644,6 +696,9 @@ export default function HomePage() {
     } finally {
       submitInFlightRef.current = false;
       void refreshSessions();
+      if (usageDashboardOpen || analytics.summary) {
+        void refreshAnalytics();
+      }
     }
   }
 
@@ -845,6 +900,13 @@ export default function HomePage() {
             className="rounded-[var(--radius-pill)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-1.5 text-xs font-semibold text-[var(--color-ink-muted)] transition hover:border-[var(--color-action-primary)] hover:text-[var(--color-action-primary)]"
           >
             Demo Guide
+          </button>
+          <button
+            type="button"
+            onClick={openUsageDashboard}
+            className="rounded-[var(--radius-pill)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-3 py-1.5 text-xs font-semibold text-[var(--color-ink-muted)] transition hover:border-[var(--color-action-primary)] hover:text-[var(--color-action-primary)]"
+          >
+            Usage Dashboard
           </button>
           <button
             type="button"
@@ -1098,6 +1160,15 @@ export default function HomePage() {
         activeSectionId={activeBriefingSection}
         onSelectSection={setActiveBriefingSection}
         onClose={closeDemoBriefing}
+      />
+      <UsageDashboardModal
+        open={usageDashboardOpen}
+        loading={analytics.loading}
+        error={analytics.error}
+        summary={analytics.summary}
+        events={analytics.events}
+        onRefresh={() => void refreshAnalytics()}
+        onClose={() => setUsageDashboardOpen(false)}
       />
     </AppShell>
   );

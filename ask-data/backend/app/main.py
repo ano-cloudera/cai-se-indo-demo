@@ -10,6 +10,7 @@ from app.db.connection import (
     check_impala_health,
     run_query,
 )
+from app.schemas.analytics import AnalyticsEventsResponse, AnalyticsSummaryResponse
 from app.schemas.llm import (
     LLMProviderOptionsResponse,
     LLMProviderSelectionRequest,
@@ -31,6 +32,11 @@ from app.schemas.sql import (
     SQLGenerationResponse,
 )
 from app.services.memory_store import SessionMemoryStore
+from app.services.analytics_store import (
+    InMemoryAnalyticsStore,
+    SQLiteAnalyticsStore,
+    estimate_text_tokens,
+)
 from app.services.answer_generator import AnswerGeneratorService
 from app.services.chat_router import (
     build_processing_fallback_answer,
@@ -62,7 +68,14 @@ def _build_session_store():
     return InMemorySessionStore(settings)
 
 
+def _build_analytics_store():
+    if settings.session_backend.strip().lower() == "sqlite":
+        return SQLiteAnalyticsStore(settings)
+    return InMemoryAnalyticsStore(settings)
+
+
 session_store = _build_session_store()
+analytics_store = _build_analytics_store()
 memory_store = SessionMemoryStore(session_store=session_store, settings=settings)
 llm_provider_service = LLMProviderService(settings=settings)
 llm_router = LLMRouter(settings=settings, provider_service=llm_provider_service)
@@ -167,6 +180,18 @@ def get_session(session_id: str) -> SessionDetailResponse:
     return SessionDetailResponse(session=session)
 
 
+@app.get("/analytics/summary", response_model=AnalyticsSummaryResponse)
+def analytics_summary(window_days: int = 30) -> AnalyticsSummaryResponse:
+    safe_window = max(1, min(window_days, 365))
+    return analytics_store.get_summary(window_days=safe_window)
+
+
+@app.get("/analytics/events", response_model=AnalyticsEventsResponse)
+def analytics_events(limit: int = 20) -> AnalyticsEventsResponse:
+    safe_limit = max(1, min(limit, 100))
+    return analytics_store.list_events(limit=safe_limit)
+
+
 @app.get("/llm/providers", response_model=LLMProviderOptionsResponse)
 def get_llm_provider_options(session_id: str | None = None) -> LLMProviderOptionsResponse:
     session_memory = memory_store.get_session_state(session_id) if session_id else None
@@ -181,6 +206,16 @@ def select_llm_provider(payload: LLMProviderSelectionRequest) -> LLMProviderSele
     session = memory_store.get_or_create_session(payload.session_id)
     session = llm_provider_service.apply_selection(session, payload.provider)
     persisted = memory_store.set_llm_selection(payload.session_id, session.llm_selection)
+    _log_analytics_event(
+        event_type="provider-select",
+        endpoint="/llm/providers/select",
+        session_id=payload.session_id,
+        mode="provider-select",
+        provider=persisted.llm_selection.provider,
+        model_name=persisted.llm_selection.model_name,
+        success=True,
+        question_excerpt=f"Provider set to {persisted.llm_selection.provider}",
+    )
     return LLMProviderSelectionResponse(
         session_id=payload.session_id,
         active_provider=persisted.llm_selection.provider,
@@ -199,6 +234,110 @@ def _store_result_preview(session_id: str | None, execution_result: dict[str, ob
         rows=execution_result["rows"],
         row_count=execution_result["row_count"],
         truncated=execution_result["truncated"],
+    )
+
+
+def _safe_question_excerpt(question: str, max_length: int = 120) -> str:
+    cleaned = " ".join(question.split())
+    if len(cleaned) <= max_length:
+        return cleaned
+    return f"{cleaned[: max_length - 1].rstrip()}…"
+
+
+def _log_analytics_event(
+    *,
+    event_type: str,
+    endpoint: str,
+    session_id: str | None = None,
+    mode: str | None = None,
+    provider: str | None = None,
+    model_name: str | None = None,
+    success: bool = True,
+    guardrails_action: str | None = None,
+    visualization_type: str | None = None,
+    estimated_prompt_tokens: int = 0,
+    estimated_completion_tokens: int = 0,
+    question_excerpt: str | None = None,
+    metadata: dict[str, object] | None = None,
+) -> None:
+    try:
+        analytics_store.log_event(
+            event_type=event_type,
+            endpoint=endpoint,
+            session_id=session_id,
+            mode=mode,
+            provider=provider,
+            model_name=model_name,
+            success=success,
+            guardrails_action=guardrails_action,
+            visualization_type=visualization_type,
+            estimated_prompt_tokens=estimated_prompt_tokens,
+            estimated_completion_tokens=estimated_completion_tokens,
+            question_excerpt=question_excerpt,
+            metadata=metadata,
+        )
+    except Exception as exc:  # pragma: no cover - observability must never break chat flow
+        logger.warning("analytics logging failed: %s", exc)
+
+
+def _infer_chat_mode(response_payload: dict[str, object]) -> str:
+    metadata = response_payload.get("metadata")
+    if isinstance(metadata, dict):
+        if metadata.get("guardrails_action") == "block":
+            return "guardrails-block"
+        if metadata.get("visualization_followup") is True:
+            return "visualization-followup"
+    if response_payload.get("mode") == "rag":
+        return "rag"
+    if response_payload.get("mode") == "fallback":
+        return "fallback"
+    if response_payload.get("generated_sql"):
+        return "chat-query"
+    if response_payload.get("rows"):
+        return "chat-query"
+    return "conversation"
+
+
+def _log_chat_response(
+    *,
+    endpoint: str,
+    payload: ChatQueryRequest,
+    response_payload: dict[str, object],
+) -> None:
+    metadata = response_payload.get("metadata")
+    metadata_dict = metadata if isinstance(metadata, dict) else {}
+    question_excerpt = _safe_question_excerpt(payload.question)
+    answer = str(response_payload.get("answer") or "")
+    generated_sql = str(response_payload.get("generated_sql") or response_payload.get("executed_sql") or "")
+    mode = _infer_chat_mode(response_payload)
+    provider = metadata_dict.get("provider")
+    model_name = metadata_dict.get("model")
+    visualization = response_payload.get("visualization")
+    visualization_type = None
+    if isinstance(visualization, dict):
+        visualization_type = visualization.get("type") if isinstance(visualization.get("type"), str) else None
+
+    prompt_tokens = estimate_text_tokens(payload.question, generated_sql)
+    completion_tokens = estimate_text_tokens(answer)
+
+    _log_analytics_event(
+        event_type=endpoint.strip("/").replace("/", "-"),
+        endpoint=endpoint,
+        session_id=payload.session_id,
+        mode=mode,
+        provider=provider if isinstance(provider, str) else None,
+        model_name=model_name if isinstance(model_name, str) else None,
+        success=True,
+        guardrails_action=metadata_dict.get("guardrails_action") if isinstance(metadata_dict.get("guardrails_action"), str) else None,
+        visualization_type=visualization_type,
+        estimated_prompt_tokens=prompt_tokens,
+        estimated_completion_tokens=completion_tokens,
+        question_excerpt=question_excerpt,
+        metadata={
+            "row_count": response_payload.get("row_count", 0),
+            "truncated": response_payload.get("truncated", False),
+            "limit_applied": response_payload.get("limit_applied", False),
+        },
     )
 
 
@@ -619,6 +758,7 @@ def chat_query(payload: ChatQueryRequest) -> ChatQueryResponse:
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
+    _log_chat_response(endpoint="/chat/query", payload=payload, response_payload=response_payload)
     return ChatQueryResponse(**response_payload)
 
 
@@ -713,6 +853,7 @@ def chat_answer(payload: ChatQueryRequest) -> ChatAnswerResponse:
             "visualization": None,
         }
 
+    _log_chat_response(endpoint="/chat/answer", payload=payload, response_payload=response_payload)
     return ChatAnswerResponse(
         session_id=response_payload["session_id"],
         original_question=response_payload["original_question"],

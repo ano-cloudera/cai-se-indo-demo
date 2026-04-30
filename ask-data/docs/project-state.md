@@ -113,10 +113,13 @@ Recommended CAI backend env values for the current deployment:
 |---|---|
 | `GET /sessions` | List recent saved sessions |
 | `GET /sessions/{session_id}` | Reload one saved session and its working memory |
+| `GET /analytics/summary` | Read-only usage and observability summary for the recent window |
+| `GET /analytics/events` | Read-only recent application activity log |
 
 **Validation note:**
 - `GET /health` now includes `session_backend`
 - expected value for the current deployment is `sqlite`
+- analytics logging shares the same SQLite file by default, so no additional backend service is required for observability
 
 **CORS:** FastAPI CORSMiddleware is removed. Cloudera Application proxy handles CORS headers.
 Do not re-add middleware unless thoroughly tested — it caused duplicate CORS headers in the past.
@@ -177,6 +180,23 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
   - general conversation / non-data replies
 - RAG Studio remains separate and continues to use its own model configuration flow
 
+### Usage observability
+- A lightweight application event log now records:
+  - chat requests
+  - provider switches
+  - guardrails blocks
+  - visualization follow-up usage
+- The logging layer is intentionally read-only from the frontend and should not interfere with chat flow if logging fails
+- Current metrics include:
+  - total recent sessions
+  - total question volume
+  - SQL vs conversation vs RAG activity
+  - guardrails block count
+  - visualization response count
+  - provider usage breakdown
+  - estimated prompt/completion token volume
+- Token values are currently **estimated** from message length so they remain stable across Azure OpenAI and Bedrock without depending on provider-specific usage payloads
+
 ---
 
 ## 6. Frontend
@@ -207,6 +227,7 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
 | `UserMessageCard` | `components/user-message-card.tsx` | Branded user bubble with avatar tile |
 | `ResultChartCard` | `components/result-chart-card.tsx` | Renders backend-provided chart or table visualizations with a user-toggleable view |
 | `DemoBriefingModal` | `components/demo-briefing-modal.tsx` | First-open briefing and reusable self-service guide for sales and users |
+| `UsageDashboardModal` | `components/usage-dashboard-modal.tsx` | Read-only observability summary and recent activity view |
 | `AppShell` | `components/ui/shell.tsx` | Layout: sidebar + topbar + main |
 
 ### UI features
@@ -220,6 +241,7 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
   - the recommended demo flow for sales and self-service users
 - A `Demo Guide` control in the top bar reopens the same briefing at any time
 - The welcome screen now includes a self-service menu so users can understand the use case without spending AI/chat turns
+- The top bar now includes a `Usage Dashboard` control so sales and delivery teams can review recent adoption and model activity without asking the AI to explain usage
 - Chat messages: styled user bubble with human avatar + assistant answer card (white surface)
 - RAG-backed answers can render a structured source list under the answer card when source metadata is available
 - Assistant answers now sanitize raw RAG citation markup before rendering
@@ -258,6 +280,7 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
 - Both response types can include guardrails metadata
 - SQL query responses can include backend-generated visualization specs
 - Frontend can reload persisted chat history through the backend session APIs and keep the active session in local storage
+- Frontend can open a read-only usage dashboard that pulls summary metrics and recent events directly from backend analytics endpoints
 - Frontend can load available LLM providers and persist the provider choice per session through backend APIs
 - Also calls `GET /rag/options`, `GET /rag/config/{session_id}`, and `POST /rag/config`
 

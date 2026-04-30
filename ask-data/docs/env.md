@@ -63,6 +63,14 @@ Important:
 - `SESSION_TTL_MINUTES`
 - `MEMORY_MAX_HISTORY`
 
+### Usage dashboard and observability
+
+No dedicated environment variable is required for the current usage dashboard.
+
+- Usage events are stored in the same SQLite file configured by `SESSION_SQLITE_PATH`
+- If `SESSION_BACKEND=memory`, usage analytics also becomes in-memory and will not survive app restart
+- Token figures shown in the dashboard are estimated from message length for cross-provider monitoring and are not intended to replace billing-grade accounting
+
 ### SQL safety and execution
 
 - `SQL_DEFAULT_LIMIT`

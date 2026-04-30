@@ -210,6 +210,59 @@ export interface LLMProviderSelectionResponse {
   active_model_name?: string | null;
 }
 
+export interface AnalyticsModeMetric {
+  mode: string;
+  count: number;
+}
+
+export interface AnalyticsProviderMetric {
+  provider: string;
+  count: number;
+}
+
+export interface AnalyticsSummaryResponse {
+  window_days: number;
+  total_events: number;
+  total_sessions: number;
+  total_questions: number;
+  sql_requests: number;
+  rag_requests: number;
+  conversation_requests: number;
+  visualization_followups: number;
+  visualization_responses: number;
+  guardrails_blocks: number;
+  provider_selections: number;
+  estimated_prompt_tokens: number;
+  estimated_completion_tokens: number;
+  estimated_total_tokens: number;
+  mode_breakdown: AnalyticsModeMetric[];
+  provider_breakdown: AnalyticsProviderMetric[];
+  latest_event_at?: string | null;
+}
+
+export interface AnalyticsEventRecord {
+  event_id: number;
+  created_at: string;
+  event_type: string;
+  endpoint: string;
+  session_id?: string | null;
+  mode?: string | null;
+  provider?: string | null;
+  model_name?: string | null;
+  success: boolean;
+  guardrails_action?: string | null;
+  visualization_type?: string | null;
+  estimated_prompt_tokens: number;
+  estimated_completion_tokens: number;
+  estimated_total_tokens: number;
+  question_excerpt?: string | null;
+  metadata: Record<string, unknown>;
+}
+
+export interface AnalyticsEventsResponse {
+  events: AnalyticsEventRecord[];
+}
+
 function getApiBaseUrl(): string {
   return "/api/backend";
 }
@@ -313,6 +366,10 @@ export const apiClient = {
     request<SessionListResponse>(`/sessions?limit=${limit}`),
   getSession: (sessionId: string) =>
     request<SessionDetailResponse>(`/sessions/${sessionId}`),
+  getAnalyticsSummary: (windowDays = 30) =>
+    request<AnalyticsSummaryResponse>(`/analytics/summary?window_days=${windowDays}`),
+  getAnalyticsEvents: (limit = 20) =>
+    request<AnalyticsEventsResponse>(`/analytics/events?limit=${limit}`),
   getLlmProviders: (sessionId?: string) =>
     request<LLMProviderOptionsResponse>(
       `/llm/providers${sessionId ? `?session_id=${encodeURIComponent(sessionId)}` : ""}`,
