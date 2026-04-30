@@ -344,6 +344,46 @@ const demoBriefingSections = [
   },
 ] as const;
 
+const selfServiceThemes: Record<
+  (typeof demoBriefingSections)[number]["id"],
+  {
+    shell: string;
+    eyebrow: string;
+    accent: string;
+    badge: string;
+    icon: string;
+  }
+> = {
+  "use-case": {
+    shell: "border-sky-200 bg-[linear-gradient(180deg,#f6fbff_0%,#eef7ff_100%)] hover:border-sky-300 hover:bg-[linear-gradient(180deg,#eff8ff_0%,#e8f3ff_100%)]",
+    eyebrow: "text-sky-700",
+    accent: "bg-sky-500",
+    badge: "bg-sky-50 text-sky-700",
+    icon: "M3.5 9.5 6.8 12.8 14.5 5.2",
+  },
+  "data-scope": {
+    shell: "border-emerald-200 bg-[linear-gradient(180deg,#f5fff9_0%,#edf9f2_100%)] hover:border-emerald-300 hover:bg-[linear-gradient(180deg,#effcf5_0%,#e7f6ee_100%)]",
+    eyebrow: "text-emerald-700",
+    accent: "bg-emerald-500",
+    badge: "bg-emerald-50 text-emerald-700",
+    icon: "M4 5.5h10M4 9h10M4 12.5h6",
+  },
+  "business-value": {
+    shell: "border-amber-200 bg-[linear-gradient(180deg,#fffaf1_0%,#fff4de_100%)] hover:border-amber-300 hover:bg-[linear-gradient(180deg,#fff7ea_0%,#fff0d3_100%)]",
+    eyebrow: "text-amber-700",
+    accent: "bg-amber-500",
+    badge: "bg-amber-50 text-amber-700",
+    icon: "M8.25 3 4.5 9.25h3L6.75 15l5.75-8H9.5L13 3h-4.75Z",
+  },
+  "how-to-demo": {
+    shell: "border-rose-200 bg-[linear-gradient(180deg,#fff7f8_0%,#fff0f4_100%)] hover:border-rose-300 hover:bg-[linear-gradient(180deg,#fff3f5_0%,#ffe8ef_100%)]",
+    eyebrow: "text-rose-700",
+    accent: "bg-rose-500",
+    badge: "bg-rose-50 text-rose-700",
+    icon: "M4.5 4.5h9v9h-9zM7 7h4M7 9.5h4",
+  },
+};
+
 export default function HomePage() {
   const submitInFlightRef = useRef(false);
   const [state, setState] = useState<ChatState>(initialChatState);
@@ -1069,7 +1109,7 @@ export default function HomePage() {
                     </div>
                   </section>
 
-                  <section className="mt-6 rounded-[18px] border border-[var(--color-border-soft)] bg-white p-5">
+                  <section className="mt-6 rounded-[20px] border border-[var(--color-border-soft)] bg-[linear-gradient(180deg,#ffffff_0%,#fbfcff_100%)] p-6 shadow-panel">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
                         <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--color-ink-subtle)]">
@@ -1078,24 +1118,57 @@ export default function HomePage() {
                         <h4 className="mt-2 font-headline text-xl font-bold text-[var(--color-ink-strong)]">
                           Pick The Right Starting Point
                         </h4>
+                        <p className="mt-2 max-w-3xl text-sm leading-7 text-[var(--color-ink-muted)]">
+                          Open the area that best matches the conversation you want to lead, whether the goal is framing the use case, clarifying the data scope, landing the business value, or guiding the demo flow.
+                        </p>
                       </div>
                     </div>
-                    <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                      {demoBriefingSections.map((section) => (
+                    <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                      {demoBriefingSections.map((section, index) => {
+                        const theme = selfServiceThemes[section.id];
+                        return (
                         <button
                           key={section.id}
                           type="button"
                           onClick={() => openGuideView(section.id)}
-                          className="rounded-[16px] border border-[var(--color-border-soft)] bg-[var(--color-surface-muted)] px-4 py-4 text-left transition hover:border-[var(--color-action-primary)] hover:bg-[rgba(92,99,242,0.05)]"
+                          className={`group relative overflow-hidden rounded-[20px] border px-5 py-5 text-left shadow-[0_14px_34px_rgba(15,23,42,0.04)] transition ${theme.shell}`}
                         >
-                          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--color-ink-subtle)]">
-                            {section.label}
-                          </p>
-                          <p className="mt-2 text-sm leading-6 text-[var(--color-ink-muted)]">
+                          <span className={`absolute inset-x-0 top-0 h-1 ${theme.accent}`} />
+                          <div className="flex items-start justify-between gap-4">
+                            <div>
+                              <p className={`text-[10px] font-semibold uppercase tracking-[0.24em] ${theme.eyebrow}`}>
+                                Section {index + 1}
+                              </p>
+                              <p className="mt-3 font-headline text-[13px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-strong)]">
+                                {section.label}
+                              </p>
+                            </div>
+                            <span className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${theme.badge}`}>
+                              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+                                <path
+                                  d={theme.icon}
+                                  stroke="currentColor"
+                                  strokeWidth="1.6"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
+                              </svg>
+                            </span>
+                          </div>
+                          <p className="mt-4 text-[15px] leading-7 text-[var(--color-ink-muted)]">
                             {section.body}
                           </p>
+                          <div className="mt-5 flex items-center justify-between">
+                            <span className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] ${theme.badge}`}>
+                              Open Guide
+                            </span>
+                            <span className="text-sm font-semibold text-[var(--color-ink-strong)] transition group-hover:translate-x-0.5">
+                              Review
+                            </span>
+                          </div>
                         </button>
-                      ))}
+                        );
+                      })}
                     </div>
                   </section>
 
