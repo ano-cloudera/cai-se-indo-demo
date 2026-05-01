@@ -1,4 +1,6 @@
+import json
 from functools import lru_cache
+from typing import Any
 
 from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -75,6 +77,8 @@ class Settings(BaseSettings):
         default="Claude Sonnet 4",
         alias="BEDROCK_MODEL_NAME",
     )
+    # Optional JSON array of {"model_id": "...", "model_name": "..."} — server-side catalog only (no AWS secrets).
+    bedrock_model_catalog_json: str = Field(default="", alias="BEDROCK_MODEL_CATALOG_JSON")
     aws_access_key_id: str = Field(default="", alias="AWS_ACCESS_KEY_ID")
     aws_secret_access_key: str = Field(default="", alias="AWS_SECRET_ACCESS_KEY")
     session_backend: str = Field(default="sqlite", alias="SESSION_BACKEND")
@@ -129,6 +133,29 @@ class Settings(BaseSettings):
             self.bedrock_model_id,
         )
         return all(bool(value) for value in required_values)
+
+    @property
+    def bedrock_model_catalog_entries(self) -> list[tuple[str, str]]:
+        """Bedrock models exposed to the UI: (model_id, display name). Falls back to BEDROCK_MODEL_ID/NAME."""
+        raw = (self.bedrock_model_catalog_json or "").strip()
+        if not raw:
+            return [(self.bedrock_model_id, self.bedrock_model_name)]
+        try:
+            parsed: Any = json.loads(raw)
+            if not isinstance(parsed, list):
+                return [(self.bedrock_model_id, self.bedrock_model_name)]
+            out: list[tuple[str, str]] = []
+            for item in parsed:
+                if not isinstance(item, dict):
+                    continue
+                mid = item.get("model_id") or item.get("modelId")
+                name = item.get("model_name") or item.get("modelName")
+                if isinstance(mid, str) and mid.strip():
+                    label = (name.strip() if isinstance(name, str) and name.strip() else mid.strip())
+                    out.append((mid.strip(), label))
+            return out if out else [(self.bedrock_model_id, self.bedrock_model_name)]
+        except (json.JSONDecodeError, TypeError, ValueError):
+            return [(self.bedrock_model_id, self.bedrock_model_name)]
 
     @property
     def sql_allowed_tables_list(self) -> list[str]:

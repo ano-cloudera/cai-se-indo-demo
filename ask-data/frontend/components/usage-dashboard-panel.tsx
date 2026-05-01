@@ -1,5 +1,19 @@
 "use client";
 
+import { useMemo } from "react";
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  Cell,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+
 import type { AnalyticsEventRecord, AnalyticsSummaryResponse } from "@/lib/api";
 
 interface UsageDashboardPanelProps {
@@ -30,6 +44,8 @@ function formatDate(value?: string | null): string {
   });
 }
 
+const PIE_COLORS = ["#5c63f2", "#38bdf8", "#a78bfa"];
+
 export function UsageDashboardPanel({
   loading,
   error,
@@ -37,14 +53,41 @@ export function UsageDashboardPanel({
   events,
   onRefresh,
 }: UsageDashboardPanelProps) {
-  const metrics = [
+  const coreMetrics = [
     { label: "Active sessions", value: summary ? formatCompact(summary.total_sessions) : "—" },
     { label: "Questions", value: summary ? formatCompact(summary.total_questions) : "—" },
     { label: "SQL requests", value: summary ? formatCompact(summary.sql_requests) : "—" },
     { label: "Guardrails blocks", value: summary ? formatCompact(summary.guardrails_blocks) : "—" },
     { label: "Visual responses", value: summary ? formatCompact(summary.visualization_responses) : "—" },
-    { label: "Estimated tokens", value: summary ? formatCompact(summary.estimated_total_tokens) : "—" },
   ];
+
+  const promptTokens = summary?.estimated_prompt_tokens ?? 0;
+  const completionTokens = summary?.estimated_completion_tokens ?? 0;
+  const totalTokens = summary?.estimated_total_tokens ?? promptTokens + completionTokens;
+
+  const pieSlices = useMemo(
+    () =>
+      [
+        { name: "Prompt (est.)", value: Math.max(0, promptTokens) },
+        { name: "Completion (est.)", value: Math.max(0, completionTokens) },
+      ].filter((row) => row.value > 0),
+    [promptTokens, completionTokens],
+  );
+
+  const trendData = useMemo(() => {
+    const ordered = [...events].sort(
+      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+    );
+    return ordered.map((e, i) => ({
+      seq: i + 1,
+      tokens: Math.max(0, e.estimated_total_tokens),
+    }));
+  }, [events]);
+
+  const promptPct =
+    totalTokens > 0 ? Math.round((promptTokens / totalTokens) * 100) : 0;
+  const completionPct =
+    totalTokens > 0 ? Math.round((completionTokens / totalTokens) * 100) : 0;
 
   return (
     <div className="space-y-5">
@@ -77,7 +120,7 @@ export function UsageDashboardPanel({
         ) : null}
 
         <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {metrics.map((metric) => (
+          {coreMetrics.map((metric) => (
             <section
               key={metric.label}
               className="rounded-[18px] border border-[var(--color-border-soft)] bg-white px-5 py-4"
@@ -91,6 +134,165 @@ export function UsageDashboardPanel({
             </section>
           ))}
         </div>
+
+        <section className="mt-6 rounded-[22px] border border-[var(--color-border-soft)] bg-white p-6 shadow-panel">
+          <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[var(--color-border-soft)] pb-5">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#4968cf]">
+                Estimated token usage
+              </p>
+              <p className="mt-2 max-w-xl text-sm leading-7 text-[var(--color-ink-muted)]">
+                Totals combine prompt and completion estimates so Azure OpenAI and Bedrock stay comparable. Figures scale from recent activity in the selected window.
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="font-headline text-[42px] font-bold leading-none tracking-tight text-[var(--color-ink-strong)]">
+                {loading ? "…" : formatCompact(totalTokens)}
+              </p>
+              <p className="mt-2 text-xs font-medium uppercase tracking-[0.18em] text-[var(--color-ink-subtle)]">
+                Estimated tokens (combined)
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,260px)] lg:items-center">
+            <div className="space-y-5">
+              <div>
+                <div className="flex items-center justify-between text-xs font-semibold text-[var(--color-ink-muted)]">
+                  <span>Composition</span>
+                  <span>
+                    {totalTokens > 0 ? `${promptPct}% / ${completionPct}%` : "—"}
+                  </span>
+                </div>
+                <div className="mt-3 flex h-4 overflow-hidden rounded-full bg-[var(--color-surface-muted)]">
+                  {totalTokens > 0 ? (
+                    <>
+                      <div
+                        className="h-full bg-[#5c63f2] transition-all"
+                        style={{ width: `${promptPct}%` }}
+                        title={`Prompt ${promptPct}%`}
+                      />
+                      <div
+                        className="h-full bg-[#38bdf8] transition-all"
+                        style={{ width: `${completionPct}%` }}
+                        title={`Completion ${completionPct}%`}
+                      />
+                    </>
+                  ) : (
+                    <div className="h-full w-full bg-[var(--color-border-soft)]" />
+                  )}
+                </div>
+                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                  <div className="rounded-[14px] border border-[var(--color-border-soft)] bg-[linear-gradient(180deg,#fafbff_0%,#f0f4ff_100%)] px-4 py-3">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--color-ink-subtle)]">
+                      Prompt (est.)
+                    </p>
+                    <p className="mt-1 font-headline text-xl font-bold text-[#434ce8]">
+                      {loading ? "…" : formatCompact(promptTokens)}
+                    </p>
+                  </div>
+                  <div className="rounded-[14px] border border-[var(--color-border-soft)] bg-[linear-gradient(180deg,#f8fcff_0%,#e8f6ff_100%)] px-4 py-3">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--color-ink-subtle)]">
+                      Completion (est.)
+                    </p>
+                    <p className="mt-1 font-headline text-xl font-bold text-[#0284c7]">
+                      {loading ? "…" : formatCompact(completionTokens)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex min-h-[220px] flex-col items-center justify-center rounded-[20px] border border-[var(--color-border-soft)] bg-[var(--color-surface-muted)]/50 px-2 py-4">
+              {pieSlices.length > 0 && !loading ? (
+                <ResponsiveContainer width="100%" height={200}>
+                  <PieChart>
+                    <Pie
+                      data={pieSlices}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={54}
+                      outerRadius={84}
+                      paddingAngle={2}
+                    >
+                      {pieSlices.map((entry, index) => (
+                        <Cell key={entry.name} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      formatter={(value: number | undefined) =>
+                        value !== undefined ? formatCompact(value) : ""
+                      }
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <p className="px-4 text-center text-sm text-[var(--color-ink-muted)]">
+                  {loading ? "Loading token breakdown…" : "No token estimates recorded yet in this window."}
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-8">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--color-ink-subtle)]">
+              Recent activity trend (tokens per event)
+            </p>
+            <div className="mt-3 h-[200px] w-full rounded-[18px] border border-[var(--color-border-soft)] bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] px-2 py-3">
+              {trendData.length > 1 && !loading ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={trendData} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="tokenAreaFill" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#5c63f2" stopOpacity={0.35} />
+                        <stop offset="100%" stopColor="#5c63f2" stopOpacity={0.02} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                    <XAxis
+                      dataKey="seq"
+                      tick={{ fontSize: 11, fill: "#64748b" }}
+                      tickLine={false}
+                      axisLine={false}
+                      label={{ value: "Event sequence", position: "insideBottom", offset: -2, fontSize: 10, fill: "#94a3b8" }}
+                    />
+                    <YAxis
+                      tick={{ fontSize: 11, fill: "#64748b" }}
+                      tickLine={false}
+                      axisLine={false}
+                      width={40}
+                    />
+                    <Tooltip
+                      formatter={(value: number | undefined) =>
+                        value !== undefined ? [`${formatCompact(value)} est. tokens`, "Volume"] : ["", ""]
+                      }
+                      labelFormatter={(label) => `Event ${label}`}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="tokens"
+                      stroke="#5c63f2"
+                      strokeWidth={2}
+                      fill="url(#tokenAreaFill)"
+                      dot={{ r: 2.5, fill: "#5c63f2" }}
+                      activeDot={{ r: 5 }}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex h-full items-center justify-center px-4 text-center text-sm text-[var(--color-ink-muted)]">
+                  {loading
+                    ? "Loading trend…"
+                    : trendData.length === 0
+                      ? "Activity will appear here as requests are logged."
+                      : "At least two events are needed to show a trend line."}
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
       </section>
 
       <div className="grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">

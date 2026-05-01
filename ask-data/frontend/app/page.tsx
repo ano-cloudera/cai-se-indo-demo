@@ -393,7 +393,7 @@ export default function HomePage() {
   const [sessions, setSessions] = useState<SessionsState>(initialSessionsState);
   const [llmProviders, setLlmProviders] = useState<LLMProvidersState>(initialLlmProvidersState);
   const [analytics, setAnalytics] = useState<AnalyticsState>(initialAnalyticsState);
-  const [activeView, setActiveView] = useState<AppView>("assistant");
+  const [activeView, setActiveView] = useState<AppView>("guide");
   const [draftProvider, setDraftProvider] = useState("azure");
   const [draftModelId, setDraftModelId] = useState("");
   const [savingModelSettings, setSavingModelSettings] = useState(false);
@@ -517,6 +517,9 @@ export default function HomePage() {
       let response = await apiClient.getLlmProviders(sessionId);
       const storedProvider =
         typeof window !== "undefined" ? window.localStorage.getItem(LLM_PROVIDER_STORAGE_KEY) : null;
+      const storedModelId =
+        typeof window !== "undefined" ? window.localStorage.getItem(LLM_MODEL_STORAGE_KEY) : null;
+
       if (
         storedProvider &&
         storedProvider !== response.active_provider &&
@@ -525,6 +528,8 @@ export default function HomePage() {
         const selected = await apiClient.selectLlmProvider({
           session_id: sessionId,
           provider: storedProvider,
+          model_id:
+            storedProvider === "bedrock" && storedModelId ? storedModelId : undefined,
         });
         response = {
           ...response,
@@ -533,17 +538,36 @@ export default function HomePage() {
           active_model_name: selected.active_model_name,
         };
       }
+
       const preferredProvider =
         storedProvider && response.options.some((option) => option.provider === storedProvider)
           ? storedProvider
           : response.active_provider;
       const preferredModels = response.options.filter((option) => option.provider === preferredProvider);
-      const storedModelId =
-        typeof window !== "undefined" ? window.localStorage.getItem(LLM_MODEL_STORAGE_KEY) : null;
       const preferredModelId =
         storedModelId && preferredModels.some((option) => option.model_id === storedModelId)
           ? storedModelId
           : preferredModels[0]?.model_id || "";
+
+      const needsBedrockModelSync =
+        preferredProvider === "bedrock" &&
+        Boolean(preferredModelId) &&
+        response.active_model_id !== preferredModelId &&
+        preferredModels.some((option) => option.model_id === preferredModelId);
+
+      if (needsBedrockModelSync) {
+        const selected = await apiClient.selectLlmProvider({
+          session_id: sessionId,
+          provider: "bedrock",
+          model_id: preferredModelId,
+        });
+        response = {
+          ...response,
+          active_provider: selected.active_provider,
+          active_model_id: selected.active_model_id,
+          active_model_name: selected.active_model_name,
+        };
+      }
 
       setLlmProviders({
         loading: false,
@@ -567,13 +591,15 @@ export default function HomePage() {
     }
   }
 
-  async function handleLlmProviderChange(nextProvider: string) {
+  async function handleLlmProviderChange(nextProvider: string, modelId?: string | null) {
     const sessionId = state.sessionId || getOrCreateSessionId();
     setLlmProviders((cur) => ({ ...cur, loading: true, error: "" }));
     try {
       const response: LLMProviderSelectionResponse = await apiClient.selectLlmProvider({
         session_id: sessionId,
         provider: nextProvider,
+        model_id:
+          nextProvider === "bedrock" && modelId ? modelId : undefined,
       });
       setLlmProviders((cur) => ({
         ...cur,
@@ -611,7 +637,7 @@ export default function HomePage() {
           window.localStorage.setItem(LLM_MODEL_STORAGE_KEY, draftModelId);
         }
       }
-      const saved = await handleLlmProviderChange(draftProvider);
+      const saved = await handleLlmProviderChange(draftProvider, draftModelId);
       if (saved) {
         setActiveView("assistant");
       }

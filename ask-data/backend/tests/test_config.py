@@ -47,3 +47,27 @@ class SettingsTestCase(unittest.TestCase):
         )
 
         self.assertTrue(settings.is_bedrock_configured)
+
+    def test_bedrock_catalog_json_parses_entries(self) -> None:
+        settings = Settings(
+            BEDROCK_REGION="us-west-2",
+            BEDROCK_MODEL_ID="default-id",
+            BEDROCK_MODEL_NAME="Default",
+            BEDROCK_MODEL_CATALOG_JSON='[{"model_id":"a","model_name":"A"},{"model_id":"b","model_name":"B"}]',
+        )
+        self.assertEqual(
+            settings.bedrock_model_catalog_entries,
+            [("a", "A"), ("b", "B")],
+        )
+
+    def test_bedrock_catalog_invalid_json_falls_back(self) -> None:
+        settings = Settings(
+            BEDROCK_REGION="us-west-2",
+            BEDROCK_MODEL_ID="fallback-id",
+            BEDROCK_MODEL_NAME="Fallback",
+            BEDROCK_MODEL_CATALOG_JSON="not-json",
+        )
+        self.assertEqual(
+            settings.bedrock_model_catalog_entries,
+            [("fallback-id", "Fallback")],
+        )

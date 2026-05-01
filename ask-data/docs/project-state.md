@@ -226,8 +226,7 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
 | `RagConfigModal` | `components/rag-config-modal.tsx` | Per-session RAG Studio config panel |
 | `UserMessageCard` | `components/user-message-card.tsx` | Branded user bubble with avatar tile |
 | `ResultChartCard` | `components/result-chart-card.tsx` | Renders backend-provided chart or table visualizations with a user-toggleable view |
-| `DemoBriefingModal` | `components/demo-briefing-modal.tsx` | First-open briefing and reusable self-service guide for sales and users |
-| `UsageDashboardModal` | `components/usage-dashboard-modal.tsx` | Read-only observability summary and recent activity view |
+| `DemoBriefingModal` | `components/demo-briefing-modal.tsx` | First-open briefing modal with color-coded sections for use case, data scope, business value, and demo flow |
 | `DemoGuidePanel` | `components/demo-guide-panel.tsx` | Sidebar-driven demo guide workspace inside the main body |
 | `ModelSettingsPanel` | `components/model-settings-panel.tsx` | Sidebar-driven provider and model settings workspace |
 | `UsageDashboardPanel` | `components/usage-dashboard-panel.tsx` | Sidebar-driven usage dashboard workspace inside the main body |
@@ -243,11 +242,10 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
   - the business value
   - the recommended demo flow for sales and self-service users
 - The left sidebar now includes dedicated workspace views for:
-  - `AI Assistant`
-  - `Model Settings`
-  - `Usage Dashboard`
   - `Demo Guide`
-- The welcome screen now includes a self-service menu so users can understand the use case without spending AI/chat turns
+  - `AI Assistant`
+  - `Usage Dashboard`
+  - `Model Settings`
 - The first-open demo briefing popup now uses stronger section-specific color treatment so use case, data scope, business value, and demo flow are easier to distinguish at a glance
 - `Demo Guide` is now also available as a persistent body section rather than only as a modal
 - `Usage Dashboard` is now rendered in the main body workspace instead of a popup
@@ -256,6 +254,12 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
   - choose the provider connection
   - choose the available model for that provider
 - The preferred model setting is stored locally in the browser and then applied to the active AI session
+- The `Demo Guide` body layout no longer contains an internal sidebar. It now uses:
+  - a briefing hero header
+  - a horizontal section selector
+  - an editorial content canvas with `What To Explain`, `Suggested Flow`, and `Prompt Ideas`
+- The `Demo Guide` copy has been rewritten to sound more business-facing and sales-ready, avoiding generic AI-style phrasing
+- The earlier welcome-state `Self-Service Menu` cards have been removed to keep the landing experience more focused
 - Chat messages: styled user bubble with human avatar + assistant answer card (white surface)
 - RAG-backed answers can render a structured source list under the answer card when source metadata is available
 - Assistant answers now sanitize raw RAG citation markup before rendering
@@ -322,6 +326,7 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
   - `AWS_DEFAULT_REGION` or `BEDROCK_REGION`
   - `BEDROCK_MODEL_ID`
   - `BEDROCK_MODEL_NAME`
+  - Optional `BEDROCK_MODEL_CATALOG_JSON` — JSON array of `{"model_id","model_name"}` entries shown in Model Settings (server-side only; no credential exposure)
   - `AWS_ACCESS_KEY_ID`
   - `AWS_SECRET_ACCESS_KEY`
 - `RAG_BASE_URL` or `AGENT_BASE_URL` for RAG Studio integration

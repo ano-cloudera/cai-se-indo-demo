@@ -22,6 +22,10 @@ const sectionTheme: Record<
     chip: string;
     callout: string;
     softCard: string;
+    /** Soft pastel surface + hover for section tabs when not selected */
+    tabInactive: string;
+    /** Elevated selected tab: clearer border + light tinted shadow */
+    tabActive: string;
   }
 > = {
   "use-case": {
@@ -30,6 +34,10 @@ const sectionTheme: Record<
     chip: "border-sky-200 bg-white text-sky-700",
     callout: "border-sky-100 bg-white",
     softCard: "border-sky-100 bg-sky-50/60",
+    tabInactive:
+      "border-sky-100/90 bg-sky-50/85 text-[var(--color-ink-strong)] hover:border-sky-200 hover:bg-sky-100/70",
+    tabActive:
+      "border-sky-300 bg-white text-sky-900 shadow-[0_12px_28px_rgba(14,165,233,0.14)] ring-1 ring-sky-200/80",
   },
   "data-scope": {
     kicker: "text-emerald-700",
@@ -37,6 +45,10 @@ const sectionTheme: Record<
     chip: "border-emerald-200 bg-white text-emerald-700",
     callout: "border-emerald-100 bg-white",
     softCard: "border-emerald-100 bg-emerald-50/60",
+    tabInactive:
+      "border-emerald-100/90 bg-emerald-50/85 text-[var(--color-ink-strong)] hover:border-emerald-200 hover:bg-emerald-100/70",
+    tabActive:
+      "border-emerald-300 bg-white text-emerald-950 shadow-[0_12px_28px_rgba(16,185,129,0.14)] ring-1 ring-emerald-200/80",
   },
   "business-value": {
     kicker: "text-amber-700",
@@ -44,6 +56,10 @@ const sectionTheme: Record<
     chip: "border-amber-200 bg-white text-amber-700",
     callout: "border-amber-100 bg-white",
     softCard: "border-amber-100 bg-amber-50/60",
+    tabInactive:
+      "border-amber-100/90 bg-amber-50/85 text-[var(--color-ink-strong)] hover:border-amber-200 hover:bg-amber-100/70",
+    tabActive:
+      "border-amber-300 bg-white text-amber-950 shadow-[0_12px_28px_rgba(245,158,11,0.16)] ring-1 ring-amber-200/80",
   },
   "how-to-demo": {
     kicker: "text-rose-700",
@@ -51,6 +67,10 @@ const sectionTheme: Record<
     chip: "border-rose-200 bg-white text-rose-700",
     callout: "border-rose-100 bg-white",
     softCard: "border-rose-100 bg-rose-50/60",
+    tabInactive:
+      "border-rose-100/90 bg-rose-50/85 text-[var(--color-ink-strong)] hover:border-rose-200 hover:bg-rose-100/70",
+    tabActive:
+      "border-rose-300 bg-white text-rose-950 shadow-[0_12px_28px_rgba(244,63,94,0.12)] ring-1 ring-rose-200/80",
   },
 };
 
@@ -192,16 +212,20 @@ export function DemoGuidePanel({
                 key={section.id}
                 type="button"
                 onClick={() => onSelectSection(section.id)}
-                className={`rounded-[18px] border px-4 py-3 text-left transition ${
-                  isActive
-                    ? `${chipTheme.chip} shadow-[0_12px_24px_rgba(15,23,42,0.08)]`
-                    : "border-[var(--color-border-soft)] bg-[var(--color-surface-muted)] text-[var(--color-ink-muted)] hover:border-[var(--color-action-primary)] hover:bg-[rgba(92,99,242,0.04)]"
+                className={`rounded-[18px] border px-4 py-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5c63f2]/35 focus-visible:ring-offset-2 ${
+                  isActive ? chipTheme.tabActive : chipTheme.tabInactive
                 }`}
               >
-                <p className="text-[10px] font-semibold uppercase tracking-[0.22em] opacity-70">
+                <p
+                  className={`text-[10px] font-semibold uppercase tracking-[0.22em] ${isActive ? chipTheme.kicker : `${chipTheme.kicker} opacity-[0.72]`}`}
+                >
                   Section {index + 1}
                 </p>
-                <p className="mt-1 font-headline text-sm font-semibold">{section.label}</p>
+                <p
+                  className={`mt-1 font-headline text-sm font-semibold ${isActive ? "" : "text-[var(--color-ink-strong)]/88"}`}
+                >
+                  {section.label}
+                </p>
               </button>
             );
           })}

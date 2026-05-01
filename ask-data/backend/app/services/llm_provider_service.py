@@ -35,23 +35,74 @@ class LLMProviderService:
             session_memory.llm_selection.provider if session_memory is not None else None
         )
         provider = self._normalize_provider(requested_provider)
-        option = self._option_by_provider(provider)
+        if provider == "azure":
+            opt = self._azure_option()
+            if opt is None:
+                return LLMSelectionState(
+                    provider=self.default_provider(),
+                    model_id=None,
+                    model_name=None,
+                )
+            return LLMSelectionState(
+                provider="azure",
+                model_id=opt.model_id,
+                model_name=opt.model_name,
+            )
+
+        catalog = self.settings.bedrock_model_catalog_entries
+        requested_mid = (
+            session_memory.llm_selection.model_id.strip()
+            if session_memory is not None and session_memory.llm_selection.model_id
+            else None
+        )
+        if requested_mid:
+            for mid, mname in catalog:
+                if mid == requested_mid:
+                    return LLMSelectionState(
+                        provider="bedrock",
+                        model_id=mid,
+                        model_name=mname,
+                    )
+
+        default_id = self.settings.bedrock_model_id
+        for mid, mname in catalog:
+            if mid == default_id:
+                return LLMSelectionState(
+                    provider="bedrock",
+                    model_id=mid,
+                    model_name=mname,
+                )
+
+        mid0, mname0 = catalog[0]
         return LLMSelectionState(
-            provider=provider,
-            model_id=option.model_id if option is not None else None,
-            model_name=option.model_name if option is not None else None,
+            provider="bedrock",
+            model_id=mid0,
+            model_name=mname0,
         )
 
     def apply_selection(
         self,
         session_memory: SessionMemoryState,
         provider: str,
+        model_id: str | None = None,
     ) -> SessionMemoryState:
         snapshot = session_memory.model_copy(deep=True)
-        snapshot.llm_selection = LLMSelectionState(provider=provider)
-        normalized = self.resolve_selection(snapshot)
-        session_memory.llm_selection = normalized
-        return session_memory
+        normalized_provider = self._normalize_provider(provider)
+        if normalized_provider == "azure":
+            snapshot.llm_selection = LLMSelectionState(provider="azure")
+        else:
+            cleaned = model_id.strip() if isinstance(model_id, str) and model_id.strip() else None
+            snapshot.llm_selection = LLMSelectionState(
+                provider="bedrock",
+                model_id=cleaned,
+                model_name=None,
+            )
+        resolved = self.resolve_selection(snapshot)
+        snapshot.llm_selection = resolved
+        return snapshot
+
+    def bedrock_catalog_ids(self) -> set[str]:
+        return {mid for mid, _ in self.settings.bedrock_model_catalog_entries}
 
     def default_provider(self) -> str:
         if self.settings.is_azure_openai_configured:
@@ -68,29 +119,31 @@ class LLMProviderService:
             return "azure"
         return self.default_provider()
 
+    def _azure_option(self) -> LLMProviderOption | None:
+        if not self.settings.is_azure_openai_configured:
+            return None
+        return LLMProviderOption(
+            provider="azure",
+            label="Azure OpenAI",
+            model_id=self.settings.azure_openai_deployment,
+            model_name=self.settings.azure_openai_model,
+            description="Current default provider for SQL, answers, and general conversation.",
+        )
+
     def _build_options(self) -> list[LLMProviderOption]:
         options: list[LLMProviderOption] = []
-        if self.settings.is_azure_openai_configured:
-            options.append(
-                LLMProviderOption(
-                    provider="azure",
-                    label="Azure OpenAI",
-                    model_id=self.settings.azure_openai_deployment,
-                    model_name=self.settings.azure_openai_model,
-                    description="Current default provider for SQL, answers, and general conversation.",
-                )
-            )
+        azure_opt = self._azure_option()
+        if azure_opt is not None:
+            options.append(azure_opt)
         if self.settings.is_bedrock_configured:
-            options.append(
-                LLMProviderOption(
-                    provider="bedrock",
-                    label="Amazon Bedrock",
-                    model_id=self.settings.bedrock_model_id,
-                    model_name=self.settings.bedrock_model_name,
-                    description="Alternative provider for the same non-RAG chat and SQL generation flow.",
+            for mid, mname in self.settings.bedrock_model_catalog_entries:
+                options.append(
+                    LLMProviderOption(
+                        provider="bedrock",
+                        label="Amazon Bedrock",
+                        model_id=mid,
+                        model_name=mname,
+                        description="Configured Bedrock model for non-RAG chat and SQL generation.",
+                    )
                 )
-            )
         return options
-
-    def _option_by_provider(self, provider: str) -> LLMProviderOption | None:
-        return next((option for option in self._build_options() if option.provider == provider), None)

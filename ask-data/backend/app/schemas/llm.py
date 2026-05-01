@@ -32,6 +32,7 @@ class LLMProviderOptionsResponse(BaseModel):
 class LLMProviderSelectionRequest(BaseModel):
     session_id: str
     provider: str
+    model_id: str | None = None
 
 
 class LLMProviderSelectionResponse(BaseModel):

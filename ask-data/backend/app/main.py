@@ -203,8 +203,20 @@ def get_llm_provider_options(session_id: str | None = None) -> LLMProviderOption
 
 @app.post("/llm/providers/select", response_model=LLMProviderSelectionResponse)
 def select_llm_provider(payload: LLMProviderSelectionRequest) -> LLMProviderSelectionResponse:
+    req_provider = payload.provider.strip().lower()
+    if req_provider == "bedrock" and payload.model_id:
+        mid = payload.model_id.strip()
+        if mid not in llm_provider_service.bedrock_catalog_ids():
+            raise HTTPException(
+                status_code=422,
+                detail="Unknown Bedrock model_id for this deployment.",
+            )
     session = memory_store.get_or_create_session(payload.session_id)
-    session = llm_provider_service.apply_selection(session, payload.provider)
+    session = llm_provider_service.apply_selection(
+        session,
+        payload.provider,
+        payload.model_id,
+    )
     persisted = memory_store.set_llm_selection(payload.session_id, session.llm_selection)
     _log_analytics_event(
         event_type="provider-select",

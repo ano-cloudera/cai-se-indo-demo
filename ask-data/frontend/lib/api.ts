@@ -374,7 +374,11 @@ export const apiClient = {
     request<LLMProviderOptionsResponse>(
       `/llm/providers${sessionId ? `?session_id=${encodeURIComponent(sessionId)}` : ""}`,
     ),
-  selectLlmProvider: (payload: { session_id: string; provider: string }) =>
+  selectLlmProvider: (payload: {
+    session_id: string;
+    provider: string;
+    model_id?: string | null;
+  }) =>
     request<LLMProviderSelectionResponse>("/llm/providers/select", {
       method: "POST",
       body: JSON.stringify(payload),

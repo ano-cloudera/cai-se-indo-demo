@@ -154,7 +154,11 @@ export function ModelSettingsPanel({
               </p>
               <ul className="mt-4 space-y-3 text-sm leading-7 text-white/80">
                 <li>Azure OpenAI and Amazon Bedrock use the same governed chat and SQL workflow.</li>
-                <li>The model list reflects the configured connection catalog available to this deployment.</li>
+                <li>
+                  Available Bedrock models are defined by server environment configuration (for example{" "}
+                  <span className="font-mono text-white/90">BEDROCK_MODEL_CATALOG_JSON</span>); AWS credentials never
+                  leave the backend.
+                </li>
                 <li>The saved choice is stored locally and reused as the preferred AI setting in this browser.</li>
               </ul>
             </div>
