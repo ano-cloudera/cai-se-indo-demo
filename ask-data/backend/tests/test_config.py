@@ -71,3 +71,11 @@ class SettingsTestCase(unittest.TestCase):
             settings.bedrock_model_catalog_entries,
             [("fallback-id", "Fallback")],
         )
+
+    def test_bedrock_discovery_flag_can_be_enabled(self) -> None:
+        settings = Settings(
+            BEDROCK_REGION="us-west-2",
+            BEDROCK_MODEL_ID="fallback-id",
+            BEDROCK_DISCOVER_MODELS=True,
+        )
+        self.assertTrue(settings.bedrock_discover_models)

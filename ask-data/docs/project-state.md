@@ -174,11 +174,15 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
 - Non-RAG LLM calls can now route through either Azure OpenAI or Amazon Bedrock
 - Azure remains the safe default provider when both are configured
 - Provider selection is stored per session, so each conversation can keep its own active model provider
+- Bedrock model selection can now be sourced in two ways:
+  - static env-based catalog through `BEDROCK_MODEL_ID`, `BEDROCK_MODEL_NAME`, or `BEDROCK_MODEL_CATALOG_JSON`
+  - optional live discovery from AWS Bedrock when `BEDROCK_DISCOVER_MODELS=true` and valid AWS credentials are present in the backend runtime
 - Current provider selection applies to:
   - SQL generation
   - SQL answer narration
   - general conversation / non-data replies
 - RAG Studio remains separate and continues to use its own model configuration flow
+- General conversation and greeting flows are now explicitly framed around credit risk, outstanding exposure, portfolio quality, deposit concentration, and supporting customer analysis so the opening guidance stays aligned across Azure OpenAI and Bedrock
 
 ### Usage observability
 - A lightweight application event log now records:
@@ -326,6 +330,7 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
   - `AWS_DEFAULT_REGION` or `BEDROCK_REGION`
   - `BEDROCK_MODEL_ID`
   - `BEDROCK_MODEL_NAME`
+  - Optional `BEDROCK_DISCOVER_MODELS=true` to fetch a live Bedrock model list for the Model Settings dropdown
   - Optional `BEDROCK_MODEL_CATALOG_JSON` — JSON array of `{"model_id","model_name"}` entries shown in Model Settings (server-side only; no credential exposure)
   - `AWS_ACCESS_KEY_ID`
   - `AWS_SECRET_ACCESS_KEY`

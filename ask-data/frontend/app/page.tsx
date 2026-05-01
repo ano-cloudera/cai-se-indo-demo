@@ -1116,7 +1116,7 @@ export default function HomePage() {
                       Hello, I am the Data Analyst Assistant.
                     </h3>
                     <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-[var(--color-ink-muted)]">
-                      I&apos;m here to help you analyze deposit and credit data quickly using natural language. If you need answers grounded in policy or operational documents, enable RAG Studio from the top bar first.
+                      I&apos;m here to help you analyze credit risk, outstanding exposure, portfolio quality, deposit concentration, and customer segmentation using natural language. If you need answers grounded in policy or operational documents, enable RAG Studio from the top bar first.
                     </p>
                     <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
                       <button

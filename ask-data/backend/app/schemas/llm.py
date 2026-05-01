@@ -30,6 +30,7 @@ class LLMProviderOptionsResponse(BaseModel):
 
 
 class LLMProviderSelectionRequest(BaseModel):
+    model_config = ConfigDict(protected_namespaces=())
     session_id: str
     provider: str
     model_id: str | None = None

@@ -77,6 +77,7 @@ class Settings(BaseSettings):
         default="Claude Sonnet 4",
         alias="BEDROCK_MODEL_NAME",
     )
+    bedrock_discover_models: bool = Field(default=False, alias="BEDROCK_DISCOVER_MODELS")
     # Optional JSON array of {"model_id": "...", "model_name": "..."} — server-side catalog only (no AWS secrets).
     bedrock_model_catalog_json: str = Field(default="", alias="BEDROCK_MODEL_CATALOG_JSON")
     aws_access_key_id: str = Field(default="", alias="AWS_ACCESS_KEY_ID")

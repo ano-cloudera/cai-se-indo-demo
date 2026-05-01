@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+from functools import cached_property
+
+import boto3
+
 from app.core.config import Settings, get_settings
 from app.schemas.llm import (
     LLMProviderOption,
@@ -49,7 +53,7 @@ class LLMProviderService:
                 model_name=opt.model_name,
             )
 
-        catalog = self.settings.bedrock_model_catalog_entries
+        catalog = self._bedrock_catalog_entries
         requested_mid = (
             session_memory.llm_selection.model_id.strip()
             if session_memory is not None and session_memory.llm_selection.model_id
@@ -102,7 +106,7 @@ class LLMProviderService:
         return snapshot
 
     def bedrock_catalog_ids(self) -> set[str]:
-        return {mid for mid, _ in self.settings.bedrock_model_catalog_entries}
+        return {mid for mid, _ in self._bedrock_catalog_entries}
 
     def default_provider(self) -> str:
         if self.settings.is_azure_openai_configured:
@@ -136,14 +140,87 @@ class LLMProviderService:
         if azure_opt is not None:
             options.append(azure_opt)
         if self.settings.is_bedrock_configured:
-            for mid, mname in self.settings.bedrock_model_catalog_entries:
+            for mid, mname in self._bedrock_catalog_entries:
                 options.append(
                     LLMProviderOption(
                         provider="bedrock",
                         label="Amazon Bedrock",
                         model_id=mid,
                         model_name=mname,
-                        description="Configured Bedrock model for non-RAG chat and SQL generation.",
+                        description="Available Bedrock model for non-RAG chat and SQL generation.",
                     )
                 )
         return options
+
+    @cached_property
+    def _bedrock_catalog_entries(self) -> list[tuple[str, str]]:
+        discovered = self._discover_bedrock_models()
+        return discovered if discovered else self.settings.bedrock_model_catalog_entries
+
+    def _discover_bedrock_models(self) -> list[tuple[str, str]]:
+        if not self.settings.is_bedrock_configured:
+            return []
+        if not self.settings.bedrock_discover_models:
+            return []
+        if not (
+            self.settings.aws_access_key_id.strip()
+            and self.settings.aws_secret_access_key.strip()
+        ):
+            return []
+
+        client_kwargs = {
+            "service_name": "bedrock",
+            "region_name": self.settings.bedrock_region,
+            "aws_access_key_id": self.settings.aws_access_key_id,
+            "aws_secret_access_key": self.settings.aws_secret_access_key,
+        }
+        try:
+            client = boto3.client(**client_kwargs)
+            response = client.list_foundation_models(byOutputModality="TEXT")
+        except Exception:
+            return []
+
+        summaries = response.get("modelSummaries", [])
+        if not isinstance(summaries, list):
+            return []
+
+        entries: list[tuple[str, str]] = []
+        seen: set[str] = set()
+        for item in summaries:
+            if not isinstance(item, dict):
+                continue
+            model_id = item.get("modelId")
+            model_name = item.get("modelName")
+            provider_name = item.get("providerName")
+            inference_types = item.get("inferenceTypesSupported") or []
+            response_streaming = item.get("responseStreamingSupported")
+
+            if not isinstance(model_id, str) or not model_id.strip():
+                continue
+            mid = model_id.strip()
+            if mid in seen:
+                continue
+
+            # Keep the catalog focused on conversational models that are realistic for this app.
+            if isinstance(provider_name, str) and provider_name.lower() not in {
+                "anthropic",
+                "meta",
+                "amazon",
+                "mistral ai",
+                "cohere",
+            }:
+                continue
+            if inference_types and "ON_DEMAND" not in inference_types:
+                continue
+            if response_streaming is False:
+                continue
+
+            label = (
+                model_name.strip()
+                if isinstance(model_name, str) and model_name.strip()
+                else mid
+            )
+            entries.append((mid, label))
+            seen.add(mid)
+
+        return entries

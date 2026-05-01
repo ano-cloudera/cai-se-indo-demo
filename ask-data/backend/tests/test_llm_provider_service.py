@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import patch
 
 from app.core.config import Settings
 from app.schemas.llm import LLMSelectionState
@@ -147,3 +148,61 @@ class LLMProviderServiceTestCase(unittest.TestCase):
         updated = service.apply_selection(session, "bedrock", "x-id")
         self.assertEqual(updated.llm_selection.model_id, "x-id")
         self.assertEqual(updated.llm_selection.model_name, "X")
+
+    @patch("app.services.llm_provider_service.boto3.client")
+    def test_bedrock_discovery_populates_provider_options(self, mock_boto_client) -> None:
+        mock_boto_client.return_value.list_foundation_models.return_value = {
+            "modelSummaries": [
+                {
+                    "modelId": "anthropic.claude-sonnet-4-20250514-v1:0",
+                    "modelName": "Claude Sonnet 4",
+                    "providerName": "Anthropic",
+                    "inferenceTypesSupported": ["ON_DEMAND"],
+                    "responseStreamingSupported": True,
+                },
+                {
+                    "modelId": "meta.llama3-1-70b-instruct-v1:0",
+                    "modelName": "Llama 3.1 70B Instruct",
+                    "providerName": "Meta",
+                    "inferenceTypesSupported": ["ON_DEMAND"],
+                    "responseStreamingSupported": True,
+                },
+            ]
+        }
+        settings = Settings(
+            BEDROCK_REGION="us-west-2",
+            BEDROCK_MODEL_ID="anthropic.claude-sonnet-4-20250514-v1:0",
+            BEDROCK_MODEL_NAME="Claude Sonnet 4",
+            BEDROCK_DISCOVER_MODELS=True,
+            AWS_ACCESS_KEY_ID="demo-key",
+            AWS_SECRET_ACCESS_KEY="demo-secret",
+        )
+
+        service = LLMProviderService(settings=settings)
+        bedrock_options = [o for o in service.list_options().options if o.provider == "bedrock"]
+
+        self.assertEqual(
+            [o.model_id for o in bedrock_options],
+            [
+                "anthropic.claude-sonnet-4-20250514-v1:0",
+                "meta.llama3-1-70b-instruct-v1:0",
+            ],
+        )
+
+    @patch("app.services.llm_provider_service.boto3.client")
+    def test_bedrock_discovery_failure_falls_back_to_env_catalog(self, mock_boto_client) -> None:
+        mock_boto_client.side_effect = RuntimeError("bedrock unavailable")
+        settings = Settings(
+            BEDROCK_REGION="us-west-2",
+            BEDROCK_MODEL_ID="fallback-id",
+            BEDROCK_MODEL_NAME="Fallback Model",
+            BEDROCK_DISCOVER_MODELS=True,
+            AWS_ACCESS_KEY_ID="demo-key",
+            AWS_SECRET_ACCESS_KEY="demo-secret",
+        )
+
+        service = LLMProviderService(settings=settings)
+        bedrock_options = [o for o in service.list_options().options if o.provider == "bedrock"]
+
+        self.assertEqual(len(bedrock_options), 1)
+        self.assertEqual(bedrock_options[0].model_id, "fallback-id")

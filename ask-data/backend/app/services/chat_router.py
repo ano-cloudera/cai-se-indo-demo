@@ -157,23 +157,28 @@ def build_greeting_answer(question: str) -> str:
     if is_indonesian_text(question):
         return (
             "Selamat datang. Saya Data Analyst Assistant, siap membantu Anda "
-            "membaca data deposito dan kredit dengan cara yang lebih sederhana "
-            "dan nyaman. Jika Anda nanti butuh jawaban dari dokumen, SOP, atau knowledge base, "
-            "aktifkan dulu RAG Studio dari aplikasi.\n\n"
+            "mengeksplorasi pertanyaan seputar credit risk, outstanding exposure, "
+            "kualitas portofolio kredit, konsentrasi deposito, dan segmentasi nasabah "
+            "dengan cara yang lebih cepat dan lebih mudah dipahami. Jika Anda perlu "
+            "jawaban yang berasal dari dokumen, SOP, atau knowledge base, aktifkan "
+            "dulu RAG Studio dari aplikasi.\n\n"
             "Kalau mau mulai, Anda bisa tanya hal seperti:\n"
-            "1. Berapa total saldo deposito saat ini?\n"
-            "2. Berapa total outstanding kredit saat ini?\n"
-            "3. Siapa nasabah dengan outstanding kredit tertinggi?"
+            "1. Berapa total outstanding kredit saat ini?\n"
+            "2. Siapa nasabah dengan outstanding kredit tertinggi?\n"
+            "3. Bagaimana tren outstanding kredit per bulan?\n"
+            "4. Bagaimana distribusi portofolio berdasarkan segmen atau kota?"
         )
 
     return (
         "Hello, it is great to meet you. I am the Data Analyst Assistant, "
-        "ready to help you explore deposit and credit data in a clear and practical way. "
+        "ready to help you explore credit risk, outstanding exposure, portfolio quality, "
+        "deposit concentration, and supporting customer analysis in a clear and practical way. "
         "If you need answers grounded in documents or knowledge-base content, enable RAG Studio first.\n\n"
         "You can start with questions like:\n"
-        "1. What is the total deposit balance?\n"
-        "2. What is the total outstanding credit?\n"
-        "3. Who has the highest outstanding credit?"
+        "1. What is the total outstanding credit right now?\n"
+        "2. Who has the highest outstanding credit?\n"
+        "3. How is outstanding credit trending by month?\n"
+        "4. Which segments or cities hold the largest portfolio exposure?"
     )
 
 

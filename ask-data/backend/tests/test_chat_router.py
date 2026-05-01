@@ -18,8 +18,8 @@ class ChatRouterTestCase(unittest.TestCase):
         self.assertTrue(is_greeting_or_smalltalk("selamat pagi"))
         answer = build_greeting_answer("selamat pagi")
         self.assertIn("Data Analyst Assistant", answer)
-        self.assertIn("Berapa total saldo deposito saat ini?", answer)
         self.assertIn("Berapa total outstanding kredit saat ini?", answer)
+        self.assertIn("credit risk", answer.lower())
 
     def test_indonesian_acknowledgement_is_detected(self) -> None:
         self.assertTrue(is_acknowledgement("makasih ya"))
