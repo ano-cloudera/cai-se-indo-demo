@@ -32,6 +32,16 @@ function formatCompact(value: number): string {
   }).format(value);
 }
 
+/** Recharts Tooltip values may be string | number; normalize for display */
+function formatTooltipNumber(value: unknown): string {
+  if (typeof value === "number" && Number.isFinite(value)) return formatCompact(value);
+  if (typeof value === "string") {
+    const n = Number(value);
+    if (Number.isFinite(n)) return formatCompact(n);
+  }
+  return "";
+}
+
 function formatDate(value?: string | null): string {
   if (!value) return "No activity yet";
   const date = new Date(value);
@@ -221,11 +231,7 @@ export function UsageDashboardPanel({
                         <Cell key={entry.name} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip
-                      formatter={(value: number | undefined) =>
-                        value !== undefined ? formatCompact(value) : ""
-                      }
-                    />
+                    <Tooltip formatter={(value) => formatTooltipNumber(value)} />
                   </PieChart>
                 </ResponsiveContainer>
               ) : (
@@ -265,9 +271,10 @@ export function UsageDashboardPanel({
                       width={40}
                     />
                     <Tooltip
-                      formatter={(value: number | undefined) =>
-                        value !== undefined ? [`${formatCompact(value)} est. tokens`, "Volume"] : ["", ""]
-                      }
+                      formatter={(value) => {
+                        const text = formatTooltipNumber(value);
+                        return text ? [`${text} est. tokens`, "Volume"] : ["", ""];
+                      }}
                       labelFormatter={(label) => `Event ${label}`}
                     />
                     <Area
