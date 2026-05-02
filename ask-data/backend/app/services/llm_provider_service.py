@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from functools import cached_property
+from collections import Counter
 
 import boto3
 
@@ -184,16 +185,13 @@ class LLMProviderService:
         if not isinstance(summaries, list):
             return []
 
-        entries: list[tuple[str, str]] = []
+        raw_entries: list[tuple[str, str]] = []
         seen: set[str] = set()
         for item in summaries:
             if not isinstance(item, dict):
                 continue
             model_id = item.get("modelId")
             model_name = item.get("modelName")
-            provider_name = item.get("providerName")
-            inference_types = item.get("inferenceTypesSupported") or []
-            response_streaming = item.get("responseStreamingSupported")
 
             if not isinstance(model_id, str) or not model_id.strip():
                 continue
@@ -201,26 +199,26 @@ class LLMProviderService:
             if mid in seen:
                 continue
 
-            # Keep the catalog focused on conversational models that are realistic for this app.
-            if isinstance(provider_name, str) and provider_name.lower() not in {
-                "anthropic",
-                "meta",
-                "amazon",
-                "mistral ai",
-                "cohere",
-            }:
-                continue
-            if inference_types and "ON_DEMAND" not in inference_types:
-                continue
-            if response_streaming is False:
-                continue
-
             label = (
                 model_name.strip()
                 if isinstance(model_name, str) and model_name.strip()
                 else mid
             )
-            entries.append((mid, label))
+            raw_entries.append((mid, label))
             seen.add(mid)
 
-        return entries
+        return self._disambiguate_bedrock_labels(raw_entries)
+
+    @staticmethod
+    def _disambiguate_bedrock_labels(entries: list[tuple[str, str]]) -> list[tuple[str, str]]:
+        if not entries:
+            return []
+
+        label_counts = Counter(label for _, label in entries)
+        out: list[tuple[str, str]] = []
+        for model_id, label in entries:
+            if label_counts[label] <= 1:
+                out.append((model_id, label))
+                continue
+            out.append((model_id, f"{label} ({model_id})"))
+        return out

@@ -206,3 +206,60 @@ class LLMProviderServiceTestCase(unittest.TestCase):
 
         self.assertEqual(len(bedrock_options), 1)
         self.assertEqual(bedrock_options[0].model_id, "fallback-id")
+
+    @patch("app.services.llm_provider_service.boto3.client")
+    def test_bedrock_discovery_keeps_models_even_without_previous_filters(self, mock_boto_client) -> None:
+        mock_boto_client.return_value.list_foundation_models.return_value = {
+            "modelSummaries": [
+                {
+                    "modelId": "anthropic.claude-4-5-sonnet-20251001-v1:0",
+                    "modelName": "Claude 4.5 Sonnet",
+                    "providerName": "Anthropic",
+                    "inferenceTypesSupported": ["INFERENCE_PROFILE"],
+                    "responseStreamingSupported": False,
+                },
+                {
+                    "modelId": "amazon.nova-premier-v1:0",
+                    "modelName": "Nova Premier",
+                    "providerName": "Amazon",
+                    "inferenceTypesSupported": ["ON_DEMAND"],
+                    "responseStreamingSupported": True,
+                },
+                {
+                    "modelId": "amazon.nova-premier-v2:0",
+                    "modelName": "Nova Premier",
+                    "providerName": "Amazon",
+                    "inferenceTypesSupported": ["ON_DEMAND"],
+                    "responseStreamingSupported": True,
+                },
+            ]
+        }
+        settings = Settings(
+            BEDROCK_REGION="us-west-2",
+            BEDROCK_MODEL_ID="anthropic.claude-sonnet-4-20250514-v1:0",
+            BEDROCK_MODEL_NAME="Claude Sonnet 4",
+            BEDROCK_DISCOVER_MODELS=True,
+            AWS_ACCESS_KEY_ID="demo-key",
+            AWS_SECRET_ACCESS_KEY="demo-secret",
+        )
+
+        service = LLMProviderService(settings=settings)
+        bedrock_options = [o for o in service.list_options().options if o.provider == "bedrock"]
+
+        self.assertEqual(
+            [o.model_id for o in bedrock_options],
+            [
+                "anthropic.claude-4-5-sonnet-20251001-v1:0",
+                "amazon.nova-premier-v1:0",
+                "amazon.nova-premier-v2:0",
+            ],
+        )
+        self.assertEqual(bedrock_options[0].model_name, "Claude 4.5 Sonnet")
+        self.assertEqual(
+            bedrock_options[1].model_name,
+            "Nova Premier (amazon.nova-premier-v1:0)",
+        )
+        self.assertEqual(
+            bedrock_options[2].model_name,
+            "Nova Premier (amazon.nova-premier-v2:0)",
+        )

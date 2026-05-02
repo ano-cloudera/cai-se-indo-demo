@@ -255,18 +255,19 @@ const navItems = [
     icon: (
       <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden>
         <path
-          d="M5.25 4.5h6.5a1.75 1.75 0 0 1 1.75 1.75v7.25H7A2.75 2.75 0 0 0 4.25 16V5.5A1 1 0 0 1 5.25 4.5Z"
+          d="M4.75 4.5h8.5a1.25 1.25 0 0 1 1.25 1.25v7.5a.75.75 0 0 1-.75.75H7.5a2.75 2.75 0 0 0-2.75 2.75V5.5A1 1 0 0 1 4.75 4.5Z"
           stroke="currentColor"
           strokeWidth="1.4"
           strokeLinecap="round"
           strokeLinejoin="round"
         />
         <path
-          d="M7 6.75h4.25M7 9h4.25M7 11.25h2.75"
+          d="M7 6.75h4.25M7 9h4.25M7 11.25h3.25"
           stroke="currentColor"
           strokeWidth="1.4"
           strokeLinecap="round"
         />
+        <path d="M4.75 14.5c.55-.66 1.37-1 2.75-1h6.25" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
       </svg>
     ),
   },
@@ -275,17 +276,9 @@ const navItems = [
     label: "AI Assistant",
     icon: (
       <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden>
-        <rect
-          x="4.25"
-          y="5"
-          width="9.5"
-          height="7.5"
-          rx="2.2"
-          stroke="currentColor"
-          strokeWidth="1.4"
-        />
+        <rect x="4.5" y="5" width="9" height="7.25" rx="2.1" stroke="currentColor" strokeWidth="1.4" />
         <path
-          d="M7 14.25h4M9 5V3.5M6.75 8.25h.01M11.25 8.25h.01M7.25 10.75c.35.45.95.75 1.75.75s1.4-.3 1.75-.75"
+          d="M7 14.25h4M9 5V3.5M6.9 8.2h.01M11.1 8.2h.01M7.4 10.65c.35.45.93.75 1.6.75.67 0 1.25-.3 1.6-.75"
           stroke="currentColor"
           strokeWidth="1.4"
           strokeLinecap="round"
@@ -300,13 +293,13 @@ const navItems = [
     icon: (
       <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden>
         <path
-          d="M3.75 13.75h10.5M5.25 11.75V8.75M9 11.75V5.75M12.75 11.75V7.25"
+          d="M3.75 13.75h10.5M5.5 11.75v-2.5M9 11.75V6.5M12.5 11.75V8"
           stroke="currentColor"
           strokeWidth="1.5"
           strokeLinecap="round"
         />
         <path
-          d="m4.5 5.25 2.5-1.5 2 1 3-2"
+          d="m4.75 6 2.1-1.35 2.15 1.05 3.25-2.2"
           stroke="currentColor"
           strokeWidth="1.4"
           strokeLinecap="round"
@@ -321,12 +314,12 @@ const navItems = [
     icon: (
       <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden>
         <path
-          d="M9 3.5v2M9 12.5v2M14.5 9h-2M5.5 9h-2M12.9 5.1l-1.4 1.4M6.5 11.5l-1.4 1.4M12.9 12.9l-1.4-1.4M6.5 6.5 5.1 5.1"
+          d="M9 3.5v1.5M9 13v1.5M14.5 9h-1.5M5 9H3.5M12.55 5.45l-1.05 1.05M6.5 11.5l-1.05 1.05M12.55 12.55l-1.05-1.05M6.5 6.5 5.45 5.45"
           stroke="currentColor"
           strokeWidth="1.3"
           strokeLinecap="round"
         />
-        <circle cx="9" cy="9" r="2.5" stroke="currentColor" strokeWidth="1.4" />
+        <circle cx="9" cy="9" r="2.35" stroke="currentColor" strokeWidth="1.4" />
       </svg>
     ),
   },
