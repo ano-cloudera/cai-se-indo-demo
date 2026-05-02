@@ -177,6 +177,8 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
 - Bedrock model selection can now be sourced in two ways:
   - static env-based catalog through `BEDROCK_MODEL_ID`, `BEDROCK_MODEL_NAME`, or `BEDROCK_MODEL_CATALOG_JSON`
   - optional live discovery from AWS Bedrock when `BEDROCK_DISCOVER_MODELS=true` and valid AWS credentials are present in the backend runtime
+- Some newer Anthropic Bedrock models require invocation through an inference profile instead of direct on-demand model ID usage
+- The backend now retries automatically with a region-appropriate inference profile prefix such as `us.` when Bedrock returns the specific on-demand throughput validation error for a selected model
 - Current provider selection applies to:
   - SQL generation
   - SQL answer narration
@@ -279,10 +281,13 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
   - optional switch between `Chart` and `Table` when both views are available
 - Bar charts now render as a standard chart instead of a manual progress-bar list
 - Composition visuals now render as a donut chart with a compact legend
+- Usage Dashboard recent activity now uses pagination so the analytics workspace stays compact as event volume grows
+- Usage Dashboard summary cards now use dedicated icons and a lighter operational notes treatment
+- Model Settings now uses polished provider cards, a custom-styled model selector, and a lighter guidance panel instead of the earlier dark notes box
 - Loading state: animated bouncing dots
 - "New Conversation" button in sidebar footer resets session
 - Sidebar now shows recent saved sessions from the backend store and can reopen an earlier conversation
-- Topbar now includes a session-scoped `AI Model` dropdown for switching between Azure OpenAI and Bedrock when both providers are configured
+- The `AI Model` control no longer lives in the topbar and is now managed through the dedicated `Model Settings` workspace in the sidebar
 - RAG config lives in a separate modal, not in the chat input area
 - Layout has been adjusted to be more responsive on narrower screens
 - RAG modal locks page scroll on open, supports `Escape`/backdrop close, uses sticky header/footer, and avoids repeated option reloads to reduce visible modal flicker/glitch
@@ -379,10 +384,15 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
 - [x] Backend CAI configuration now includes explicit SQLite session env values (`SESSION_BACKEND`, `SESSION_SQLITE_PATH`, `SESSION_TTL_MINUTES`, `MEMORY_MAX_HISTORY`)
 - [x] First-open demo briefing and reusable self-service guide are now part of the frontend experience
 - [x] Non-RAG model selection can now switch between Azure OpenAI and Bedrock per session
+- [x] Bedrock live model discovery can populate the model list from AWS when `BEDROCK_DISCOVER_MODELS=true`
+- [x] Bedrock runtime now retries newer Anthropic models through inference-profile prefixes when direct on-demand invocation is rejected
 - [x] Sensitive Indonesian PII prompts such as `nomor hp`, `email nasabah`, `alamat nasabah`, and `nomor rekening` are blocked by local guardrails
 - [x] `customer_id` is now allowed for ranked analytics exploration instead of being hard-blocked like direct contact/account PII
 - [x] Chart rendering now uses Recharts for a more standard enterprise dashboard look and feel
 - [x] Line chart values now use compact formatting to reduce clipping on large balances
+- [x] Usage Dashboard recent activity is paginated and more compact
+- [x] Usage Dashboard score cards now use more purposeful iconography
+- [x] Sidebar and Model Settings iconography has been cleaned up to feel less generic
 - [x] Topbar guardrails mode badge was removed from the visible UI; `/health` remains the source for runtime status
 - [x] RAG source cards now prefer an `Open Source PDF` action instead of implying guaranteed inline preview
 

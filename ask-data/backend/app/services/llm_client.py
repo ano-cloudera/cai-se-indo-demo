@@ -103,14 +103,26 @@ class BedrockClient:
     def chat(self, messages: list[dict[str, str]], temperature: float = 0.0) -> str:
         system_messages, conversation_messages = self._to_bedrock_messages(messages)
         try:
-            response = self._client.converse(
-                modelId=self.model_id,
-                messages=conversation_messages,
-                system=system_messages,
-                inferenceConfig={"temperature": temperature},
+            response = self._converse(
+                model_id=self.model_id,
+                conversation_messages=conversation_messages,
+                system_messages=system_messages,
+                temperature=temperature,
             )
         except Exception as exc:
-            raise LLMClientError(f"Bedrock request failed: {exc}") from exc
+            fallback_model_id = self._fallback_inference_profile_id(exc)
+            if fallback_model_id:
+                try:
+                    response = self._converse(
+                        model_id=fallback_model_id,
+                        conversation_messages=conversation_messages,
+                        system_messages=system_messages,
+                        temperature=temperature,
+                    )
+                except Exception as retry_exc:
+                    raise LLMClientError(f"Bedrock request failed: {retry_exc}") from retry_exc
+            else:
+                raise LLMClientError(f"Bedrock request failed: {exc}") from exc
 
         output = response.get("output", {})
         message = output.get("message", {})
@@ -118,6 +130,48 @@ class BedrockClient:
         if not content:
             raise LLMClientError("Bedrock returned an empty response.")
         return content.strip()
+
+    def _converse(
+        self,
+        model_id: str,
+        conversation_messages: list[dict[str, Any]],
+        system_messages: list[dict[str, str]],
+        temperature: float,
+    ) -> dict[str, Any]:
+        return self._client.converse(
+            modelId=model_id,
+            messages=conversation_messages,
+            system=system_messages,
+            inferenceConfig={"temperature": temperature},
+        )
+
+    def _fallback_inference_profile_id(self, exc: Exception) -> str | None:
+        message = str(exc).lower()
+        if not (
+            "on-demand throughput" in message
+            and "supported" in message
+            and "invoc" in message
+        ):
+            return None
+        if self.model_id.startswith(("us.", "eu.", "apac.", "global.")):
+            return None
+
+        prefixes = self._inference_profile_prefixes_for_region()
+        for prefix in prefixes:
+            candidate = f"{prefix}.{self.model_id}"
+            if candidate != self.model_id:
+                return candidate
+        return None
+
+    def _inference_profile_prefixes_for_region(self) -> list[str]:
+        region = (self.settings.bedrock_region or "").strip().lower()
+        if region.startswith("us-"):
+            return ["us", "global"]
+        if region.startswith("eu-"):
+            return ["eu", "global"]
+        if region.startswith("ap-") or region.startswith("me-") or region.startswith("sa-"):
+            return ["apac", "global"]
+        return ["global"]
 
     @staticmethod
     def _to_bedrock_messages(
