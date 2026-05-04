@@ -1,0 +1,18 @@
+path: /Users/trianonurhikmat/Documents/Works/cloudera/cai-se-indo-demo/healthcare/Xray Assistant/backend/data/prepared/chestxdet_yolo
+train: images/train
+val: images/val
+nc: 13
+names:
+  - Atelectasis
+  - Calcification
+  - Cardiomegaly
+  - Consolidation
+  - Diffuse Nodule
+  - Effusion
+  - Emphysema
+  - Fibrosis
+  - Fracture
+  - Mass
+  - Nodule
+  - Pleural Thickening
+  - Pneumothorax
