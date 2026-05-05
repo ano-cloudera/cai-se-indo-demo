@@ -428,6 +428,7 @@ This allows local root credentials to be reused while still supporting backend-s
 - dataset conversion scaffolding exists
 - Cloudera AI Python entrypoints exist for backend and frontend applications
 - backend root endpoint and deploy-oriented CORS handling are now part of the application setup
+- Cloudera AI deployment should disable app-level CORS middleware to avoid duplicate platform CORS headers on POST responses
 
 ---
 

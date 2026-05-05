@@ -54,6 +54,7 @@ XRAY_RESPONSE_LANGUAGE=en
 GENAI_PROVIDER=bedrock
 BEDROCK_MODEL_ID=anthropic.claude-sonnet-4-5-20250929-v1:0
 BEDROCK_TIMEOUT_SECONDS=20
+ENABLE_APP_CORS=false
 CORS_ALLOW_ORIGINS=http://127.0.0.1:3000,http://localhost:3000,https://xray-frontend.ml-dbfc64d1-783.go01-dem.ylcu-atmi.cloudera.site
 CORS_ALLOW_ORIGIN_REGEX=^https://.*\\.cloudera\\.site$
 AWS_DEFAULT_REGION=us-east-1
@@ -97,3 +98,4 @@ NEXT_PUBLIC_XRAY_USE_MOCK=false
   `finding`, `confidence`, `severity`, `status`, `summary`, `explanation`, `action_items`, `annotated_image_path`, and `model_info`.
 - Annotated images are served through backend static `/temp/...` URLs after inference.
 - For two separate public Applications, the frontend must use the public backend URL, not `127.0.0.1`.
+- In Cloudera AI, set `ENABLE_APP_CORS=false` so the application does not duplicate platform-managed CORS headers on POST responses.
