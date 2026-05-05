@@ -61,7 +61,7 @@ def resolve_backend_dir() -> Path:
     return cwd
 
 
-def validate_runtime_dependencies() -> None:
+def get_dependency_mismatches() -> list[str]:
     actual_versions: dict[str, str | None] = {}
     mismatches: list[str] = []
 
@@ -79,13 +79,45 @@ def validate_runtime_dependencies() -> None:
             logging.warning("%s is not installed", package_name)
             mismatches.append(f"{package_name} is not installed (expected {expected_version})")
 
-    if mismatches:
+    return mismatches
+
+
+def run_command(cmd: list[str], cwd: Path, env: dict[str, str]) -> None:
+    logging.info("Running command: %s", " ".join(cmd))
+    try:
+        subprocess.run(cmd, cwd=str(cwd), env=env, check=True)
+    except subprocess.CalledProcessError as exc:
+        logging.error("Command failed with exit code %s: %s", exc.returncode, " ".join(cmd))
+        raise
+
+
+def ensure_runtime_dependencies(backend_dir: Path, env: dict[str, str]) -> None:
+    mismatches = get_dependency_mismatches()
+    if not mismatches:
+        return
+
+    requirements_file = backend_dir / "requirements.txt"
+    if not requirements_file.exists():
         mismatch_summary = ", ".join(mismatches)
         raise SystemExit(
             "Incompatible Python package versions detected for Ask Data backend: "
+            f"{mismatch_summary}. requirements.txt was not found next to the backend entrypoint."
+        )
+
+    logging.warning("Backend dependency mismatch detected: %s", ", ".join(mismatches))
+    logging.info("Attempting automatic install from %s", requirements_file)
+    run_command(
+        [sys.executable, "-m", "pip", "install", "--upgrade", "-r", "requirements.txt"],
+        cwd=backend_dir,
+        env=env,
+    )
+
+    remaining = get_dependency_mismatches()
+    if remaining:
+        mismatch_summary = ", ".join(remaining)
+        raise SystemExit(
+            "Incompatible Python package versions detected for Ask Data backend after automatic install: "
             f"{mismatch_summary}. "
-            "This usually means the Cloudera AI Application install command is not using "
-            "ask-data/backend/requirements.txt. "
             "Set the Application working directory to ask-data/backend and the install command "
             "to 'pip install --upgrade -r requirements.txt', then redeploy."
         )
@@ -99,7 +131,6 @@ def main() -> None:
 
     logging.info("Starting Ask Data backend")
     logging.info("Working directory: %s", Path.cwd())
-    validate_runtime_dependencies()
 
     backend_dir = resolve_backend_dir()
     port = resolve_port()
@@ -110,6 +141,8 @@ def main() -> None:
     env = os.environ.copy()
     pythonpath = env.get("PYTHONPATH", "")
     env["PYTHONPATH"] = f"{backend_dir}:{pythonpath}" if pythonpath else str(backend_dir)
+
+    ensure_runtime_dependencies(backend_dir, env)
 
     cmd = [
         sys.executable,
