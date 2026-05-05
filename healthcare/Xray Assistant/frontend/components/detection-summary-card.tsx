@@ -46,17 +46,6 @@ export function DetectionSummaryCard({ result, loading = false }: DetectionSumma
               {Math.round(result.confidence * 100)}% confidence
             </span>
           </div>
-
-          <div className="mt-4 space-y-2 text-sm">
-            <div className="flex items-baseline justify-between gap-3">
-              <span className="text-xs font-medium text-[var(--color-ink-subtle)]">Framework</span>
-              <span className="break-all text-right font-semibold text-[var(--color-ink-strong)]">{result.model_info.framework}</span>
-            </div>
-            <div className="flex items-baseline justify-between gap-3">
-              <span className="text-xs font-medium text-[var(--color-ink-subtle)]">Runtime</span>
-              <span className="break-all text-right font-semibold text-[var(--color-ink-strong)]">{result.model_info.version}</span>
-            </div>
-          </div>
         </>
       ) : (
         <div className="mt-5 rounded-[18px] border border-[var(--color-border-soft)] bg-[var(--color-surface-muted)] p-4">
