@@ -21,6 +21,8 @@ class Settings(BaseSettings):
     aws_secret_access_key: str | None = None
     bedrock_model_id: str | None = None
     bedrock_timeout_seconds: int = 20
+    cors_allow_origins: str = "http://127.0.0.1:3000,http://localhost:3000"
+    cors_allow_origin_regex: str = r"^https://.*\.cloudera\.site$"
     backend_root: Path = BACKEND_ROOT
 
     model_config = SettingsConfigDict(

@@ -54,6 +54,8 @@ XRAY_RESPONSE_LANGUAGE=en
 GENAI_PROVIDER=bedrock
 BEDROCK_MODEL_ID=anthropic.claude-sonnet-4-5-20250929-v1:0
 BEDROCK_TIMEOUT_SECONDS=20
+CORS_ALLOW_ORIGINS=http://127.0.0.1:3000,http://localhost:3000,https://xray-frontend.ml-dbfc64d1-783.go01-dem.ylcu-atmi.cloudera.site
+CORS_ALLOW_ORIGIN_REGEX=^https://.*\\.cloudera\\.site$
 AWS_DEFAULT_REGION=us-east-1
 AWS_ACCESS_KEY_ID=your_access_key_id
 AWS_SECRET_ACCESS_KEY=your_secret_access_key
@@ -82,8 +84,8 @@ python "healthcare/Xray Assistant/scripts/frontend_entry.py"
 ### Required environment variables
 
 ```env
-BACKEND_API_BASE_URL=http://127.0.0.1:8080
-NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8080
+BACKEND_API_BASE_URL=https://xray-backend.ml-dbfc64d1-783.go01-dem.ylcu-atmi.cloudera.site
+NEXT_PUBLIC_API_BASE_URL=https://xray-backend.ml-dbfc64d1-783.go01-dem.ylcu-atmi.cloudera.site
 NEXT_PUBLIC_XRAY_USE_MOCK=false
 ```
 
@@ -94,3 +96,4 @@ NEXT_PUBLIC_XRAY_USE_MOCK=false
 - The frontend expects the backend response contract to include:
   `finding`, `confidence`, `severity`, `status`, `summary`, `explanation`, `action_items`, `annotated_image_path`, and `model_info`.
 - Annotated images are served through backend static `/temp/...` URLs after inference.
+- For two separate public Applications, the frontend must use the public backend URL, not `127.0.0.1`.

@@ -427,6 +427,7 @@ This allows local root credentials to be reused while still supporting backend-s
 - Bedrock enrichment is wired and locally validated with safe fallback behavior
 - dataset conversion scaffolding exists
 - Cloudera AI Python entrypoints exist for backend and frontend applications
+- backend root endpoint and deploy-oriented CORS handling are now part of the application setup
 
 ---
 
