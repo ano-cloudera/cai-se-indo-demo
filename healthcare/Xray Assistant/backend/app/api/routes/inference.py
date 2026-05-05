@@ -2,7 +2,7 @@ from pathlib import Path
 from shutil import copyfileobj
 from uuid import uuid4
 
-from fastapi import APIRouter, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
 
 from app.core.config import get_settings
 from app.schemas.inference import DetectionItem, InferenceResponse, ModelInfo
@@ -24,8 +24,24 @@ UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 ANNOTATED_DIR.mkdir(parents=True, exist_ok=True)
 
 
+def to_public_temp_url(file_path: str | None) -> str | None:
+    if not file_path:
+        return None
+
+    path = Path(file_path).resolve()
+    try:
+        relative = path.relative_to(BACKEND_ROOT / "temp")
+    except ValueError:
+        return file_path
+
+    return f"/temp/{relative.as_posix()}"
+
+
 @router.post("/v1/infer", response_model=InferenceResponse)
-async def run_inference(file: UploadFile = File(...)) -> InferenceResponse:
+async def run_inference(
+    file: UploadFile = File(...),
+    response_language: str = Form("en"),
+) -> InferenceResponse:
     if not file.filename:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -78,7 +94,10 @@ async def run_inference(file: UploadFile = File(...)) -> InferenceResponse:
         "severity": severity,
         "detections": prediction["detections"],
     }
-    enrichment = genai_service.generate_clinical_response(detection_payload)
+    enrichment = genai_service.generate_clinical_response(
+        detection_payload,
+        response_language=response_language,
+    )
 
     return InferenceResponse(
         case_id=case_id,
@@ -90,6 +109,6 @@ async def run_inference(file: UploadFile = File(...)) -> InferenceResponse:
         summary=enrichment["summary"],
         explanation=enrichment["explanation"],
         action_items=list(enrichment.get("action_items", [])),
-        annotated_image_path=annotated_image_path,
+        annotated_image_path=to_public_temp_url(annotated_image_path),
         model_info=ModelInfo(**prediction["model_info"]),
     )

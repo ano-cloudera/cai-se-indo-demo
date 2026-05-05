@@ -37,6 +37,7 @@ healthcare/Xray Assistant/backend/data/prepared/
 healthcare/Xray Assistant/backend/data/sample_inputs/
 healthcare/Xray Assistant/backend/data/sample_outputs/
 healthcare/Xray Assistant/backend/ml/weights/*.pt
+healthcare/Xray Assistant/backend/ml/models/*.bak
 healthcare/Xray Assistant/frontend/tsconfig.tsbuildinfo
 healthcare/Xray Assistant/references/ChestX-Det-Dataset/*.zip
 healthcare/Xray Assistant/references/ChestX-Det-Dataset/train_data/
@@ -44,6 +45,8 @@ healthcare/Xray Assistant/references/ChestX-Det-Dataset/test_data/
 healthcare/Xray Assistant/references/ChestX-Det-Dataset/
 healthcare/Xray Assistant/references/ultralytics/
 healthcare/Xray Assistant/references/ultralytics.partial-*/
+healthcare/Xray Assistant/sample/
+healthcare/Xray Assistant/scripts/__pycache__/
 
 fraud-ai-assistant/frontend/node_modules/
 fraud-ai-assistant/frontend/.next/

@@ -11,8 +11,8 @@ import { NoticePanel } from "../components/notice-panel";
 import { XrayPreview } from "../components/xray-preview";
 import { XrayUpload } from "../components/xray-upload";
 import { PanelCard, PanelHeader, StatCard } from "../components/ui/card";
-import { AppShell, AppSidebar, AppTopHeader, PageCanvas } from "../components/ui/shell";
-import { xrayApi, type InferenceResponse, type XrayUiState } from "../lib/api";
+import { AppShell, AppSidebar, AppTopHeader, PageCanvas, SidebarNavButton } from "../components/ui/shell";
+import { xrayApi, type InferenceResponse, type ResponseLanguage, type XrayUiState } from "../lib/api";
 
 const navItems = [
   {
@@ -65,6 +65,11 @@ function formatConfidence(confidence: number | null) {
   return `${Math.round(confidence * 100)}%`;
 }
 
+function buildReviewNote(label: string, confidence: number) {
+  const confidencePercent = Math.round(confidence * 100);
+  return `${label} flagged for clinical review support at ${confidencePercent}% confidence.`;
+}
+
 function getUiState({
   selectedFile,
   loading,
@@ -89,6 +94,8 @@ export default function Page() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<InferenceResponse | null>(null);
+  const [responseLanguage, setResponseLanguage] = useState<ResponseLanguage>("en");
+  const [helpOpen, setHelpOpen] = useState(false);
   const resultAnchorRef = useRef<HTMLDivElement | null>(null);
   const uiState = getUiState({ selectedFile, loading, error, result });
   const modeLabel = xrayApi.useMockMode() ? "Mock" : "Backend";
@@ -128,7 +135,7 @@ export default function Page() {
     setResult(null);
 
     try {
-      const response = await xrayApi.infer(selectedFile);
+      const response = await xrayApi.infer(selectedFile, responseLanguage);
       setResult(response);
     } catch (submissionError) {
       setError(
@@ -153,18 +160,31 @@ export default function Page() {
         <AppSidebar
           brand={<BrandLogo />}
           items={navItems}
+          footer={
+            <SidebarNavButton
+              active={helpOpen}
+              label="Help"
+              icon={
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden>
+                  <circle cx="9" cy="9" r="6.25" stroke="currentColor" strokeWidth="1.5" />
+                  <path d="M7.7 7.15a1.55 1.55 0 1 1 2.57 1.17c-.5.43-.92.74-.92 1.43" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                  <path d="M9 12.2h.01" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+                </svg>
+              }
+              onClick={() => setHelpOpen((value) => !value)}
+            />
+          }
         />
       }
       header={
         <AppTopHeader
           left={
-            <div className="page-title-stack">
-              <p className="meta-kicker">Healthcare · Chest X-ray</p>
+            <div className="page-title-stack page-title-stack--simple">
               <h2 className="page-title text-[var(--color-ink-strong)]">
                 Xray Assist
               </h2>
               <p className="page-subtitle">
-                A focused chest X-ray demo for structured review and action-oriented output.
+                Structured chest X-ray review and action-oriented output.
               </p>
             </div>
           }
@@ -205,12 +225,6 @@ export default function Page() {
               detail="Current system state for the submitted image."
               toneClassName={getStatusTone(result?.status, loading, Boolean(error))}
             />
-            <StatCard
-              label="Mode"
-              value={modeLabel}
-              detail="Current frontend execution mode."
-              toneClassName="scorecard-soft-violet"
-            />
           </div>
         </div>
 
@@ -219,9 +233,20 @@ export default function Page() {
             <XrayUpload
               selectedFileName={selectedFile?.name ?? ""}
               loading={loading}
+              responseLanguage={responseLanguage}
+              onLanguageChange={setResponseLanguage}
               onFileSelect={handleFileSelect}
               onSubmit={handleSubmit}
             />
+
+            {helpOpen ? (
+              <NoticePanel
+                title="How To Use This Demo"
+                message="Select a chest X-ray image, confirm the preview, choose the response language, then run the analysis."
+                tone="empty"
+                suggestion="Review the finding, clinical interpretation, and recommended actions after the result image is generated."
+              />
+            ) : null}
 
             {error ? (
               <NoticePanel
@@ -234,22 +259,27 @@ export default function Page() {
 
             <div className="grid gap-6 xl:grid-cols-2">
               <XrayPreview previewUrl={previewUrl} />
-              <AnnotatedImageCard imageUrl={result?.annotated_image_path ?? null} loading={loading} />
+              <AnnotatedImageCard
+                imageUrl={result?.annotated_image_path ?? null}
+                fallbackUrl={previewUrl}
+                hasDetections={(result?.detections.length ?? 0) > 0}
+                loading={loading}
+              />
             </div>
 
             <PanelCard className="p-6">
               <PanelHeader
-                title="Detection Results"
-                subtitle="Structured detections presented in a cleaner review table."
+                title="Findings Overview"
+                subtitle="A concise summary of the findings surfaced for review."
               />
               {result ? (
                 <div className="mt-5 overflow-hidden rounded-[20px] border border-[var(--color-border-soft)]">
                   <table className="min-w-full divide-y divide-[var(--color-border-soft)] text-sm">
                     <thead className="bg-[var(--color-surface-muted)]">
                       <tr>
-                        <th className="px-4 py-3 text-left font-semibold text-[var(--color-ink-strong)]">Label</th>
+                        <th className="px-4 py-3 text-left font-semibold text-[var(--color-ink-strong)]">Finding</th>
                         <th className="px-4 py-3 text-left font-semibold text-[var(--color-ink-strong)]">Confidence</th>
-                        <th className="px-4 py-3 text-left font-semibold text-[var(--color-ink-strong)]">Bounding Box</th>
+                        <th className="px-4 py-3 text-left font-semibold text-[var(--color-ink-strong)]">Review Note</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[var(--color-border-soft)] bg-white">
@@ -258,13 +288,13 @@ export default function Page() {
                           <tr key={`${item.label}-${index}`}>
                             <td className="px-4 py-3 text-[var(--color-ink-strong)]">{item.label}</td>
                             <td className="px-4 py-3 text-[var(--color-ink-muted)]">{Math.round(item.confidence * 100)}%</td>
-                            <td className="px-4 py-3 text-[var(--color-ink-muted)]">{item.bbox.join(", ")}</td>
+                            <td className="px-4 py-3 text-[var(--color-ink-muted)]">{buildReviewNote(item.label, item.confidence)}</td>
                           </tr>
                         ))
                       ) : (
                         <tr>
                           <td colSpan={3} className="px-4 py-6 text-center text-[var(--color-ink-subtle)]">
-                            No detections returned for this image.
+                            No findings were surfaced for review from this image.
                           </td>
                         </tr>
                       )}
@@ -284,19 +314,6 @@ export default function Page() {
           </div>
 
           <div className="sticky-rail mt-6 xl:mt-0">
-            <PanelCard className="p-6" tone="dark">
-              <PanelHeader
-                title="Review Workflow"
-                subtitle="Follow these steps to run the demo."
-                inverted
-              />
-              <ol className="mt-5 list-decimal space-y-3 pl-5 text-sm leading-6 text-white/70">
-                <li>Select a chest X-ray image.</li>
-                <li>Preview the image before submitting.</li>
-                <li>Run inference and review the finding, explanation, and actions.</li>
-                <li>Compare original and annotated output side by side.</li>
-              </ol>
-            </PanelCard>
             <DetectionSummaryCard result={result} loading={loading} />
             <ExplanationCard explanation={result?.explanation ?? null} loading={loading} />
             <ActionItemsCard items={result?.action_items ?? []} loading={loading} />

@@ -1,0 +1,9 @@
+path: /Users/trianonurhikmat/Documents/Works/cloudera/cai-se-indo-demo/healthcare/Xray Assistant/data/prepared/chestxdet_yolo
+train: images/train
+val: images/val
+nc: 4
+names:
+  - Pneumothorax
+  - Effusion
+  - Cardiomegaly
+  - Consolidation

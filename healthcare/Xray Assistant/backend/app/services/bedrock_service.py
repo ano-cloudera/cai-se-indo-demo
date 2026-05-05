@@ -35,13 +35,39 @@ class BedrockService:
                 accept="application/json",
             )
         except Exception as exc:
-            raise BedrockServiceError(f"Bedrock invocation failed: {exc}") from exc
+            fallback_model_id = self._maybe_inference_profile_model_id(str(exc))
+            if fallback_model_id:
+                try:
+                    response = client.invoke_model(
+                        modelId=fallback_model_id,
+                        body=json.dumps(request_body),
+                        contentType="application/json",
+                        accept="application/json",
+                    )
+                except Exception as retry_exc:
+                    raise BedrockServiceError(f"Bedrock invocation failed: {retry_exc}") from retry_exc
+            else:
+                raise BedrockServiceError(f"Bedrock invocation failed: {exc}") from exc
 
         try:
             raw_body = response["body"].read()
             return json.loads(raw_body)
         except Exception as exc:
             raise BedrockServiceError(f"Bedrock returned an unreadable response body: {exc}") from exc
+
+    def _maybe_inference_profile_model_id(self, error_message: str) -> str | None:
+        if "on-demand throughput isn’t supported" not in error_message and "on-demand throughput isn't supported" not in error_message:
+            return None
+        if self.model_id.startswith(("us.", "eu.", "apac.", "jp.", "au.", "sa.")):
+            return None
+        region = (self.settings.aws_default_region or "").strip().lower()
+        if region.startswith("us-"):
+            return f"us.{self.model_id}"
+        if region.startswith("eu-"):
+            return f"eu.{self.model_id}"
+        if region.startswith("ap-"):
+            return f"apac.{self.model_id}"
+        return None
 
     def _get_client(self) -> Any:
         if self._client is not None:

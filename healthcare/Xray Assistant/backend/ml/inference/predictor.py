@@ -18,8 +18,16 @@ class PredictorRuntimeError(Exception):
 class XrayPredictor:
     def __init__(self, model_path: str | None = None, confidence_threshold: float | None = None) -> None:
         settings = get_settings()
+        self.backend_root = settings.backend_root
         self.project_root = settings.backend_root.parent
-        self.model_path = Path(model_path or settings.xray_model_path).expanduser() if (model_path or settings.xray_model_path) else None
+        configured_model_path = model_path or settings.xray_model_path
+        if configured_model_path:
+            candidate_path = Path(configured_model_path).expanduser()
+            if not candidate_path.is_absolute():
+                candidate_path = self.backend_root / candidate_path
+            self.model_path = candidate_path.resolve()
+        else:
+            self.model_path = None
         self.confidence_threshold = (
             confidence_threshold if confidence_threshold is not None else settings.xray_confidence_threshold
         )

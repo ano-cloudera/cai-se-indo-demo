@@ -26,6 +26,7 @@ export interface InferenceResponse {
 }
 
 export type XrayUiState = "idle" | "selected" | "analyzing" | "success" | "error";
+export type ResponseLanguage = "en" | "id";
 
 const MOCK_RESPONSE: InferenceResponse = {
   case_id: "XRAY-0001",
@@ -84,9 +85,26 @@ function cloneMockResponse(): InferenceResponse {
   };
 }
 
-async function inferWithBackend(file: File): Promise<InferenceResponse> {
+function localizeMockResponse(responseLanguage: ResponseLanguage, payload: InferenceResponse): InferenceResponse {
+  if (responseLanguage === "id") {
+    return {
+      ...payload,
+      summary: "Terdapat temuan potensial. Review klinis dianjurkan.",
+      explanation: "Model mengidentifikasi area abnormal yang perlu ditinjau dalam konteks klinis yang sesuai.",
+      action_items: [
+        "Tinjau citra bersama radiolog",
+        "Korelasikan dengan gejala dan saturasi oksigen",
+        "Eskalasi bila terdapat distress pernapasan",
+      ],
+    };
+  }
+  return payload;
+}
+
+async function inferWithBackend(file: File, responseLanguage: ResponseLanguage): Promise<InferenceResponse> {
   const formData = new FormData();
   formData.append("file", file);
+  formData.append("response_language", responseLanguage);
 
   const response = await fetch(`${getApiBaseUrl()}/api/v1/infer`, {
     method: "POST",
@@ -111,25 +129,26 @@ async function inferWithBackend(file: File): Promise<InferenceResponse> {
   };
 }
 
-async function inferWithMock(file: File): Promise<InferenceResponse> {
+async function inferWithMock(file: File, responseLanguage: ResponseLanguage): Promise<InferenceResponse> {
   await new Promise((resolve) => window.setTimeout(resolve, 900));
   const base = cloneMockResponse();
+  const localized = localizeMockResponse(responseLanguage, base);
   const fileStem = file.name.replace(/\.[^.]+$/, "").toUpperCase().slice(0, 12) || "XRAY";
   return {
-    ...base,
+    ...localized,
     case_id: `XRAY-${fileStem}`,
     annotated_image_path: URL.createObjectURL(file),
     model_info: {
-      ...base.model_info,
+      ...localized.model_info,
       source: "mock-mode",
     },
   };
 }
 
 export const xrayApi = {
-  async infer(file: File): Promise<InferenceResponse> {
-    if (useMockMode()) return inferWithMock(file);
-    return inferWithBackend(file);
+  async infer(file: File, responseLanguage: ResponseLanguage = "en"): Promise<InferenceResponse> {
+    if (useMockMode()) return inferWithMock(file, responseLanguage);
+    return inferWithBackend(file, responseLanguage);
   },
   getApiBaseUrl,
   resolveAnnotatedImageUrl,

@@ -1,6 +1,10 @@
+import type { ResponseLanguage } from "../lib/api";
+
 interface XrayUploadProps {
   selectedFileName: string;
   loading: boolean;
+  responseLanguage: ResponseLanguage;
+  onLanguageChange: (language: ResponseLanguage) => void;
   onFileSelect: (file: File | null) => void;
   onSubmit: () => void;
 }
@@ -8,6 +12,8 @@ interface XrayUploadProps {
 export function XrayUpload({
   selectedFileName,
   loading,
+  responseLanguage,
+  onLanguageChange,
   onFileSelect,
   onSubmit,
 }: XrayUploadProps) {
@@ -25,6 +31,17 @@ export function XrayUpload({
         </div>
 
         <div className="flex w-full flex-col gap-3 lg:w-auto lg:min-w-[19rem]">
+          <label className="flex items-center justify-between rounded-[18px] border border-[var(--color-border-soft)] bg-white px-4 py-3 text-sm font-medium text-[var(--color-ink-muted)] shadow-sm">
+            <span>Response Language</span>
+            <select
+              value={responseLanguage}
+              onChange={(event) => onLanguageChange(event.target.value as ResponseLanguage)}
+              className="border-0 bg-transparent text-sm font-semibold text-[var(--color-ink-strong)] outline-none"
+            >
+              <option value="en">English</option>
+              <option value="id">Bahasa Indonesia</option>
+            </select>
+          </label>
           <label className="flex cursor-pointer items-center justify-center rounded-[18px] border border-[var(--color-border-soft)] bg-white px-4 py-3 text-sm font-semibold text-[var(--color-ink-strong)] shadow-sm transition hover:border-[var(--color-action-primary)]">
             <input
               type="file"

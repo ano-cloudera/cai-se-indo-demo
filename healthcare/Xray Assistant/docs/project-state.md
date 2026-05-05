@@ -155,8 +155,9 @@ Current behavior:
 - returns normalized detection payload
 
 Important note:
-- The currently validated local weight has been `yolo11n.pt`, which is only useful for runtime validation
-- It is not medically fine-tuned for chest X-ray detection
+- The backend is now validated against a trained ChestX-Det-derived weight:
+  `backend/ml/models/chestxdet_subset_yolo11n_best.pt`
+- The original generic `yolo11n.pt` was only used earlier for runtime validation and is no longer the intended inference model
 
 ### Severity logic
 
@@ -238,8 +239,8 @@ The backend is currently configured to use Claude Sonnet 4.5 on Bedrock through:
 
 ### Current limitation
 
-Live Bedrock invocation has not yet been end-to-end validated in this workspace with active AWS credentials and a successful runtime call.
-The code path is wired, but only compile-level validation has been run so far.
+Live Bedrock invocation has now been validated end-to-end locally with configured AWS credentials.
+The remaining limitation is deployment validation inside Cloudera AI rather than local runtime wiring.
 
 ---
 
@@ -260,13 +261,13 @@ The frontend has been adapted from `ask-data/frontend` into a dedicated healthca
 The UI now supports:
 - X-ray image upload
 - image preview
-- backend or mock inference mode
 - live scorecards
-- detection results table
+- findings overview table
 - clinical summary
-- explanation
+- clinical interpretation
 - recommended actions
-- annotated output panel
+- analysis result image panel
+- bilingual response selection for Bedrock enrichment
 
 ### Scorecards
 
@@ -275,7 +276,6 @@ Top scorecards are now bound to backend-compatible fields:
 - `Confidence` ← `confidence`
 - `Severity` ← `severity`
 - `Status` ← request lifecycle / backend status
-- `Mode` ← frontend execution mode
 
 ### Frontend API mode
 
@@ -406,10 +406,11 @@ Purpose:
 
 ### Important note
 
-The backend currently reads its local env from:
+The backend now reads env values from:
+- `healthcare/Xray Assistant/.env`
 - `healthcare/Xray Assistant/backend/.env`
 
-The project root `.env` is **not** the active backend runtime env by default.
+This allows local root credentials to be reused while still supporting backend-specific overrides.
 
 ---
 
@@ -420,33 +421,30 @@ The project root `.env` is **not** the active backend runtime env by default.
 - upstream references are cloned and isolated
 - frontend and backend are wired to the same response schema
 - real YOLO runtime integration exists
+- trained ChestX-Det-based model artifact is prepared in a tracked deploy path
 - annotated output generation exists
 - frontend renders live inference results
-- Bedrock enrichment layer exists with safe fallback behavior
+- Bedrock enrichment is wired and locally validated with safe fallback behavior
 - dataset conversion scaffolding exists
+- Cloudera AI Python entrypoints exist for backend and frontend applications
 
 ---
 
 ## 12. What Is Not Finished Yet
 
-- medically fine-tuned YOLO weights are not yet in place
-- ChestX-Det image archives are not yet fully prepared inside the repo
-- YOLO fine-tuning has not started
-- live Bedrock invocation has not yet been fully verified end-to-end
-- backend static serving for annotated filesystem paths may need final production handling if deployed behind a proxy
-- Cloudera AI deployment-specific runtime integration has not yet been finalized
+- deployment validation inside Cloudera AI has not yet been executed
+- frontend and backend applications still need final Application-level env configuration in Cloudera AI
+- local/generated training artifacts remain intentionally excluded from deploy scope
 
 ---
 
 ## 13. Recommended Next Steps
 
-1. Finalize backend `.env` with working AWS Bedrock credentials and region.
-2. Run end-to-end backend validation with Bedrock enabled.
-3. Download and extract ChestX-Det image archives.
-4. Run YOLO dataset conversion script successfully.
-5. Fine-tune a chest X-ray-specific YOLO model.
-6. Replace generic runtime validation weights with fine-tuned medical weights.
-7. Re-test the frontend against real detection plus real Bedrock enrichment.
+1. Commit the tracked backend/frontend changes plus the deploy-ready `best.pt` model path.
+2. Push the Xray Assist update to GitHub.
+3. Create two Cloudera AI Applications using the provided Python entrypoints.
+4. Set backend Bedrock credentials and model env vars in the Application configuration.
+5. Validate end-to-end inference from the deployed frontend to the deployed backend.
 
 ---
 

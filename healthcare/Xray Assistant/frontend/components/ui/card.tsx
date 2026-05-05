@@ -95,8 +95,8 @@ export function StatCard({
   toneClassName?: string;
 }) {
   return (
-    <PanelCard className={cn("stat-card relative overflow-hidden p-4 xl:p-4", toneClassName)}>
-      <div className="flex min-h-[8.5rem] flex-col">
+    <PanelCard className={cn("stat-card relative overflow-hidden px-3.5 py-3 xl:px-3.5 xl:py-3", toneClassName)}>
+      <div className="flex min-h-[6.4rem] flex-col">
         <span className="stat-card-label">
           {label}
         </span>
