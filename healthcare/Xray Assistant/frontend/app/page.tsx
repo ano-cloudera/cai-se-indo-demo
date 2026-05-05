@@ -6,6 +6,7 @@ import { ActionItemsCard } from "../components/action-items-card";
 import { AnnotatedImageCard } from "../components/annotated-image-card";
 import { BrandLogo } from "../components/brand-logo";
 import { DetectionSummaryCard } from "../components/detection-summary-card";
+import { ExecutiveSummaryStrip } from "../components/executive-summary-strip";
 import { ExplanationCard } from "../components/explanation-card";
 import { NoticePanel } from "../components/notice-panel";
 import { XrayPreview } from "../components/xray-preview";
@@ -226,6 +227,7 @@ export default function Page() {
               toneClassName={getStatusTone(result?.status, loading, Boolean(error))}
             />
           </div>
+          <ExecutiveSummaryStrip result={result} />
         </div>
 
         <div className="panel-grid xl:grid xl:grid-cols-[minmax(0,1.6fr)_minmax(320px,0.95fr)]">

@@ -13,11 +13,19 @@ export function ActionItemsCard({ items, loading = false }: ActionItemsCardProps
         subtitle="Suggested next steps for clinical review."
       />
       {items.length > 0 ? (
-        <ol className="mt-5 list-decimal space-y-3 pl-5 text-sm leading-6 text-[var(--color-ink-muted)]">
-          {items.map((item) => (
-            <li key={item}>{item}</li>
+        <div className="mt-5 space-y-3">
+          {items.map((item, index) => (
+            <div
+              key={item}
+              className="flex gap-3 rounded-[18px] border border-[var(--color-border-soft)] bg-[var(--color-surface-muted)] px-4 py-3"
+            >
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-xs font-bold text-[var(--color-action-primary)]">
+                {index + 1}
+              </span>
+              <p className="text-sm leading-6 text-[var(--color-ink-muted)]">{item}</p>
+            </div>
           ))}
-        </ol>
+        </div>
       ) : (
         <p className="mt-5 text-sm leading-6 text-[var(--color-ink-muted)]">
           {loading
