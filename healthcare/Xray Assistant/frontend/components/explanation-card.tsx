@@ -10,7 +10,7 @@ export function ExplanationCard({ explanation, loading = false }: ExplanationCar
     <PanelCard className="border-[var(--color-soft-blue-border)] bg-[linear-gradient(180deg,#ffffff_0%,#f3f7ff_100%)] p-6">
       <PanelHeader
         title="Clinical Interpretation"
-        subtitle="Specialist-style explanation written for clinical review support."
+        subtitle="Specialist-style explanation for clinical review support."
         icon={
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden>
             <path d="M6 4.5A2.5 2.5 0 0 1 8.5 2h3A2.5 2.5 0 0 1 14 4.5v11A2.5 2.5 0 0 1 11.5 18h-3A2.5 2.5 0 0 1 6 15.5v-11Z" stroke="currentColor" strokeWidth="1.5" />

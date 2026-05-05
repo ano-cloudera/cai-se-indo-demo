@@ -259,15 +259,7 @@ export default function Page() {
               />
             ) : null}
 
-            <div className="grid gap-6 xl:grid-cols-2">
-              <XrayPreview previewUrl={previewUrl} />
-              <AnnotatedImageCard
-                imageUrl={result?.annotated_image_path ?? null}
-                fallbackUrl={previewUrl}
-                hasDetections={(result?.detections.length ?? 0) > 0}
-                loading={loading}
-              />
-            </div>
+            <XrayPreview previewUrl={previewUrl} />
 
             <PanelCard className="p-6">
               <PanelHeader
@@ -313,6 +305,11 @@ export default function Page() {
                 </div>
               )}
             </PanelCard>
+
+            <AnnotatedImageCard
+              imageUrl={result?.annotated_image_path ?? null}
+              loading={loading}
+            />
           </div>
 
           <div className="sticky-rail mt-6 xl:mt-0">

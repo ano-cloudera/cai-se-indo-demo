@@ -66,9 +66,6 @@ export function XrayUpload({
         <span className="inline-flex rounded-full border border-[var(--color-border-soft)] bg-white px-3 py-1.5">
           {selectedFileName || "No image selected yet"}
         </span>
-        <span className="inline-flex rounded-full border border-[var(--color-border-soft)] bg-white px-3 py-1.5">
-          PNG or JPG
-        </span>
       </div>
     </div>
   );

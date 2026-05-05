@@ -464,11 +464,10 @@ body {
 
 .section-subtitle {
   margin-top: 0.35rem;
-  font-size: var(--font-size-helper);
-  font-weight: 700;
-  line-height: var(--line-height-meta);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.45;
+  letter-spacing: 0.01em;
   color: var(--color-ink-subtle);
 }
 
