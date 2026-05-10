@@ -1,6 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import GroupIcon from "@mui/icons-material/Group";
+import ChatIcon from "@mui/icons-material/Chat";
+import StorageIcon from "@mui/icons-material/Storage";
+import SecurityIcon from "@mui/icons-material/Security";
+import BarChartIcon from "@mui/icons-material/BarChart";
+import InfoIcon from "@mui/icons-material/Info";
+import RefreshIcon from "@mui/icons-material/Refresh";
 import {
   Area,
   AreaChart,
@@ -71,83 +78,27 @@ export function UsageDashboardPanel({
     {
       label: "Active sessions",
       value: summary ? formatCompact(summary.total_sessions) : "—",
-      accent: "from-[#eef2ff] to-[#dde7ff]",
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
-          <path
-            d="M16 19a4 4 0 0 0-8 0"
-            stroke="currentColor"
-            strokeWidth="1.7"
-            strokeLinecap="round"
-          />
-          <circle cx="12" cy="10" r="3.2" stroke="currentColor" strokeWidth="1.7" />
-          <path
-            d="M6.5 18.5a3.5 3.5 0 0 0-2.5-1M17.5 18.5a3.5 3.5 0 0 1 2.5-1M6.4 8.8a2.4 2.4 0 1 0-1.6 4.2M17.6 8.8a2.4 2.4 0 1 1 1.6 4.2"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-          />
-        </svg>
-      ),
+      icon: <GroupIcon sx={{ fontSize: 20 }} />,
     },
     {
       label: "Questions",
       value: summary ? formatCompact(summary.total_questions) : "—",
-      accent: "from-[#eff6ff] to-[#dcf1ff]",
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
-          <path
-            d="M7 17.5 4.5 19v-4.1A6.5 6.5 0 1 1 11 21.5H8.2"
-            stroke="currentColor"
-            strokeWidth="1.7"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <path d="M9 9.5h6M9 13h4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-        </svg>
-      ),
+      icon: <ChatIcon sx={{ fontSize: 20 }} />,
     },
     {
       label: "SQL requests",
       value: summary ? formatCompact(summary.sql_requests) : "—",
-      accent: "from-[#f8faff] to-[#e8efff]",
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
-          <ellipse cx="12" cy="6.5" rx="6.5" ry="2.8" stroke="currentColor" strokeWidth="1.7" />
-          <path
-            d="M5.5 6.5v5c0 1.55 2.9 2.8 6.5 2.8s6.5-1.25 6.5-2.8v-5M5.5 11.5v5c0 1.55 2.9 2.8 6.5 2.8s6.5-1.25 6.5-2.8v-5"
-            stroke="currentColor"
-            strokeWidth="1.7"
-          />
-        </svg>
-      ),
+      icon: <StorageIcon sx={{ fontSize: 20 }} />,
     },
     {
       label: "Guardrails blocks",
       value: summary ? formatCompact(summary.guardrails_blocks) : "—",
-      accent: "from-[#fff7ed] to-[#ffedd5]",
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
-          <path
-            d="M12 3.75 5.5 6.4v5.15c0 4.15 2.63 7.95 6.5 8.95 3.87-1 6.5-4.8 6.5-8.95V6.4L12 3.75Z"
-            stroke="currentColor"
-            strokeWidth="1.7"
-            strokeLinejoin="round"
-          />
-          <path d="M12 8v4.25M12 15.75h.01" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-        </svg>
-      ),
+      icon: <SecurityIcon sx={{ fontSize: 20 }} />,
     },
     {
       label: "Visual responses",
       value: summary ? formatCompact(summary.visualization_responses) : "—",
-      accent: "from-[#f5f3ff] to-[#ede9fe]",
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
-          <path d="M5 18.5h14M7.5 16v-4.5M12 16V7.5M16.5 16v-6.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-          <path d="m7 8.5 4.25-3 3.5 2.25L18 5.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      ),
+      icon: <BarChartIcon sx={{ fontSize: 20 }} />,
     },
   ];
 
@@ -207,8 +158,9 @@ export function UsageDashboardPanel({
           <button
             type="button"
             onClick={onRefresh}
-            className="rounded-[var(--radius-pill)] border border-[var(--color-border-strong)] bg-white px-4 py-2 text-sm font-semibold text-[var(--color-ink-muted)] transition hover:border-[var(--color-action-primary)] hover:text-[var(--color-action-primary)]"
+            className="inline-flex items-center gap-2 rounded-[var(--radius-pill)] border border-[var(--color-border-strong)] bg-[var(--color-surface)] px-4 py-2 text-sm font-semibold text-[var(--color-ink-muted)] transition hover:border-[var(--color-action-primary)] hover:text-[var(--color-action-primary)]"
           >
+            <RefreshIcon sx={{ fontSize: 16 }} />
             Refresh Dashboard
           </button>
         </div>
@@ -223,7 +175,7 @@ export function UsageDashboardPanel({
           {coreMetrics.map((metric) => (
             <section
               key={metric.label}
-              className="rounded-[18px] border border-[var(--color-border-soft)] bg-white px-5 py-4"
+              className="rounded-[18px] border border-[var(--color-border-soft)] bg-[var(--color-surface)] px-5 py-4 transition hover:border-[var(--color-border-strong)] hover:shadow-[0_8px_24px_rgba(255,107,0,0.1)]"
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -234,9 +186,7 @@ export function UsageDashboardPanel({
                     {loading ? "…" : metric.value}
                   </p>
                 </div>
-                <div
-                  className={`flex h-11 w-11 items-center justify-center rounded-[14px] border border-[var(--color-border-soft)] bg-gradient-to-br ${metric.accent} text-[#4f46e5]`}
-                >
+                <div className="icon-box h-11 w-11 rounded-[14px]">
                   {metric.icon}
                 </div>
               </div>
@@ -542,11 +492,8 @@ export function UsageDashboardPanel({
 
           <div className="rounded-[22px] border border-[var(--color-border-soft)] bg-[linear-gradient(180deg,#fbfcff_0%,#eef4ff_100%)] p-5 shadow-panel">
             <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-[14px] border border-[#d7e3ff] bg-white text-[#4968cf]">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
-                  <path d="M12 8v4.25M12 16h.01" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-                  <path d="M12 3.75a8.25 8.25 0 1 0 8.25 8.25A8.25 8.25 0 0 0 12 3.75Z" stroke="currentColor" strokeWidth="1.7" />
-                </svg>
+              <div className="icon-box h-11 w-11 rounded-[14px]">
+                <InfoIcon sx={{ fontSize: 20 }} />
               </div>
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#4968cf]">

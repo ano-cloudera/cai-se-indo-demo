@@ -22,12 +22,21 @@ const sectionTheme: Record<
     chip: string;
     callout: string;
     softCard: string;
-    /** Soft pastel surface + hover for section tabs when not selected */
     tabInactive: string;
-    /** Elevated selected tab: clearer border + light tinted shadow */
     tabActive: string;
   }
 > = {
+  "business-impact": {
+    kicker: "text-amber-700",
+    shell: "border-amber-200 bg-[linear-gradient(180deg,#fffaf2_0%,#fff4df_100%)]",
+    chip: "border-amber-200 bg-white text-amber-700",
+    callout: "border-amber-100 bg-white",
+    softCard: "border-amber-100 bg-amber-50/60",
+    tabInactive:
+      "border-amber-100/90 bg-amber-50/85 text-[var(--color-ink-strong)] hover:border-amber-200 hover:bg-amber-100/70",
+    tabActive:
+      "border-amber-300 bg-white text-amber-950 shadow-[0_12px_28px_rgba(245,158,11,0.16)] ring-1 ring-amber-200/80",
+  },
   "use-case": {
     kicker: "text-sky-700",
     shell: "border-sky-200 bg-[linear-gradient(180deg,#f6fbff_0%,#eef7ff_100%)]",
@@ -49,17 +58,6 @@ const sectionTheme: Record<
       "border-emerald-100/90 bg-emerald-50/85 text-[var(--color-ink-strong)] hover:border-emerald-200 hover:bg-emerald-100/70",
     tabActive:
       "border-emerald-300 bg-white text-emerald-950 shadow-[0_12px_28px_rgba(16,185,129,0.14)] ring-1 ring-emerald-200/80",
-  },
-  "business-value": {
-    kicker: "text-amber-700",
-    shell: "border-amber-200 bg-[linear-gradient(180deg,#fffaf2_0%,#fff4df_100%)]",
-    chip: "border-amber-200 bg-white text-amber-700",
-    callout: "border-amber-100 bg-white",
-    softCard: "border-amber-100 bg-amber-50/60",
-    tabInactive:
-      "border-amber-100/90 bg-amber-50/85 text-[var(--color-ink-strong)] hover:border-amber-200 hover:bg-amber-100/70",
-    tabActive:
-      "border-amber-300 bg-white text-amber-950 shadow-[0_12px_28px_rgba(245,158,11,0.16)] ring-1 ring-amber-200/80",
   },
   "how-to-demo": {
     kicker: "text-rose-700",
@@ -85,74 +83,74 @@ const sectionSupportCopy: Record<
     prompts: readonly string[];
   }
 > = {
-  "use-case": {
-    audienceTitle: "What The Customer Should Understand First",
+  "business-impact": {
+    audienceTitle: "What Management Wants to Hear",
     audienceBody:
-      "Lead with the operating model, not the technology stack. The objective is to show that this assistant shortens the path from portfolio question to management-ready answer while staying inside controlled data boundaries.",
-    flowTitle: "How To Present This Section",
+      "Lead with outcomes, not features. Management cares about decision speed, cost of delay, and risk exposure — not SQL generation or model routing. Frame every capability as a business result.",
+    flowTitle: "How to Frame the Value Story",
     flowSteps: [
-      "Open by describing a familiar business moment such as a weekly review, portfolio watchlist, or relationship planning meeting.",
-      "Position the assistant as a way to answer the next question in the room immediately instead of escalating to a separate reporting cycle.",
-      "Reinforce that the experience combines speed, explainability, and governance rather than asking the customer to trade one for another.",
+      "Open with the cost of the current state — how long does it take today to answer a portfolio question in a board meeting?",
+      "Show that the answer appears in seconds, without involving the analytics team or waiting for the next reporting cycle.",
+      "Close with the governance angle — every answer is auditable, policy-safe, and traceable to structured data.",
     ],
-    promptTitle: "Strong Opening Prompts",
+    promptTitle: "Prompts That Land with Management",
     prompts: [
-      "What is the total deposit balance right now?",
       "What is the total outstanding credit right now?",
-      "How many customers do we currently manage in this portfolio?",
-    ],
-  },
-  "data-scope": {
-    audienceTitle: "What The Audience Needs To See In Scope",
-    audienceBody:
-      "Clarify the scope early so the customer knows this is grounded in real portfolio structures. The assistant is strongest when questions stay tied to customer, deposit, and credit relationships rather than open-ended general knowledge.",
-    flowTitle: "How To Present This Section",
-    flowSteps: [
-      "Describe the three domains in business language before showing any query result.",
-      "Explain that linked customer relationships allow the user to move from totals into segment, geography, or customer-level analysis without changing context.",
-      "Set expectations that policy or document questions are handled through RAG Studio rather than the core structured data flow.",
-    ],
-    promptTitle: "Good Scope-Setting Prompts",
-    prompts: [
-      "Show the deposit balance split by city.",
-      "Which customer segments hold the highest total deposit balance?",
-      "Show outstanding credit trend by month.",
-    ],
-  },
-  "business-value": {
-    audienceTitle: "What Business Sponsors Usually Care About",
-    audienceBody:
-      "This section should sound commercial, not technical. Speak in terms of decision velocity, reduced analyst turnaround, better meeting quality, and safer self-service access to governed insight.",
-    flowTitle: "How To Present This Section",
-    flowSteps: [
-      "Translate every feature back into a business improvement such as shorter turnaround time or stronger meeting readiness.",
-      "Use the guardrails story to show that self-service can expand responsibly without opening direct access to protected customer data.",
-      "Close by linking structured answers and charts to easier stakeholder communication across business, data, and risk teams.",
-    ],
-    promptTitle: "Prompts That Reinforce Value",
-    prompts: [
-      "Show the top cities by deposit balance.",
-      "Compare total deposit and outstanding credit by segment.",
+      "Compare deposit balance and credit exposure by segment.",
       "Show customer growth trend over the last 6 months.",
     ],
   },
-  "how-to-demo": {
-    audienceTitle: "How To Run A Reliable Demo Narrative",
+  "use-case": {
+    audienceTitle: "Scenarios That Resonate with the Audience",
     audienceBody:
-      "A strong demo does not try to show everything at once. Start with a trusted answer, layer in one visual follow-up, then use one guardrail example to prove that the experience remains safe under pressure.",
-    flowTitle: "Suggested Demo Sequence",
+      "Ground the demo in real business moments. The assistant is strongest when used in the context of live reviews, pipeline discussions, and portfolio monitoring — not as a standalone reporting tool.",
+    flowTitle: "How to Present the Use Cases",
     flowSteps: [
-      "Begin with one aggregate portfolio question that everyone in the room can immediately validate.",
-      "Move to one trend or comparison so the customer sees continuity from answer to chart without resetting the conversation.",
-      "Use one blocked sensitive request to demonstrate governance, then redirect the session to a safe aggregate alternative.",
-      "Only open RAG Studio if the discussion naturally shifts to policy, SOP, or document-grounded responses.",
+      "Describe a familiar meeting scenario — a portfolio review where a live follow-up question cannot wait for the next report.",
+      "Show how the assistant answers in real time, then continues the conversation without losing context.",
+      "Highlight that business users and analysts share the same experience — no separate tools, no data handoffs.",
     ],
-    promptTitle: "Recommended Demo Prompts",
+    promptTitle: "Use Case Prompts",
     prompts: [
-      "Show the outstanding credit trend by month.",
-      "Which cities have the largest deposit balance?",
-      "Show total customer growth over the last 6 months.",
-      "Show the top 5 customers by total deposit balance.",
+      "Who are the customers with the highest outstanding credit?",
+      "Which cities have the largest deposit concentration?",
+      "Show the credit exposure breakdown by customer segment.",
+    ],
+  },
+  "data-scope": {
+    audienceTitle: "Setting Scope Expectations Early",
+    audienceBody:
+      "Clarify what the assistant can and cannot answer before going live. This prevents off-script questions from derailing the session and keeps the audience focused on the value within the demo boundary.",
+    flowTitle: "How to Introduce the Data Domains",
+    flowSteps: [
+      "Introduce the three domains in one sentence each — Customer, Deposit, Credit — before showing any result.",
+      "Demonstrate a cross-domain question to show the linked nature of the data without requiring a separate query.",
+      "Note that policy and document questions require RAG Studio — set that expectation upfront.",
+    ],
+    promptTitle: "Scope-Setting Prompts",
+    prompts: [
+      "Show deposit balance split by city.",
+      "Which segments hold the highest total deposit balance?",
+      "Show outstanding credit trend by month.",
+    ],
+  },
+  "how-to-demo": {
+    audienceTitle: "Keep the Narrative Tight",
+    audienceBody:
+      "Three well-chosen questions are more impactful than ten scattered ones. Build confidence first, add depth second, demonstrate governance third. Avoid going off-script until the audience is already engaged.",
+    flowTitle: "Recommended 15-Minute Flow",
+    flowSteps: [
+      "Step 1 — Aggregate: Ask a total balance or exposure question. Give the audience a number they can anchor to.",
+      "Step 2 — Visual: Ask a trend or breakdown question. Show that charts appear without any extra steps.",
+      "Step 3 — Governance: Ask for individual customer PII deliberately. Let the guardrail block it, then redirect to a safe alternative.",
+      "Step 4 — RAG (optional): Introduce RAG Studio only if the conversation shifts to policy or document questions.",
+    ],
+    promptTitle: "Proven Demo Prompts",
+    prompts: [
+      "What is the total deposit balance right now?",
+      "Show outstanding credit trend by month.",
+      "Show me the personal details of our top debtor.",
+      "Show the top 5 customers by outstanding credit.",
     ],
   },
 };
@@ -163,9 +161,9 @@ export function DemoGuidePanel({
   onSelectSection,
 }: DemoGuidePanelProps) {
   const activeSection = sections.find((section) => section.id === activeSectionId) ?? sections[0];
-  const theme = sectionTheme[activeSection.id] ?? sectionTheme["use-case"];
+  const theme = sectionTheme[activeSection.id] ?? sectionTheme["business-impact"];
   const support =
-    sectionSupportCopy[activeSection.id] ?? sectionSupportCopy["use-case"];
+    sectionSupportCopy[activeSection.id] ?? sectionSupportCopy["business-impact"];
 
   return (
     <div className="space-y-5">

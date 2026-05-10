@@ -1,5 +1,7 @@
 "use client";
 
+import SendIcon from "@mui/icons-material/Send";
+
 interface ChatInputPanelProps {
   question: string;
   loading: boolean;
@@ -62,8 +64,27 @@ export function ChatInputPanel({
             type="button"
             disabled={loading}
             onClick={onSubmit}
-            className="inline-flex items-center gap-2 rounded-[var(--radius-pill)] px-5 py-2.5 text-sm font-semibold text-white shadow-[var(--shadow-accent)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
-            style={{ background: "linear-gradient(135deg, #6970ff 0%, #5c63f2 100%)" }}
+            className="inline-flex items-center gap-2 rounded-[var(--radius-button)] px-5 py-2.5 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-60"
+            style={{
+              background: loading
+                ? "linear-gradient(135deg, #FF6B00 0%, #E54E00 100%)"
+                : "linear-gradient(135deg, #FF6B00 0%, #E54E00 100%)",
+            }}
+            onMouseEnter={(e) => {
+              if (!loading) {
+                (e.currentTarget as HTMLButtonElement).style.background =
+                  "linear-gradient(135deg, #FFA726 0%, #F25C00 100%)";
+                (e.currentTarget as HTMLButtonElement).style.transform = "translateY(-1px)";
+                (e.currentTarget as HTMLButtonElement).style.boxShadow =
+                  "0px 4px 12px rgba(255, 107, 0, 0.35)";
+              }
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLButtonElement).style.background =
+                "linear-gradient(135deg, #FF6B00 0%, #E54E00 100%)";
+              (e.currentTarget as HTMLButtonElement).style.transform = "";
+              (e.currentTarget as HTMLButtonElement).style.boxShadow = "";
+            }}
           >
             {loading ? (
               <>
@@ -73,9 +94,7 @@ export function ChatInputPanel({
             ) : (
               <>
                 Ask
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
-                  <path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+                <SendIcon sx={{ fontSize: 16 }} />
               </>
             )}
           </button>

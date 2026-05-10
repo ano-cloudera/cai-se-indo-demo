@@ -1,5 +1,10 @@
 "use client";
 
+import CloudIcon from "@mui/icons-material/Cloud";
+import SmartToyIcon from "@mui/icons-material/SmartToy";
+import InfoIcon from "@mui/icons-material/Info";
+import SaveIcon from "@mui/icons-material/Save";
+
 import type { LLMProviderOption } from "@/lib/api";
 
 interface ModelSettingsPanelProps {
@@ -28,20 +33,9 @@ function providerDescription(provider: string): string {
 
 function providerIcon(provider: string) {
   if (provider === "bedrock") {
-    return (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-        <path d="M7 8.5 12 5l5 3.5v7L12 19l-5-3.5v-7Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
-        <path d="M9.5 10.25 12 8.75l2.5 1.5v3.5L12 15.25l-2.5-1.5v-3.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-      </svg>
-    );
+    return <CloudIcon sx={{ fontSize: 18 }} />;
   }
-
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path d="M6.75 8.25h10.5M6.75 12h10.5M6.75 15.75h6.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-      <path d="M5.75 5.5h12.5a1.25 1.25 0 0 1 1.25 1.25v10.5a1.25 1.25 0 0 1-1.25 1.25H5.75A1.25 1.25 0 0 1 4.5 17.25V6.75A1.25 1.25 0 0 1 5.75 5.5Z" stroke="currentColor" strokeWidth="1.7" />
-    </svg>
-  );
+  return <SmartToyIcon sx={{ fontSize: 18 }} />;
 }
 
 export function ModelSettingsPanel({
@@ -101,7 +95,7 @@ export function ModelSettingsPanel({
                     }`}
                   >
                     <div className="flex items-start gap-3">
-                      <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] border border-[var(--color-border-soft)] bg-white text-[#4f46e5]">
+                      <div className="icon-box mt-0.5 h-10 w-10 shrink-0 rounded-[14px]">
                         {providerIcon(provider)}
                       </div>
                       <div>
@@ -171,8 +165,10 @@ export function ModelSettingsPanel({
                 type="button"
                 onClick={onSave}
                 disabled={saving || loading || !draftProvider}
-                className="rounded-[var(--radius-pill)] bg-[var(--color-action-primary)] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[var(--color-action-primary-hover)] disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex items-center gap-2 rounded-[var(--radius-button)] px-4 py-2 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-60"
+                style={{ background: "linear-gradient(135deg, #FF6B00 0%, #E54E00 100%)" }}
               >
+                <SaveIcon sx={{ fontSize: 16 }} />
                 {saving ? "Saving..." : "Save Model Settings"}
               </button>
             </div>
@@ -186,7 +182,7 @@ export function ModelSettingsPanel({
               <div className="mt-4 space-y-3">
                 <div className="rounded-[16px] border border-[var(--color-border-soft)] bg-[var(--color-surface-muted)] px-4 py-3">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] border border-[var(--color-border-soft)] bg-white text-[#4f46e5]">
+                    <div className="icon-box h-10 w-10 shrink-0 rounded-[14px]">
                       {providerIcon(activeProvider)}
                     </div>
                     <div>
@@ -201,11 +197,8 @@ export function ModelSettingsPanel({
                 </div>
                 <div className="rounded-[16px] border border-[var(--color-border-soft)] bg-[var(--color-surface-muted)] px-4 py-3">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] border border-[var(--color-border-soft)] bg-white text-[#0284c7]">
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-                        <path d="M6.75 8.25h10.5M6.75 12h8M6.75 15.75h6" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-                        <path d="M5.75 5.5h12.5a1.25 1.25 0 0 1 1.25 1.25v10.5a1.25 1.25 0 0 1-1.25 1.25H5.75A1.25 1.25 0 0 1 4.5 17.25V6.75A1.25 1.25 0 0 1 5.75 5.5Z" stroke="currentColor" strokeWidth="1.7" />
-                      </svg>
+                    <div className="icon-box h-10 w-10 rounded-[14px]">
+                      <SmartToyIcon sx={{ fontSize: 18 }} />
                     </div>
                     <div>
                       <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--color-ink-subtle)]">
@@ -222,11 +215,8 @@ export function ModelSettingsPanel({
 
             <div className="rounded-[20px] border border-[var(--color-border-soft)] bg-[linear-gradient(180deg,#fbfcff_0%,#eef4ff_100%)] p-5 shadow-panel">
               <div className="flex items-start gap-3">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] border border-[#d7e3ff] bg-white text-[#4968cf]">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
-                    <path d="M12 8v4.25M12 16h.01" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-                    <path d="M12 3.75a8.25 8.25 0 1 0 8.25 8.25A8.25 8.25 0 0 0 12 3.75Z" stroke="currentColor" strokeWidth="1.7" />
-                  </svg>
+                <div className="icon-box h-11 w-11 shrink-0 rounded-[14px]">
+                  <InfoIcon sx={{ fontSize: 20 }} />
                 </div>
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#4968cf]">

@@ -2,6 +2,11 @@
 
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
+import AutoStoriesIcon from "@mui/icons-material/AutoStories";
+import SmartToyIcon from "@mui/icons-material/SmartToy";
+import BarChartIcon from "@mui/icons-material/BarChart";
+import TuneIcon from "@mui/icons-material/Tune";
+import PersonIcon from "@mui/icons-material/Person";
 
 import { AnswerCard } from "@/components/answer-card";
 import { BrandLogo } from "@/components/brand-logo";
@@ -252,130 +257,76 @@ const navItems = [
   {
     key: "guide",
     label: "Demo Guide",
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden>
-        <path
-          d="M4.75 4.5h8.5a1.25 1.25 0 0 1 1.25 1.25v7.5a.75.75 0 0 1-.75.75H7.5a2.75 2.75 0 0 0-2.75 2.75V5.5A1 1 0 0 1 4.75 4.5Z"
-          stroke="currentColor"
-          strokeWidth="1.4"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M7 6.75h4.25M7 9h4.25M7 11.25h3.25"
-          stroke="currentColor"
-          strokeWidth="1.4"
-          strokeLinecap="round"
-        />
-        <path d="M4.75 14.5c.55-.66 1.37-1 2.75-1h6.25" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-      </svg>
-    ),
+    icon: <AutoStoriesIcon sx={{ fontSize: 22 }} />,
   },
   {
     key: "assistant",
     label: "AI Assistant",
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden>
-        <rect x="4.5" y="5" width="9" height="7.25" rx="2.1" stroke="currentColor" strokeWidth="1.4" />
-        <path
-          d="M7 14.25h4M9 5V3.5M6.9 8.2h.01M11.1 8.2h.01M7.4 10.65c.35.45.93.75 1.6.75.67 0 1.25-.3 1.6-.75"
-          stroke="currentColor"
-          strokeWidth="1.4"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    ),
+    icon: <SmartToyIcon sx={{ fontSize: 22 }} />,
   },
   {
     key: "usage",
     label: "Usage Dashboard",
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden>
-        <path
-          d="M3.75 13.75h10.5M5.5 11.75v-2.5M9 11.75V6.5M12.5 11.75V8"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-        />
-        <path
-          d="m4.75 6 2.1-1.35 2.15 1.05 3.25-2.2"
-          stroke="currentColor"
-          strokeWidth="1.4"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    ),
+    icon: <BarChartIcon sx={{ fontSize: 22 }} />,
   },
   {
     key: "settings",
     label: "Model Settings",
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden>
-        <path
-          d="M9 3.5v1.5M9 13v1.5M14.5 9h-1.5M5 9H3.5M12.55 5.45l-1.05 1.05M6.5 11.5l-1.05 1.05M12.55 12.55l-1.05-1.05M6.5 6.5 5.45 5.45"
-          stroke="currentColor"
-          strokeWidth="1.3"
-          strokeLinecap="round"
-        />
-        <circle cx="9" cy="9" r="2.35" stroke="currentColor" strokeWidth="1.4" />
-      </svg>
-    ),
+    icon: <TuneIcon sx={{ fontSize: 22 }} />,
   },
 ];
 
 const demoBriefingSections = [
   {
+    id: "business-impact",
+    label: "Business Impact",
+    title: "Measurable Impact for Decision Makers",
+    body:
+      "Ask the Data compresses the time between a business question and a management-ready answer — from days to seconds. For leadership teams, that means faster decisions, fewer reporting bottlenecks, and full visibility into portfolio performance at any moment.",
+    bullets: [
+      "Reduce time-to-insight from days to seconds — no more waiting for the next reporting cycle to answer a board-level question.",
+      "Enable live hypothesis testing during management meetings without interrupting the conversation to request a new report.",
+      "Lower operational risk with governed, auditable SQL generation — every answer is traceable and defensible.",
+      "Expand self-service analytics safely across business, risk, and relationship teams without exposing raw customer data.",
+    ],
+  },
+  {
     id: "use-case",
     label: "Use Case",
-    title: "How This AI Analytics Experience Is Positioned",
+    title: "Built for Portfolio & Relationship Teams",
     body:
-      "Ask the Data is framed as an analytics co-pilot for portfolio and relationship teams. The story is not about replacing analysts. It is about reducing the time between a business question and a decision-ready answer while keeping the workflow governed, explainable, and easy to challenge in front of stakeholders.",
+      "This solution is designed for the moments that matter most — portfolio reviews, credit monitoring, and relationship planning. It allows business users to ask questions in plain language and receive structured, chart-ready answers instantly.",
     bullets: [
-      "The primary message is speed with control: teams can ask portfolio questions in plain language without waiting for a reporting cycle or ad hoc SQL support.",
-      "The value lands best when positioned for review meetings, pipeline discussions, portfolio monitoring, and relationship planning where follow-up questions happen live.",
-      "The workflow is designed to support business users and analysts together, so the audience sees one shared experience rather than a technical tool for specialists only.",
-      "Every answer can be traced back to structured data, governed logic, and visible follow-up steps, which makes the output easier to validate and easier to defend.",
+      "Portfolio review meetings — answer live follow-up questions on deposit concentration, credit exposure, and segment performance without leaving the room.",
+      "Credit risk monitoring — surface outstanding credit trends, top debtors, and segment-level exposure in real time.",
+      "Relationship planning — identify high-value customers by deposit balance or credit utilization across cities and segments.",
+      "Compliance & governance — sensitive data requests are automatically blocked or redacted, keeping every session policy-safe.",
     ],
   },
   {
     id: "data-scope",
     label: "Data Scope",
-    title: "What Data Domains Are Included In The Demo",
+    title: "Three Connected Data Domains",
     body:
-      "The demo is intentionally anchored on three connected data domains so the audience understands what the assistant can answer with confidence. This keeps the conversation practical and prevents the session from drifting into unsupported use cases.",
+      "The demo is anchored on three core domains — Customer, Deposit, and Credit — linked through customer relationships. This allows the audience to move seamlessly from portfolio-level questions down to segment or customer-level analysis.",
     bullets: [
-      "Customer data provides the relationship layer, including identity context, segment, city, and lifecycle attributes that help explain who sits behind the portfolio.",
-      "Deposit data supports questions around balances, maturity profile, concentration, and distribution across customer segments or geographies.",
-      "Credit data supports exposure analysis, outstanding balance review, and trend discussions related to financing performance and portfolio quality.",
-      "Because the domains are linked through customer relationships, the audience can move from aggregate portfolio questions into more targeted cross-domain exploration without changing tools.",
-    ],
-  },
-  {
-    id: "business-value",
-    label: "Business Value",
-    title: "What Business Value This Solution Can Deliver",
-    body:
-      "The strongest business value message is not only faster answers. It is faster answers that still respect policy, still preserve trust, and still fit into the way business and analytics teams already work. That makes the solution easier to sponsor and easier to operationalize.",
-    bullets: [
-      "Analysts and relationship managers can move from question to insight faster, reducing the dependency on manually prepared reporting packs for every follow-up request.",
-      "Leadership teams can test hypotheses live during business reviews instead of pausing the conversation until someone prepares another report after the meeting.",
-      "Guardrails and governed SQL generation help reduce the operational risk of self-service analytics, especially when customer-level data is involved.",
-      "Structured answers, charts, and reusable follow-up context make the output easier to communicate across risk, business, and data teams.",
+      "Customer — identity, segment, city, and lifecycle attributes that provide the relationship context behind every portfolio number.",
+      "Deposit — balance totals, concentration by segment and geography, maturity profile, and distribution trends.",
+      "Credit — outstanding exposure, top debtor analysis, financing trend, and portfolio quality indicators.",
+      "Cross-domain — questions can span all three domains in a single conversation without switching tools or context.",
     ],
   },
   {
     id: "how-to-demo",
-    label: "How To Demo",
-    title: "How Sales Teams And Users Can Run The Demo",
+    label: "Demo Flow",
+    title: "Recommended Flow for a 15-Minute Demo",
     body:
-      "The best demo flow starts broad, proves reliability quickly, and only then moves into richer visual analysis or governance scenarios. The goal is to build confidence first, then show depth, then show control.",
+      "Start with a number the audience already cares about, build confidence with one visual follow-up, then demonstrate governance. Keep the narrative tight — three questions are enough to show the full value of the platform.",
     bullets: [
-      "Start with one aggregate question such as total balance, total customers, or portfolio exposure so the audience immediately understands the business relevance.",
-      "Follow with one trend or comparison question to demonstrate visual continuity and show that the conversation can move from answer to analysis without resetting context.",
-      "Use one sensitive request example deliberately to show that the assistant can refuse unsafe asks while still steering the conversation back to acceptable insight paths.",
-      "Introduce RAG Studio only when the customer asks about policy, SOP, or document-grounded responses, so it appears as a deliberate extension rather than a distracting extra feature.",
+      "Open with one aggregate question (total balance, total credit, customer count) — give the audience an immediate anchor they can validate.",
+      "Follow with a trend or breakdown question to show chart generation and cross-domain continuity in the same conversation.",
+      "Trigger the guardrails intentionally — ask for individual customer PII to show the system blocks it, then pivot to a safe aggregate alternative.",
+      "Introduce RAG Studio only if the discussion shifts to policy or SOP questions — present it as a natural extension, not an extra feature.",
     ],
   },
 ] as const;
@@ -391,9 +342,7 @@ export default function HomePage() {
   const [draftModelId, setDraftModelId] = useState("");
   const [savingModelSettings, setSavingModelSettings] = useState(false);
   const [demoBriefingOpen, setDemoBriefingOpen] = useState(false);
-  const [activeBriefingSection, setActiveBriefingSection] = useState<string>(
-    demoBriefingSections[0].id,
-  );
+  const [activeBriefingSection, setActiveBriefingSection] = useState<string>("business-impact");
   const [health, setHealth] = useState<HealthState>({
     loading: true,
     app: null,
@@ -439,11 +388,14 @@ export default function HomePage() {
     void loadLlmProviders(state.sessionId);
   }, [state.sessionId]);
 
+  const analyticsLoadedRef = useRef(false);
+
   useEffect(() => {
-    if (activeView === "usage" && !analytics.loading && !analytics.summary) {
+    if (activeView === "usage" && !analyticsLoadedRef.current && !analytics.loading) {
+      analyticsLoadedRef.current = true;
       void refreshAnalytics();
     }
-  }, [activeView, analytics.loading, analytics.summary]);
+  }, [activeView]);
 
   async function refreshHealth() {
     setHealth((cur) => ({ ...cur, loading: true, error: "" }));
@@ -495,6 +447,7 @@ export default function HomePage() {
         error: "",
       });
     } catch (error) {
+      analyticsLoadedRef.current = false;
       setAnalytics({
         loading: false,
         summary: null,
@@ -845,7 +798,7 @@ export default function HomePage() {
     } finally {
       submitInFlightRef.current = false;
       void refreshSessions();
-      if (activeView === "usage" || analytics.summary) {
+      if (activeView === "usage") {
         void refreshAnalytics();
       }
     }
@@ -985,10 +938,7 @@ export default function HomePage() {
           </div>
           <div className="mt-4 flex items-center gap-2">
             <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/10">
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
-                <circle cx="7" cy="5" r="2.5" stroke="currentColor" strokeWidth="1.4" />
-                <path d="M2 12c0-2.761 2.239-4 5-4s5 1.239 5 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-              </svg>
+              <PersonIcon sx={{ fontSize: 16 }} />
             </div>
             <div>
               <p className="text-xs font-semibold text-white/80">Analyst Workspace</p>
@@ -1228,7 +1178,10 @@ export default function HomePage() {
             error={analytics.error}
             summary={analytics.summary}
             events={analytics.events}
-            onRefresh={() => void refreshAnalytics()}
+            onRefresh={() => {
+              analyticsLoadedRef.current = true;
+              void refreshAnalytics();
+            }}
           />
         ) : null}
 

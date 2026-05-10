@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import SmartToyIcon from "@mui/icons-material/SmartToy";
+import ArticleIcon from "@mui/icons-material/Article";
 
 import type { AnswerSource } from "@/lib/api";
 
@@ -195,8 +197,8 @@ export function AnswerCard({ answer, sources = [] }: AnswerCardProps) {
   return (
     <section className="w-full max-w-[56rem] rounded-[var(--radius-panel)] border border-[var(--color-border-soft)] bg-[var(--color-surface)] shadow-panel">
       <div className="flex items-center gap-2 border-b border-[var(--color-border-soft)] px-5 py-3">
-        <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[linear-gradient(135deg,#6970ff_0%,#5c63f2_100%)] text-sm">
-          🤖
+        <span className="icon-box h-7 w-7 rounded-full">
+          <SmartToyIcon sx={{ fontSize: 16 }} />
         </span>
         <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-ink-subtle)]">
           Analyst Response
@@ -219,23 +221,8 @@ export function AnswerCard({ answer, sources = [] }: AnswerCardProps) {
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0">
                       <div className="flex min-w-0 items-center gap-2">
-                        <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-rose-50 text-rose-600">
-                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
-                            <path
-                              d="M4 1.75h4.25L11 4.5v6.75A1.75 1.75 0 0 1 9.25 13h-5.5A1.75 1.75 0 0 1 2 11.25v-7.5A1.75 1.75 0 0 1 3.75 2H4"
-                              stroke="currentColor"
-                              strokeWidth="1.2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                            <path
-                              d="M8.25 1.75V4.5H11"
-                              stroke="currentColor"
-                              strokeWidth="1.2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
+                        <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[rgba(255,107,0,0.1)] text-[var(--color-brand-orange)]">
+                          <ArticleIcon sx={{ fontSize: 15 }} />
                         </span>
                         <p className="truncate text-sm font-semibold text-[var(--color-ink-strong)]">
                           {source.title}
