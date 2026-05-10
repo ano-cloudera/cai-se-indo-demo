@@ -207,14 +207,18 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
 
 ## 6. Frontend
 
-**Stack:** Next.js 15 (App Router), Tailwind CSS 3, TypeScript, Inter + Manrope fonts, Recharts
+**Stack:** Next.js 15 (App Router), Tailwind CSS 3, TypeScript, Inter + Outfit + JetBrains Mono fonts, Recharts, @mui/icons-material
 
-### Design system (adopted from fraud-ai-assistant project)
-- **Sidebar:** Dark navy (`#08004D`) with indigo accent (`#5c63f2`)
+### Design system
+- **Sidebar:** Dark navy (`#08004D`) with indigo nav accent (`#5c63f2`) — original Cloudera palette retained
 - **Background:** Light grey (`#f3f5fa`)
-- **Typography:** Inter (body), Manrope (headlines)
-- **Radius tokens:** `--radius-panel: 22px`, `--radius-control: 16px`
+- **Typography:** Inter (body/labels), Outfit (all headings h1–h6), JetBrains Mono (code/numeric values)
+- **Fonts:** Loaded from Google Fonts via `layout.tsx` — no external CSS import in globals
+- **Icons:** All inline SVGs replaced with `@mui/icons-material` components per-component
+- **Action buttons:** Orange gradient (`#FF6B00 → #E54E00`) for primary CTAs (Ask, Save, New Conversation excluded — remains indigo)
+- **Radius tokens:** `--radius-panel: 16px`, `--radius-card: 16px`, `--radius-button: 8px`
 - **Sidebar width:** `18rem`
+- **Icon convention:** Stat/feature icons wrapped in `.icon-box` utility (orange gradient background, 32–40px)
 
 ### Branding
 - Logo: Cloudera wordmark (`/Cloudera_logo.svg.png`) — centered in sidebar, `172px` wide
@@ -371,7 +375,7 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
 - [x] Footer actions in RAG config modal no longer easily clip off-screen
 - [x] Frontend can fall back to hardcoded RAG KB/model defaults if live `/rag/options` is still failing in a stale backend deployment
 - [x] Answer card supports rendering structured RAG sources instead of raw source objects
-- [x] Answer card now uses a bot emoji marker instead of the earlier plus icon
+- [x] Answer card now uses SmartToy MUI icon marker instead of bot emoji
 - [x] User/assistant message alignment has been adjusted to feel more balanced in wide chat layouts
 - [x] Backend now sorts temporal chart data before plotting and samples longer series more intelligently
 - [x] Visual insight cards can switch between chart and table views when summary rows are available
@@ -395,6 +399,16 @@ Do not re-add middleware unless thoroughly tested — it caused duplicate CORS h
 - [x] Sidebar and Model Settings iconography has been cleaned up to feel less generic
 - [x] Topbar guardrails mode badge was removed from the visible UI; `/health` remains the source for runtime status
 - [x] RAG source cards now prefer an `Open Source PDF` action instead of implying guaranteed inline preview
+- [x] Typography upgraded to Inter (body) + Outfit (headings) + JetBrains Mono (code/numeric) via Google Fonts
+- [x] All inline SVG icons replaced with `@mui/icons-material` across nav, cards, dashboard, and settings panels
+- [x] Primary action buttons (Ask, Save) updated to orange gradient (`#FF6B00 → #E54E00`) per design system spec
+- [x] Sidebar nav colors and background retained as original Cloudera indigo/navy palette
+- [x] Demo Guide content rewritten with management-first framing — Business Impact is now the first section
+- [x] Demo Guide sections restructured: Business Impact → Use Case → Data Scope → Demo Flow
+- [x] Demo Guide copy is now scannable and outcome-focused for management-level audiences
+- [x] Analytics dashboard glitch fixed — `analyticsLoadedRef` prevents re-fetch loop on tab switch
+- [x] Auto-refresh after chat now only triggers when user is actively on the Usage Dashboard tab
+- [x] Analytics error state resets the load ref so manual retry via Refresh button works correctly
 
 ### Backend
 - [x] Implemented and deployed

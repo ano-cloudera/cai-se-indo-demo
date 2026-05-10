@@ -59,12 +59,16 @@ cai-se-indo-demo/
 General-purpose AI analytics assistant. Ask questions about structured data in natural language — no SQL knowledge required.
 
 - FastAPI backend with NL-to-SQL via Azure OpenAI and Impala/CDW execution
-- Next.js frontend with Cloudera-branded design (dark navy sidebar, indigo accent)
-- Read-only Impala query execution with SQL guardrails
+- Next.js 15 frontend with Cloudera-branded design (dark navy sidebar, indigo accent, orange CTAs)
+- Typography: Inter (body), Outfit (headings), JetBrains Mono (code/numeric) — all via Google Fonts
+- Icons: `@mui/icons-material` throughout — no inline SVGs
+- Read-only Impala query execution with SQL guardrails and PII blocking
 - Generic enough to reuse across different banking or enterprise customers
 - Deployed as two separate Cloudera AI Applications (backend + frontend)
 - Optional RAG Studio integration for document-grounded answers, with per-session configuration stored in backend memory
-- RAG answers can surface source cards with an `Open Source PDF` action when source metadata is available
+- RAG answers surface source cards with an `Open Source PDF` action when source metadata is available
+- Demo Guide redesigned for management-level audiences: Business Impact first, scannable bullets, ready-to-use demo prompts
+- Usage Dashboard analytics glitch fixed — no more re-fetch loop on tab switch
 
 See [`ask-data/docs/project-state.md`](ask-data/docs/project-state.md) for full implementation and deployment details.
 
