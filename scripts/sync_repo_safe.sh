@@ -15,6 +15,11 @@ if [ ! -d ".git" ]; then
   exit 1
 fi
 
+echo "[INFO] Removing lock files from git index if still tracked"
+git rm --cached --quiet --ignore-unmatch \
+  "ask-data/frontend/package-lock.json" \
+  "healthcare/Xray Assistant/frontend/package-lock.json" || true
+
 echo "[INFO] Checking tracked changes only"
 TRACKED_CHANGES="$(git status --porcelain --untracked-files=no)"
 
