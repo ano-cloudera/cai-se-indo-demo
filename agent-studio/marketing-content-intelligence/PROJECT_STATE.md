@@ -249,6 +249,7 @@ Current default serving profile:
 - `docs/delivery-checklist.md`
 - `docs/guardrails-hub-integration.md`
 - `docs/cai-env-parameters.md`
+- `docs/cai-deployment-guide.md`
 
 ## Test Status
 

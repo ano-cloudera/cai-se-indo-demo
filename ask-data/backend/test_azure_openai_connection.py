@@ -23,8 +23,10 @@ def load_local_env() -> None:
     print("No local .env file found. Using runtime environment only.")
 
 
+
 def mask(value: str | None) -> str:
     if not value:
+        
         return "<missing>"
     if len(value) <= 8:
         return "*" * len(value)

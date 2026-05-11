@@ -25,6 +25,7 @@ API integration notes:
 - Open WebUI integration guidance: `docs/open-webui-integration-notes.md`
 - Guardrails Hub integration notes: `docs/guardrails-hub-integration.md`
 - CAI / CML environment parameter guide: `docs/cai-env-parameters.md`
+- CAI deployment guide: `docs/cai-deployment-guide.md`
 
 Example JSON payload:
 {
