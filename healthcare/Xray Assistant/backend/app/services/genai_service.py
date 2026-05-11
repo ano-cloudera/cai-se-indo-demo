@@ -54,14 +54,16 @@ class GenAIService:
                 "Anda adalah dokter spesialis radiologi yang menulis catatan interpretasi singkat untuk demo healthcare.\n"
                 "Gunakan hanya data deteksi terstruktur yang diberikan di bawah ini.\n"
                 "Jangan menyampaikan diagnosis definitif. Jangan melebihkan tingkat kepastian.\n"
-                "Gunakan bahasa yang hati-hati seperti 'mengarah ke', 'dapat berkaitan dengan', 'mungkin memerlukan review', dan 'perlu dikorelasikan secara klinis'.\n"
+                "Gunakan bahasa yang hati-hati seperti 'tampak', 'mengarah ke', 'sesuai dengan', 'dapat berkaitan dengan', dan 'perlu dikorelasikan secara klinis'.\n"
                 "Balas dalam Bahasa Indonesia.\n"
                 "Kembalikan JSON ketat hanya dengan key: summary, explanation, action_items.\n"
                 "Ketentuan:\n"
-                "- summary: satu kalimat singkat seperti ringkasan awal review radiologi\n"
-                "- explanation: satu sampai dua kalimat singkat, terdengar seperti penjelasan dokter spesialis radiologi, tetap mudah dipahami, dan tetap terikat pada data deteksi\n"
+                "- summary: satu kalimat singkat seperti impression awal radiologi, terdengar natural seperti catatan dokter\n"
+                "- explanation: satu sampai dua kalimat singkat seperti interpretasi dokter spesialis radiologi, tetap mudah dipahami, dan tetap terikat pada data deteksi\n"
                 "- action_items: tepat 3 rekomendasi tindak lanjut yang singkat dan praktis\n"
                 "- Nada profesional, tenang, aman, dan cocok untuk demo klinis\n"
+                "- Hindari gaya bahasa AI atau teknis seperti 'teridentifikasi area', 'algoritma menemukan', atau 'sistem mendeteksi area'\n"
+                "- Lebih sukai gaya seperti: 'Tampak...', 'Terdapat gambaran...', 'Kesan awal...', 'Temuan ini dapat berkaitan dengan...'\n"
                 "- Tanpa markdown, tanpa pembuka, tanpa key tambahan\n\n"
                 f"Detection payload:\n{json.dumps(compact_payload, ensure_ascii=True)}"
             )
@@ -136,8 +138,8 @@ class GenAIService:
         if language == "id":
             if finding == "no_finding":
                 return {
-                    "summary": "Tidak tampak temuan abnormal dengan keyakinan tinggi pada hasil deteksi saat ini, namun review klinis tetap diperlukan sesuai konteks.",
-                    "explanation": "Deteksi terstruktur saat ini belum menampilkan area yang menonjol di atas ambang yang ditetapkan, sehingga interpretasi akhir tetap perlu dikorelasikan dengan kondisi klinis pasien.",
+                    "summary": "Tidak tampak temuan abnormal bermakna pada hasil analisis saat ini, meskipun korelasi klinis tetap diperlukan.",
+                    "explanation": "Pada hasil deteksi saat ini belum tampak temuan dominan di atas ambang yang ditetapkan. Interpretasi akhir tetap perlu mempertimbangkan kondisi klinis dan, bila perlu, perbandingan dengan pencitraan sebelumnya.",
                     "action_items": [
                         "Tinjau citra dalam konteks klinis lengkap",
                         "Korelasikan hasil dengan gejala dan tanda vital",
@@ -145,8 +147,8 @@ class GenAIService:
                     ],
                 }
             return {
-                "summary": "Terdapat temuan potensial pada hasil deteksi yang memerlukan review klinis lebih lanjut.",
-                "explanation": "Hasil analisa mengarah ke suatu temuan yang tetap perlu ditinjau sebagai bagian dari interpretasi klinis dan radiologis yang menyeluruh.",
+                "summary": "Terdapat temuan pada hasil analisis yang memerlukan penilaian klinis dan radiologis lebih lanjut.",
+                "explanation": "Gambaran pada hasil deteksi mengarah ke suatu temuan yang masih perlu ditafsirkan dalam konteks klinis pasien secara menyeluruh.",
                 "action_items": [
                     "Tinjau citra bersama radiolog",
                     "Korelasikan temuan dengan gejala dan tanda vital",

@@ -306,6 +306,24 @@ Idle labels: `"Awaiting"` (Finding), `"Pending"` (Severity) — replaces bare `�
 - "Select Radiograph" label (clinical tone)
 - Orange gradient CTA button (`#FF6B00 → #E54E00`) matching ask-data style
 
+### Download Report
+
+- `Download Report` button appears in topbar right area after analysis completes
+- Indigo outline pill button — hover fills indigo, white text; disabled while generating
+- Triggers off-screen `ReportTemplate` capture via `html2canvas` at 2× scale
+- Downloads a PNG named `xray-report-{case_id}.png`
+- Report contents:
+  - Navy header: app name, case ID, timestamp, model version, demo disclaimer badge
+  - Indigo accent bar
+  - 4 stat cards: Finding, Confidence (color by threshold), Severity (rose/amber/green), Status
+  - Annotated X-ray image (falls back to original preview if no annotated image)
+  - Clinical Summary section
+  - Clinical Interpretation section (soft-blue tint)
+  - Findings Overview table (zebra-striped rows)
+  - Recommended Actions list (numbered, indigo counters)
+  - Amber disclaimer footer: AI demo only, not for clinical use
+- Implementation: `components/report-template.tsx` (forwardRef, inline styles for html2canvas compatibility) + `lib/download-report.ts` (lazy import html2canvas, PNG blob download)
+
 ### Frontend API mode
 
 The frontend supports:
@@ -445,7 +463,9 @@ This allows local root credentials to be reused while still supporting backend-s
 - trained ChestX-Det-based model artifact is prepared in a tracked deploy path
 - annotated output generation exists
 - frontend renders live inference results
+- Download Report feature: full branded PNG clinical summary generated client-side via html2canvas
 - Bedrock enrichment is wired and locally validated with safe fallback behavior
+- Bahasa Indonesia GenAI prompts refined for natural clinical tone (avoids AI/technical phrasing)
 - dataset conversion scaffolding exists
 - Cloudera AI Python entrypoints exist for backend and frontend applications
 - backend root endpoint and deploy-oriented CORS handling are now part of the application setup
