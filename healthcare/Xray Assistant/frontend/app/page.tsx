@@ -1,6 +1,7 @@
 "use client";
 
 import ArticleIcon from "@mui/icons-material/Article";
+import DownloadIcon from "@mui/icons-material/Download";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import MonitorHeartIcon from "@mui/icons-material/MonitorHeart";
 import { useEffect, useRef, useState } from "react";
@@ -12,11 +13,13 @@ import { DetectionSummaryCard } from "../components/detection-summary-card";
 import { ExecutiveSummaryStrip } from "../components/executive-summary-strip";
 import { ExplanationCard } from "../components/explanation-card";
 import { NoticePanel } from "../components/notice-panel";
+import { ReportTemplate } from "../components/report-template";
 import { XrayPreview } from "../components/xray-preview";
 import { XrayUpload } from "../components/xray-upload";
 import { PanelCard, PanelHeader, StatCard } from "../components/ui/card";
 import { AppShell, AppSidebar, AppTopHeader, PageCanvas, SidebarNavButton } from "../components/ui/shell";
 import { xrayApi, type InferenceResponse, type ResponseLanguage, type XrayUiState } from "../lib/api";
+import { downloadReport } from "../lib/download-report";
 
 const navItems = [
   {
@@ -106,9 +109,12 @@ export default function Page() {
   const [result, setResult] = useState<InferenceResponse | null>(null);
   const [responseLanguage, setResponseLanguage] = useState<ResponseLanguage>("en");
   const [helpOpen, setHelpOpen] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const resultAnchorRef = useRef<HTMLDivElement | null>(null);
+  const reportRef = useRef<HTMLDivElement>(null);
   const uiState = getUiState({ selectedFile, loading, error, result });
   const modeLabel = xrayApi.useMockMode() ? "Mock" : "Backend";
+  const reportTimestamp = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
   const statusLabel =
     uiState === "analyzing"
       ? "Analyzing"
@@ -164,7 +170,19 @@ export default function Page() {
     if (!file) setResult(null);
   }
 
+  async function handleDownload() {
+    if (!reportRef.current || !result) return;
+    setDownloading(true);
+    try {
+      const filename = `xray-report-${result.case_id}.png`;
+      await downloadReport(reportRef.current, filename);
+    } finally {
+      setDownloading(false);
+    }
+  }
+
   return (
+    <>
     <AppShell
       sidebar={
         <AppSidebar
@@ -203,6 +221,17 @@ export default function Page() {
               <span className="topbar-chip topbar-chip--subtle">
                 {modeLabel} Mode
               </span>
+              {result ? (
+                <button
+                  type="button"
+                  onClick={handleDownload}
+                  disabled={downloading}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-[#5c63f2] px-3.5 py-1.5 text-xs font-semibold text-[#5c63f2] transition hover:bg-[#5c63f2] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <DownloadIcon sx={{ fontSize: 14 }} />
+                  {downloading ? "Generating…" : "Download Report"}
+                </button>
+              ) : null}
             </div>
           }
         />
@@ -326,5 +355,20 @@ export default function Page() {
         </div>
       </PageCanvas>
     </AppShell>
+
+    {/* Off-screen report template — captured by html2canvas on download */}
+    <div style={{ position: "absolute", top: 0, left: "-9999px", visibility: "hidden", pointerEvents: "none" }}>
+      {result ? (
+        <ReportTemplate
+          ref={reportRef}
+          result={result}
+          previewUrl={previewUrl}
+          timestamp={reportTimestamp}
+        />
+      ) : (
+        <div ref={reportRef} />
+      )}
+    </div>
+    </>
   );
 }
