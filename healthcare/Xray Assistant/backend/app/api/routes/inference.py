@@ -1,8 +1,11 @@
+import asyncio
+import json
 from pathlib import Path
 from shutil import copyfileobj
 from uuid import uuid4
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
+from fastapi.responses import StreamingResponse
 
 from app.core.config import get_settings
 from app.schemas.inference import DetectionItem, InferenceResponse, ModelInfo
@@ -35,6 +38,114 @@ def to_public_temp_url(file_path: str | None) -> str | None:
         return file_path
 
     return f"/temp/{relative.as_posix()}"
+
+
+def _sse_event(event: str, data: dict) -> str:
+    return f"event: {event}\ndata: {json.dumps(data)}\n\n"
+
+
+@router.post("/v1/infer/stream")
+async def run_inference_stream(
+    file: UploadFile = File(...),
+    response_language: str = Form("en"),
+) -> StreamingResponse:
+    if not file.filename:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Uploaded file must include a filename.",
+        )
+
+    case_id = str(uuid4())
+    suffix = Path(file.filename).suffix.lower() or ".bin"
+    upload_path = UPLOADS_DIR / f"{case_id}{suffix}"
+
+    try:
+        with upload_path.open("wb") as buffer:
+            copyfileobj(file.file, buffer)
+    finally:
+        await file.close()
+
+    async def generate():
+        yield _sse_event("progress", {"step": "uploading", "message": "Image uploaded, starting detection…"})
+        await asyncio.sleep(0)
+
+        try:
+            prediction = await asyncio.get_event_loop().run_in_executor(
+                None, lambda: predictor.predict(str(upload_path))
+            )
+        except PredictorConfigurationError as exc:
+            yield _sse_event("error", {"detail": str(exc)})
+            return
+        except PredictorRuntimeError as exc:
+            yield _sse_event("error", {"detail": str(exc)})
+            return
+
+        confidence = float(prediction["confidence"])
+        severity = confidence_to_severity(confidence)
+        annotated_image_path = generate_annotated_image(
+            image_path=str(upload_path),
+            detections=prediction["detections"],
+            output_dir=str(ANNOTATED_DIR),
+        )
+
+        detections = [
+            DetectionItem(
+                label=item["label"],
+                confidence=float(item["confidence"]),
+                bbox=[float(v) for v in item.get("bbox", [])],
+            )
+            for item in prediction["detections"]
+        ]
+
+        yield _sse_event("detection", {
+            "finding": prediction["finding"],
+            "confidence": confidence,
+            "severity": severity,
+            "detections": [d.model_dump() for d in detections],
+            "annotated_image_path": to_public_temp_url(annotated_image_path),
+            "model_info": prediction["model_info"],
+        })
+        await asyncio.sleep(0)
+
+        yield _sse_event("progress", {"step": "generating", "message": "Detection complete. Generating clinical summary…"})
+        await asyncio.sleep(0)
+
+        detection_payload = {
+            "finding": prediction["finding"],
+            "confidence": confidence,
+            "severity": severity,
+            "detections": prediction["detections"],
+        }
+        enrichment = await asyncio.get_event_loop().run_in_executor(
+            None, lambda: genai_service.generate_clinical_response(
+                detection_payload, response_language=response_language
+            )
+        )
+
+        result = InferenceResponse(
+            case_id=case_id,
+            status=prediction["status"],
+            finding=prediction["finding"],
+            confidence=confidence,
+            severity=severity,
+            detections=detections,
+            summary=enrichment["summary"],
+            explanation=enrichment["explanation"],
+            action_items=list(enrichment.get("action_items", [])),
+            annotated_image_path=to_public_temp_url(annotated_image_path),
+            model_info=ModelInfo(**prediction["model_info"]),
+        )
+
+        yield _sse_event("result", result.model_dump())
+
+    return StreamingResponse(
+        generate(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 @router.post("/v1/infer", response_model=InferenceResponse)

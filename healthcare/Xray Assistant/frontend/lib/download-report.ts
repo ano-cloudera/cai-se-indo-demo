@@ -1,8 +1,24 @@
+async function waitForImages(element: HTMLElement): Promise<void> {
+  const images = Array.from(element.querySelectorAll("img"));
+  await Promise.all(
+    images.map(
+      (img) =>
+        new Promise<void>((resolve) => {
+          if (img.complete) { resolve(); return; }
+          img.onload = () => resolve();
+          img.onerror = () => resolve();
+        }),
+    ),
+  );
+}
+
 export async function downloadReport(element: HTMLElement, filename: string): Promise<void> {
   const [html2canvas, { jsPDF }] = await Promise.all([
     import("html2canvas").then((m) => m.default),
     import("jspdf"),
   ]);
+
+  await waitForImages(element);
 
   const canvas = await html2canvas(element, {
     scale: 2,

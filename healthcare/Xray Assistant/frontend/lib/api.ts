@@ -27,6 +27,12 @@ export interface InferenceResponse {
 
 export type XrayUiState = "idle" | "selected" | "analyzing" | "success" | "error";
 export type ResponseLanguage = "en" | "id";
+export type AnalysisStep = "uploading" | "detecting" | "generating" | "done";
+
+export interface AnalysisProgress {
+  step: AnalysisStep;
+  partialResult?: Partial<InferenceResponse>;
+}
 
 const MOCK_RESPONSE: InferenceResponse = {
   case_id: "XRAY-0001",
@@ -101,32 +107,91 @@ function localizeMockResponse(responseLanguage: ResponseLanguage, payload: Infer
   return payload;
 }
 
-async function inferWithBackend(file: File, responseLanguage: ResponseLanguage): Promise<InferenceResponse> {
+async function inferWithBackend(
+  file: File,
+  responseLanguage: ResponseLanguage,
+  onProgress?: (progress: AnalysisProgress) => void,
+): Promise<InferenceResponse> {
   const formData = new FormData();
   formData.append("file", file);
   formData.append("response_language", responseLanguage);
 
-  const response = await fetch(`${getApiBaseUrl()}/api/v1/infer`, {
+  onProgress?.({ step: "uploading" });
+
+  const response = await fetch(`${getApiBaseUrl()}/api/v1/infer/stream`, {
     method: "POST",
     body: formData,
   });
 
-  if (!response.ok) {
+  if (!response.ok || !response.body) {
     let detail = `Request failed with status ${response.status}`;
     try {
       const payload = (await response.json()) as { detail?: string };
       if (payload.detail) detail = payload.detail;
     } catch {
-      // Keep the default message when the response body is not JSON.
+      // ignore
     }
     throw new Error(detail);
   }
 
-  const payload = (await response.json()) as InferenceResponse;
-  return {
-    ...payload,
-    annotated_image_path: resolveAnnotatedImageUrl(payload.annotated_image_path),
-  };
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let partial: Partial<InferenceResponse> = {};
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+
+    const chunks = buffer.split("\n\n");
+    buffer = chunks.pop() ?? "";
+
+    for (const chunk of chunks) {
+      const eventMatch = chunk.match(/^event: (\w+)/m);
+      const dataMatch = chunk.match(/^data: (.+)/m);
+      if (!eventMatch || !dataMatch) continue;
+
+      const event = eventMatch[1];
+      let data: Record<string, unknown>;
+      try {
+        data = JSON.parse(dataMatch[1]);
+      } catch {
+        continue;
+      }
+
+      if (event === "error") {
+        throw new Error((data.detail as string) || "Inference failed");
+      }
+
+      if (event === "progress") {
+        const step = (data.step as string) === "generating" ? "generating" : "uploading";
+        onProgress?.({ step, partialResult: partial });
+      }
+
+      if (event === "detection") {
+        partial = {
+          finding: data.finding as string,
+          confidence: data.confidence as number,
+          severity: data.severity as string,
+          detections: data.detections as DetectionItem[],
+          annotated_image_path: resolveAnnotatedImageUrl(data.annotated_image_path as string | null),
+          model_info: data.model_info as ModelInfo,
+        };
+        onProgress?.({ step: "detecting", partialResult: partial });
+      }
+
+      if (event === "result") {
+        const payload = data as unknown as InferenceResponse;
+        return {
+          ...payload,
+          annotated_image_path: resolveAnnotatedImageUrl(payload.annotated_image_path),
+        };
+      }
+    }
+  }
+
+  throw new Error("Stream ended without a result event");
 }
 
 async function inferWithMock(file: File, responseLanguage: ResponseLanguage): Promise<InferenceResponse> {
@@ -146,9 +211,13 @@ async function inferWithMock(file: File, responseLanguage: ResponseLanguage): Pr
 }
 
 export const xrayApi = {
-  async infer(file: File, responseLanguage: ResponseLanguage = "en"): Promise<InferenceResponse> {
+  async infer(
+    file: File,
+    responseLanguage: ResponseLanguage = "en",
+    onProgress?: (progress: AnalysisProgress) => void,
+  ): Promise<InferenceResponse> {
     if (useMockMode()) return inferWithMock(file, responseLanguage);
-    return inferWithBackend(file, responseLanguage);
+    return inferWithBackend(file, responseLanguage, onProgress);
   },
   getApiBaseUrl,
   resolveAnnotatedImageUrl,

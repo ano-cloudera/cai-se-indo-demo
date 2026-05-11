@@ -18,7 +18,8 @@ import { XrayPreview } from "../components/xray-preview";
 import { XrayUpload } from "../components/xray-upload";
 import { PanelCard, PanelHeader, StatCard } from "../components/ui/card";
 import { AppShell, AppSidebar, AppTopHeader, PageCanvas, SidebarNavButton } from "../components/ui/shell";
-import { xrayApi, type InferenceResponse, type ResponseLanguage, type XrayUiState } from "../lib/api";
+import { xrayApi, type AnalysisProgress, type AnalysisStep, type InferenceResponse, type ResponseLanguage, type XrayUiState } from "../lib/api";
+import { AnalysisProgressBar } from "../components/analysis-progress-bar";
 import { downloadReport } from "../lib/download-report";
 
 const navItems = [
@@ -105,6 +106,8 @@ export default function Page() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [analysisStep, setAnalysisStep] = useState<AnalysisStep>("uploading");
+  const [partialResult, setPartialResult] = useState<Partial<InferenceResponse> | null>(null);
   const [error, setError] = useState("");
   const [result, setResult] = useState<InferenceResponse | null>(null);
   const [responseLanguage, setResponseLanguage] = useState<ResponseLanguage>("en");
@@ -149,10 +152,20 @@ export default function Page() {
     setLoading(true);
     setError("");
     setResult(null);
+    setPartialResult(null);
+    setAnalysisStep("uploading");
 
     try {
-      const response = await xrayApi.infer(selectedFile, responseLanguage);
+      const response = await xrayApi.infer(
+        selectedFile,
+        responseLanguage,
+        (progress: AnalysisProgress) => {
+          setAnalysisStep(progress.step);
+          if (progress.partialResult) setPartialResult(progress.partialResult);
+        },
+      );
       setResult(response);
+      setAnalysisStep("done");
     } catch (submissionError) {
       setError(
         submissionError instanceof Error
@@ -275,6 +288,8 @@ export default function Page() {
               onSubmit={handleSubmit}
             />
 
+            <AnalysisProgressBar step={analysisStep} visible={loading} />
+
             {helpOpen ? (
               <NoticePanel
                 title="How To Use This Demo"
@@ -296,8 +311,8 @@ export default function Page() {
             <div className="grid gap-6 xl:grid-cols-2">
               <XrayPreview previewUrl={previewUrl} />
               <AnnotatedImageCard
-                imageUrl={result?.annotated_image_path ?? null}
-                loading={loading}
+                imageUrl={result?.annotated_image_path ?? partialResult?.annotated_image_path ?? null}
+                loading={loading && !partialResult?.annotated_image_path}
               />
             </div>
 
@@ -357,7 +372,7 @@ export default function Page() {
     </AppShell>
 
     {/* Off-screen report template — captured by html2canvas on download */}
-    <div style={{ position: "absolute", top: 0, left: "-9999px", visibility: "hidden", pointerEvents: "none" }}>
+    <div style={{ position: "absolute", top: 0, left: "-9999px", opacity: 0, pointerEvents: "none", zIndex: -1 }}>
       {result ? (
         <ReportTemplate
           ref={reportRef}
