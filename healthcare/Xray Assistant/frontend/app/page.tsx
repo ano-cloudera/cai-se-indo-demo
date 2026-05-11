@@ -174,7 +174,7 @@ export default function Page() {
     if (!reportRef.current || !result) return;
     setDownloading(true);
     try {
-      const filename = `xray-report-${result.case_id}.png`;
+      const filename = `xray-report-${result.case_id}.pdf`;
       await downloadReport(reportRef.current, filename);
     } finally {
       setDownloading(false);
