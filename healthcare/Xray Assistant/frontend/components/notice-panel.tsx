@@ -1,3 +1,7 @@
+import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+
 interface NoticePanelProps {
   title: string;
   message: string;
@@ -23,10 +27,7 @@ function ToneIcon({ tone }: { tone: NonNullable<NoticePanelProps["tone"]> }) {
   if (tone === "error") {
     return (
       <span className="inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-rose-100 text-rose-600">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
-          <path d="M8 1.5 14 12.5a1 1 0 0 1-.88 1.5H2.88A1 1 0 0 1 2 12.5l6-11Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
-          <path d="M8 5.5v3.5M8 11.5h.01" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-        </svg>
+        <ErrorOutlineIcon sx={{ fontSize: 18 }} />
       </span>
     );
   }
@@ -34,20 +35,14 @@ function ToneIcon({ tone }: { tone: NonNullable<NoticePanelProps["tone"]> }) {
   if (tone === "warning") {
     return (
       <span className="inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
-          <path d="M8 2.2a5.8 5.8 0 1 1 0 11.6A5.8 5.8 0 0 1 8 2.2Z" stroke="currentColor" strokeWidth="1.4" />
-          <path d="M8 5.2v3.1M8 10.8h.01" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-        </svg>
+        <WarningAmberIcon sx={{ fontSize: 18 }} />
       </span>
     );
   }
 
   return (
     <span className="inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-white/80 text-[var(--color-ink-subtle)]">
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
-        <circle cx="8" cy="8" r="5.8" stroke="currentColor" strokeWidth="1.4" />
-        <path d="M8 7.2v3M8 5.2h.01" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-      </svg>
+      <InfoOutlinedIcon sx={{ fontSize: 18 }} />
     </span>
   );
 }

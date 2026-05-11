@@ -2,10 +2,11 @@
 
 This repository is the shared workspace for the CAI SE Indonesia demo environment on Cloudera AI.
 
-It contains three application tracks:
+It contains four application tracks:
 
 - `ask-data` — general-purpose AI analytics assistant (Ask the Data / NL-to-SQL)
 - `fraud-ai-assistant` — fraud-focused AI assistant with dashboard, investigations, and ML workflows
+- `healthcare` — healthcare demo: chest X-ray review assistant powered by YOLO + AWS Bedrock
 - `agent-studio` — experimental agent applications built with the Cloudera Agent SDK
 
 ## Current Shared Platform Configuration
@@ -42,6 +43,12 @@ cai-se-indo-demo/
 │   ├── frontend/
 │   ├── ml-templates/
 │   └── docs/
+├── healthcare/                      # Healthcare demo — Xray Assist
+│   └── Xray Assistant/
+│       ├── backend/                 # FastAPI + YOLO inference + Bedrock GenAI
+│       ├── frontend/                # Next.js, Cloudera design system
+│       ├── docs/                    # Architecture, API, project state
+│       └── references/             # Upstream YOLO + ChestX-Det references
 ├── agent-studio/                    # Agent SDK experiments
 │   └── marketing-content-intelligence/
 ├── sample/                          # Generated CSV data for local dev
@@ -85,6 +92,24 @@ Fraud-specific demo track combining an AI assistant with a full analytics consol
 
 See [`fraud-ai-assistant/docs/project-state.md`](fraud-ai-assistant/docs/project-state.md) for full implementation and deployment details.
 
+### `healthcare` — Xray Assist
+
+Healthcare-focused demo: chest X-ray upload, YOLO-based object detection, and GenAI-enriched clinical output.
+
+- FastAPI backend with YOLO11 inference adapter and AWS Bedrock enrichment (Claude Sonnet)
+- Next.js 15 frontend with Cloudera-branded design — same design system as ask-data
+- Typography: Inter (body), Outfit (headings), JetBrains Mono (numeric fields) — all via Google Fonts
+- Icons: `@mui/icons-material` throughout — `MonitorHeartIcon`, `SummarizeIcon`, `BiotechIcon`, clinical notice icons
+- Upload panel: unified control block (language, file picker, CTA) with orange gradient Analyze button
+- Stat cards: dynamic color-coding by severity/confidence — rose/amber/green/blue based on result
+- Topbar: single-line layout with icon + title + separator + subtitle
+- Bilingual output: English / Bahasa Indonesia response language selection
+- GenAI output constrained to assistive, review-oriented language — never diagnostic
+- Safe fallback: API never fails if Bedrock is unavailable
+- Deployed as two separate Cloudera AI Applications (backend + frontend)
+
+See [`healthcare/Xray Assistant/docs/project-state.md`](healthcare/Xray%20Assistant/docs/project-state.md) for full implementation and deployment details.
+
 ### `agent-studio`
 
 Experimental track for agent applications built on the Cloudera Agent SDK.
@@ -123,4 +148,5 @@ Experimental track for agent applications built on the Cloudera Agent SDK.
 | Ask-data project state | [`ask-data/docs/project-state.md`](ask-data/docs/project-state.md) |
 | Fraud app | [`fraud-ai-assistant/README.md`](fraud-ai-assistant/README.md) |
 | Fraud project state | [`fraud-ai-assistant/docs/project-state.md`](fraud-ai-assistant/docs/project-state.md) |
+| Xray Assist (healthcare) | [`healthcare/Xray Assistant/docs/project-state.md`](healthcare/Xray%20Assistant/docs/project-state.md) |
 | Agent studio | [`agent-studio/`](agent-studio/) |

@@ -86,26 +86,20 @@ export function PanelHeader({
 export function StatCard({
   label,
   value,
-  detail,
   toneClassName,
 }: {
   label: string;
   value: string;
-  detail: string;
+  detail?: string;
   toneClassName?: string;
 }) {
   return (
-    <PanelCard className={cn("stat-card relative overflow-hidden px-3.5 py-3 xl:px-3.5 xl:py-3", toneClassName)}>
-      <div className="flex min-h-[6.4rem] flex-col">
-        <span className="stat-card-label">
-          {label}
-        </span>
-        <div className="mt-3 min-w-0">
-          <h3 className="metric-value text-[var(--color-ink-strong)] capitalize">
-            {value}
-          </h3>
-          <p className="table-meta mt-2 max-w-[15rem]">{detail}</p>
-        </div>
+    <PanelCard className={cn("stat-card relative overflow-hidden px-4 py-3.5", toneClassName)}>
+      <div className="flex flex-col gap-1.5">
+        <span className="stat-card-label">{label}</span>
+        <h3 className="metric-value text-[var(--color-ink-strong)] capitalize leading-none">
+          {value}
+        </h3>
       </div>
     </PanelCard>
   );

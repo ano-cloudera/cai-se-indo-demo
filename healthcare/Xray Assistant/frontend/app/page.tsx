@@ -1,5 +1,8 @@
 "use client";
 
+import ArticleIcon from "@mui/icons-material/Article";
+import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
+import MonitorHeartIcon from "@mui/icons-material/MonitorHeart";
 import { useEffect, useRef, useState } from "react";
 
 import { ActionItemsCard } from "../components/action-items-card";
@@ -19,16 +22,7 @@ const navItems = [
   {
     key: "demo",
     label: "Demo",
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden>
-        <path
-          d="M4 4.75A1.75 1.75 0 0 1 5.75 3h6.5L14 4.75v7.5A1.75 1.75 0 0 1 12.25 14h-6.5A1.75 1.75 0 0 1 4 12.25v-7.5Z"
-          stroke="currentColor"
-          strokeWidth="1.5"
-        />
-        <path d="M6.75 7.25h4.5M6.75 10h3.25" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      </svg>
-    ),
+    icon: <ArticleIcon sx={{ fontSize: 22 }} />,
     active: true,
   },
 ];
@@ -40,7 +34,7 @@ function getSeverityTone(severity: string | undefined) {
     case "medium":
       return "scorecard-soft-amber";
     case "low":
-      return "scorecard-soft-neutral";
+      return "scorecard-soft-green";
     default:
       return "scorecard-soft-neutral";
   }
@@ -59,6 +53,21 @@ function getStatusTone(status: string | undefined, loading: boolean, hasError: b
     default:
       return "scorecard-soft-neutral";
   }
+}
+
+function getConfidenceTone(confidence: number | null) {
+  if (confidence === null) return "scorecard-soft-neutral";
+  if (confidence >= 0.85) return "scorecard-soft-green";
+  if (confidence >= 0.6) return "scorecard-soft-amber";
+  return "scorecard-soft-rose";
+}
+
+function getFindingTone(finding: string | undefined) {
+  if (!finding) return "scorecard-soft-neutral";
+  const lower = finding.toLowerCase();
+  if (lower.includes("normal") || lower.includes("clear")) return "scorecard-soft-green";
+  if (lower.includes("pneumonia") || lower.includes("effusion") || lower.includes("opacity")) return "scorecard-soft-rose";
+  return "scorecard-soft-amber";
 }
 
 function formatConfidence(confidence: number | null) {
@@ -165,13 +174,7 @@ export default function Page() {
             <SidebarNavButton
               active={helpOpen}
               label="Help"
-              icon={
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden>
-                  <circle cx="9" cy="9" r="6.25" stroke="currentColor" strokeWidth="1.5" />
-                  <path d="M7.7 7.15a1.55 1.55 0 1 1 2.57 1.17c-.5.43-.92.74-.92 1.43" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                  <path d="M9 12.2h.01" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-                </svg>
-              }
+              icon={<HelpOutlineIcon sx={{ fontSize: 22 }} />}
               onClick={() => setHelpOpen((value) => !value)}
             />
           }
@@ -180,13 +183,19 @@ export default function Page() {
       header={
         <AppTopHeader
           left={
-            <div className="page-title-stack page-title-stack--simple">
-              <h2 className="page-title text-[var(--color-ink-strong)]">
-                Xray Assist
-              </h2>
-              <p className="page-subtitle">
-                Structured chest X-ray review and action-oriented output.
-              </p>
+            <div className="flex items-center gap-3">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-[var(--color-action-soft)] text-[var(--color-action-primary)]">
+                <MonitorHeartIcon sx={{ fontSize: 20 }} />
+              </span>
+              <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
+                <h2 className="font-headline text-[1.2rem] font-bold leading-tight tracking-[-0.025em] text-[var(--color-ink-strong)]">
+                  Xray Assist
+                </h2>
+                <span className="text-[var(--color-ink-subtle)] text-sm select-none">·</span>
+                <p className="text-[0.82rem] font-medium leading-tight text-[var(--color-ink-subtle)]">
+                  Structured chest X-ray review and action-oriented output.
+                </p>
+              </div>
             </div>
           }
           right={
@@ -204,26 +213,22 @@ export default function Page() {
           <div className="metric-grid metric-grid-compact">
             <StatCard
               label="Finding"
-              value={result?.finding ?? "—"}
-              detail="Primary clinical finding from the latest analysis."
-              toneClassName="scorecard-soft-neutral"
+              value={result?.finding ?? "Awaiting"}
+              toneClassName={getFindingTone(result?.finding)}
             />
             <StatCard
               label="Confidence"
               value={formatConfidence(result?.confidence ?? null)}
-              detail="Highest model confidence returned for this image."
-              toneClassName="scorecard-soft-blue"
+              toneClassName={getConfidenceTone(result?.confidence ?? null)}
             />
             <StatCard
               label="Severity"
-              value={result?.severity ?? "—"}
-              detail="Risk level derived from the analysis result."
+              value={result?.severity ?? "Pending"}
               toneClassName={getSeverityTone(result?.severity)}
             />
             <StatCard
               label="Status"
               value={statusLabel}
-              detail="Current system state for the submitted image."
               toneClassName={getStatusTone(result?.status, loading, Boolean(error))}
             />
           </div>

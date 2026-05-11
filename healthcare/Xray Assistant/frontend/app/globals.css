@@ -2,7 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
 
 :root {
   color-scheme: light;
@@ -88,12 +87,31 @@ body {
   background: var(--color-page-bg);
   color: var(--color-ink-strong);
   font-family: "Inter", "Segoe UI", sans-serif;
+  font-size: 1rem;
+  line-height: 1.75;
   text-rendering: optimizeLegibility;
   font-feature-settings: "cv01" 1, "cv02" 1, "cv03" 1, "cv11" 1;
 }
 
+h1, h2, h3, h4, h5, h6 {
+  font-family: "Outfit", "Segoe UI", sans-serif;
+}
+
 .font-headline {
-  font-family: "Inter", "Segoe UI", sans-serif;
+  font-family: "Outfit", "Segoe UI", sans-serif;
+}
+
+code, pre, .font-mono {
+  font-family: "JetBrains Mono", "Fira Code", monospace;
+}
+
+.icon-box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(255, 107, 0, 0.2), rgba(255, 107, 0, 0.05));
+  color: var(--color-brand-orange);
 }
 
 .app-shell {
@@ -403,7 +421,7 @@ body {
 }
 
 .page-title {
-  font-family: "Inter", "Segoe UI", sans-serif;
+  font-family: "Outfit", "Segoe UI", sans-serif;
   font-size: var(--font-size-page-title);
   font-weight: 700;
   line-height: 1.06;
@@ -434,8 +452,10 @@ body {
 }
 
 .page-title-stack--simple {
-  justify-content: center;
-  min-height: 3.25rem;
+  flex-direction: row;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0;
 }
 
 .surface-frame {
@@ -446,7 +466,7 @@ body {
 }
 
 .metric-value {
-  font-family: "Inter", "Segoe UI", sans-serif;
+  font-family: "JetBrains Mono", "Fira Code", monospace;
   font-size: var(--font-size-kpi-value);
   font-weight: var(--font-weight-kpi-value);
   line-height: 1.08;

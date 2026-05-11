@@ -246,22 +246,33 @@ The remaining limitation is deployment validation inside Cloudera AI rather than
 
 ## 7. Frontend
 
-**Stack:** Next.js 15, Tailwind CSS 3, TypeScript, Inter
+**Stack:** Next.js 15, Tailwind CSS 3, TypeScript, Inter + Outfit + JetBrains Mono, `@mui/icons-material`
 
 ### Current status
 
 The frontend has been adapted from `ask-data/frontend` into a dedicated healthcare demo while preserving:
 - the Cloudera logo
-- the main shell
+- the main shell (`#08004D` navy sidebar, indigo accent)
 - the sidebar style
 - the overall page structure
+
+### Design system (latest)
+
+- **Fonts:** Inter (body), Outfit (headings/`.font-headline`/`.page-title`), JetBrains Mono (`.metric-value` numeric fields) — loaded via Google Fonts `<link>` preconnect in `layout.tsx`
+- **Icons:** `@mui/icons-material` throughout — no inline SVGs remain in any component
+  - Nav: `ArticleIcon`, Help: `HelpOutlineIcon`, Topbar: `MonitorHeartIcon`
+  - Cards: `SummarizeIcon` (Clinical Summary), `BiotechIcon` (Clinical Interpretation)
+  - Notice panel: `ErrorOutlineIcon`, `WarningAmberIcon`, `InfoOutlinedIcon`
+  - Upload: `UploadFileIcon`
+- **`.icon-box`** utility class added to `globals.css` — orange gradient icon container matching ask-data
+- **Color palette:** unchanged — same CSS variables as ask-data, no net-new colors added
 
 ### Current UI behavior
 
 The UI now supports:
-- X-ray image upload
+- X-ray image upload with unified grouped control block
 - image preview
-- live scorecards
+- live scorecards with dynamic severity color-coding
 - findings overview table
 - clinical summary
 - clinical interpretation
@@ -271,11 +282,29 @@ The UI now supports:
 
 ### Scorecards
 
-Top scorecards are now bound to backend-compatible fields:
-- `Finding` ← `finding`
-- `Confidence` ← `confidence`
-- `Severity` ← `severity`
-- `Status` ← request lifecycle / backend status
+Top scorecards are bound to backend-compatible fields and color dynamically:
+
+| Card | Idle | Populated |
+|---|---|---|
+| Finding | Neutral | Green (normal/clear) · Amber (unknown) · Rose (pneumonia/opacity) |
+| Confidence | Neutral | Green ≥85% · Amber 60–84% · Rose <60% |
+| Severity | Neutral | Rose (high) · Amber (medium) · Green (low) |
+| Status | Green (Ready) | Blue (analyzing) · Rose (error) · Green (success) |
+
+Idle labels: `"Awaiting"` (Finding), `"Pending"` (Severity) — replaces bare `—`.
+
+### Topbar
+
+- Single-line layout: `MonitorHeartIcon` icon box + "Xray Assist" bold + `·` separator + subtitle — all on one horizontal row
+- No overflow / two-line wrapping inside the 4rem header
+
+### Upload panel
+
+- Solid white card with `shadow-card` (no dashed border)
+- Unified grouped control block: Language selector, Select Radiograph file picker, and Analyze Image button in one muted-surface container with thin dividers
+- File name shown inline below the picker label — no orphaned badge
+- "Select Radiograph" label (clinical tone)
+- Orange gradient CTA button (`#FF6B00 → #E54E00`) matching ask-data style
 
 ### Frontend API mode
 
@@ -287,20 +316,12 @@ Env vars:
 - `NEXT_PUBLIC_API_BASE_URL`
 - `NEXT_PUBLIC_XRAY_USE_MOCK`
 
-### Layout status
-
-Recent refinements already completed:
-- sidebar simplified to one menu item: `Demo`
-- header cleaned up
-- scorecards made more compact
-- scorecards forced into one row on desktop
-- typography and spacing improved for executive readability
-
 ### Validation already performed
 
 The frontend has already been validated with:
 - `tsc --noEmit`
 - `next build`
+- local dev server (`npm run dev`) confirming all MUI icon imports resolve correctly
 
 ---
 
