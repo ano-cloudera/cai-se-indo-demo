@@ -108,6 +108,7 @@ def dependencies_need_install(frontend_dir: Path) -> bool:
         "@emotion/react",
         "@emotion/styled",
         "html2canvas",
+        "jspdf",
     ]
     return any(not (node_modules / module_name).exists() for module_name in required_modules)
 
