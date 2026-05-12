@@ -59,19 +59,26 @@ function formatCaseId(id: string): string {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div style={{ padding: "18px 32px 0" }}>
-      <p style={{
-        fontSize: "9px",
-        fontWeight: "700",
-        textTransform: "uppercase",
-        letterSpacing: "0.16em",
-        color: "#9197a6",
-        margin: "0 0 8px",
-        borderBottom: "1px solid #eaecf2",
-        paddingBottom: "6px",
+    <div style={{ padding: "20px 32px 0" }}>
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "10px",
+        marginBottom: "10px",
+        borderBottom: "2px solid #eaecf2",
+        paddingBottom: "8px",
       }}>
-        {title}
-      </p>
+        <p style={{
+          fontSize: "11px",
+          fontWeight: "700",
+          textTransform: "uppercase",
+          letterSpacing: "0.14em",
+          color: "#5c63f2",
+          margin: 0,
+        }}>
+          {title}
+        </p>
+      </div>
       {children}
     </div>
   );
@@ -212,15 +219,15 @@ export const ReportTemplate = forwardRef<HTMLDivElement, ReportTemplateProps>(
 
         {/* ── Impression / Clinical Summary ── */}
         <Section title="Radiological Impression">
-          <div style={{ backgroundColor: "#f8f9fd", border: "1px solid #e6e9f2", borderRadius: "12px", padding: "14px 18px" }}>
-            <p style={{ fontSize: "13px", lineHeight: "1.8", color: "#2e3240", margin: 0 }}>{result.summary}</p>
+          <div style={{ backgroundColor: "#f8f9fd", border: "1px solid #e6e9f2", borderRadius: "12px", padding: "16px 20px" }}>
+            <p style={{ fontSize: "13px", lineHeight: "1.85", color: "#2e3240", margin: 0 }}>{result.summary}</p>
           </div>
         </Section>
 
         {/* ── Clinical Interpretation ── */}
         <Section title="Clinical Interpretation">
-          <div style={{ backgroundColor: "#f0f4ff", border: "1px solid #c7d4fd", borderRadius: "12px", padding: "14px 18px" }}>
-            <p style={{ fontSize: "13px", lineHeight: "1.8", color: "#2e3240", margin: 0 }}>{result.explanation}</p>
+          <div style={{ backgroundColor: "#f0f4ff", border: "1px solid #c7d4fd", borderRadius: "12px", padding: "16px 20px" }}>
+            <p style={{ fontSize: "13px", lineHeight: "1.85", color: "#2e3240", margin: 0 }}>{result.explanation}</p>
           </div>
         </Section>
 
@@ -228,34 +235,35 @@ export const ReportTemplate = forwardRef<HTMLDivElement, ReportTemplateProps>(
         {result.detections.length > 0 && (
           <Section title="Detected Findings">
             <div style={{ borderRadius: "12px", overflow: "hidden", border: "1px solid #e6e9f2" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
                 <thead>
-                  <tr style={{ backgroundColor: "#f4f6fb" }}>
-                    <th style={{ padding: "10px 16px", textAlign: "left", fontWeight: "600", color: "#3f4350", borderBottom: "1px solid #e6e9f2", width: "22%" }}>Finding</th>
-                    <th style={{ padding: "10px 16px", textAlign: "left", fontWeight: "600", color: "#3f4350", borderBottom: "1px solid #e6e9f2", width: "16%" }}>Confidence</th>
-                    <th style={{ padding: "10px 16px", textAlign: "left", fontWeight: "600", color: "#3f4350", borderBottom: "1px solid #e6e9f2", width: "14%" }}>Priority</th>
-                    <th style={{ padding: "10px 16px", textAlign: "left", fontWeight: "600", color: "#3f4350", borderBottom: "1px solid #e6e9f2" }}>Clinical Note</th>
+                  <tr style={{ backgroundColor: "#f0f2fa" }}>
+                    <th style={{ padding: "12px 18px", textAlign: "left", fontWeight: "700", color: "#2e3240", borderBottom: "2px solid #e6e9f2", width: "24%" }}>Finding</th>
+                    <th style={{ padding: "12px 18px", textAlign: "left", fontWeight: "700", color: "#2e3240", borderBottom: "2px solid #e6e9f2", width: "14%" }}>Confidence</th>
+                    <th style={{ padding: "12px 18px", textAlign: "left", fontWeight: "700", color: "#2e3240", borderBottom: "2px solid #e6e9f2", width: "16%" }}>Priority</th>
+                    <th style={{ padding: "12px 18px", textAlign: "left", fontWeight: "700", color: "#2e3240", borderBottom: "2px solid #e6e9f2" }}>Clinical Note</th>
                   </tr>
                 </thead>
                 <tbody>
                   {result.detections.map((item, index) => (
                     <tr key={`${item.label}-${index}`} style={{ backgroundColor: index % 2 === 0 ? "#ffffff" : "#f8f9fd" }}>
-                      <td style={{ padding: "10px 16px", color: "#1a1d23", textTransform: "capitalize", fontWeight: "600", borderBottom: "1px solid #eaecf2" }}>{capitalize(item.label)}</td>
-                      <td style={{ padding: "10px 16px", color: "#3f4350", borderBottom: "1px solid #eaecf2" }}>{Math.round(item.confidence * 100)}%</td>
-                      <td style={{ padding: "10px 16px", borderBottom: "1px solid #eaecf2" }}>
+                      <td style={{ padding: "12px 18px", color: "#1a1d23", textTransform: "capitalize", fontWeight: "600", borderBottom: "1px solid #eaecf2" }}>{capitalize(item.label)}</td>
+                      <td style={{ padding: "12px 18px", color: "#3f4350", fontWeight: "600", borderBottom: "1px solid #eaecf2" }}>{Math.round(item.confidence * 100)}%</td>
+                      <td style={{ padding: "12px 18px", borderBottom: "1px solid #eaecf2" }}>
                         <span style={{
                           display: "inline-block",
-                          padding: "2px 8px",
-                          borderRadius: "6px",
-                          fontSize: "10px",
+                          padding: "4px 12px",
+                          borderRadius: "8px",
+                          fontSize: "11px",
                           fontWeight: "700",
                           backgroundColor: severityBg(item.confidence >= 0.85 ? "high" : item.confidence >= 0.6 ? "medium" : "low"),
+                          border: `1px solid ${severityBorder(item.confidence >= 0.85 ? "high" : item.confidence >= 0.6 ? "medium" : "low")}`,
                           color: item.confidence >= 0.85 ? "#b91c1c" : item.confidence >= 0.6 ? "#92400e" : "#166534",
                         }}>
                           {item.confidence >= 0.85 ? "High" : item.confidence >= 0.6 ? "Moderate" : "Low"}
                         </span>
                       </td>
-                      <td style={{ padding: "10px 16px", color: "#5a5f72", borderBottom: "1px solid #eaecf2" }}>
+                      <td style={{ padding: "12px 18px", color: "#5a5f72", borderBottom: "1px solid #eaecf2", lineHeight: "1.55" }}>
                         Requires clinical correlation and specialist review.
                       </td>
                     </tr>
@@ -269,33 +277,33 @@ export const ReportTemplate = forwardRef<HTMLDivElement, ReportTemplateProps>(
         {/* ── Recommended Actions ── */}
         {result.action_items.length > 0 && (
           <Section title="Recommended Next Steps">
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
               {result.action_items.map((item, index) => (
                 <div key={index} style={{
                   display: "flex",
                   alignItems: "flex-start",
-                  gap: "12px",
+                  gap: "14px",
                   backgroundColor: "#f8f9fd",
                   border: "1px solid #e6e9f2",
-                  borderRadius: "10px",
-                  padding: "11px 16px",
+                  borderRadius: "12px",
+                  padding: "14px 18px",
                 }}>
                   <span style={{
                     flexShrink: 0,
-                    width: "22px",
-                    height: "22px",
+                    width: "26px",
+                    height: "26px",
                     borderRadius: "50%",
                     backgroundColor: "#e3e4ff",
                     color: "#4f56d9",
-                    fontSize: "11px",
-                    fontWeight: "700",
+                    fontSize: "12px",
+                    fontWeight: "800",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                   }}>
                     {index + 1}
                   </span>
-                  <p style={{ fontSize: "12px", lineHeight: "1.65", color: "#3a3f52", margin: 0 }}>{item}</p>
+                  <p style={{ fontSize: "13px", lineHeight: "1.7", color: "#3a3f52", margin: 0 }}>{item}</p>
                 </div>
               ))}
             </div>
@@ -304,15 +312,18 @@ export const ReportTemplate = forwardRef<HTMLDivElement, ReportTemplateProps>(
 
         {/* ── Disclaimer Footer ── */}
         <div style={{
-          margin: "20px 32px 0",
-          padding: "13px 18px",
+          margin: "24px 32px 0",
+          padding: "16px 20px",
           backgroundColor: "#fffbf0",
-          border: "1px solid #f5d87a",
-          borderRadius: "10px",
+          border: "2px solid #f5c842",
+          borderRadius: "12px",
           marginBottom: "32px",
         }}>
-          <p style={{ fontSize: "10px", color: "#78500a", margin: 0, lineHeight: "1.65" }}>
-            <strong>Clinical Disclaimer:</strong> This report is produced by an AI-assisted demonstration system (Cloudera AI) and is intended solely for educational and review support purposes. It does not constitute a medical diagnosis and must not be used as the basis for clinical decision-making without validation by a qualified radiologist or licensed medical professional. All findings require appropriate clinical correlation.
+          <p style={{ fontSize: "11px", fontWeight: "700", color: "#92400e", margin: "0 0 5px", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+            ⚠ Clinical Disclaimer
+          </p>
+          <p style={{ fontSize: "12px", color: "#78500a", margin: 0, lineHeight: "1.7" }}>
+            This report is produced by an AI-assisted demonstration system (Cloudera AI) and is intended solely for educational and review support purposes. It does not constitute a medical diagnosis and must not be used as the basis for clinical decision-making without validation by a qualified radiologist or licensed medical professional. All findings require appropriate clinical correlation.
           </p>
         </div>
 
