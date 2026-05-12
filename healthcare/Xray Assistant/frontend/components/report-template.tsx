@@ -251,11 +251,14 @@ export const ReportTemplate = forwardRef<HTMLDivElement, ReportTemplateProps>(
                       <td style={{ padding: "12px 18px", color: "#3f4350", fontWeight: "600", borderBottom: "1px solid #eaecf2" }}>{Math.round(item.confidence * 100)}%</td>
                       <td style={{ padding: "12px 18px", borderBottom: "1px solid #eaecf2" }}>
                         <span style={{
-                          display: "inline-block",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
                           padding: "4px 12px",
                           borderRadius: "8px",
                           fontSize: "11px",
                           fontWeight: "700",
+                          lineHeight: "1",
                           backgroundColor: severityBg(item.confidence >= 0.85 ? "high" : item.confidence >= 0.6 ? "medium" : "low"),
                           border: `1px solid ${severityBorder(item.confidence >= 0.85 ? "high" : item.confidence >= 0.6 ? "medium" : "low")}`,
                           color: item.confidence >= 0.85 ? "#b91c1c" : item.confidence >= 0.6 ? "#92400e" : "#166534",
@@ -297,6 +300,7 @@ export const ReportTemplate = forwardRef<HTMLDivElement, ReportTemplateProps>(
                     color: "#4f56d9",
                     fontSize: "12px",
                     fontWeight: "800",
+                    lineHeight: "1",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
