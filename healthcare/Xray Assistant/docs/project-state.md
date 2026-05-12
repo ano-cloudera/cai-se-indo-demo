@@ -267,16 +267,23 @@ The frontend has been adapted from `ask-data/frontend` into a dedicated healthca
 - **`.icon-box`** utility class added to `globals.css` — orange gradient icon container matching ask-data
 - **Color palette:** unchanged — same CSS variables as ask-data, no net-new colors added
 
+### Sidebar decoration
+
+- **Cloudera grid pattern:** SVG decorative block pattern anchored at bottom-left of sidebar, grows diagonally up-right — matches the Cloudera brand motif
+- **Help button:** small `52×52px` rounded square icon button at bottom-right of sidebar with "HELP" caption label below; active state fills indigo gradient
+
 ### Current UI behavior
 
 The UI now supports:
 - X-ray image upload with unified grouped control block
 - image preview
+- streaming analysis progress indicator (Uploading → Detecting → Generating)
+- annotated image appears immediately after YOLO detection, before LLM summary arrives
 - live scorecards with dynamic severity color-coding
 - findings overview table
-- clinical summary
+- clinical summary (radiology report style: Finding row + Impression + Clinical Note + inline disclaimer)
 - clinical interpretation
-- recommended actions
+- recommended actions with "Initial Assessment Only" amber disclaimer
 - analysis result image panel
 - bilingual response selection for Bedrock enrichment
 
@@ -306,28 +313,45 @@ Idle labels: `"Awaiting"` (Finding), `"Pending"` (Severity) — replaces bare `�
 - "Select Radiograph" label (clinical tone)
 - Orange gradient CTA button (`#FF6B00 → #E54E00`) matching ask-data style
 
-### Download Report
+### Streaming progress indicator
+
+- `AnalysisProgressBar` component shown during analysis
+- Three steps: **Uploading → Detecting → Generating** with animated pill indicators
+- Annotated image rendered immediately after `detection` SSE event — user sees result image ~4s before full summary
+- Backend: `/api/v1/infer/stream` SSE endpoint emits `progress`, `detection`, `result` events
+- Original `/api/v1/infer` endpoint preserved for compatibility
+
+### Clinical Summary card (radiology report style)
+
+Redesigned from generic impression block to structured clinical sections:
+- **FINDING:** finding name + confidence pill + severity badge
+- **IMPRESSION:** AI-generated summary in soft neutral card
+- **CLINICAL NOTE:** fixed specialist correlation reminder in blue card
+- Inline italic disclaimer: *"AI-generated · For initial review support only · Not a clinical diagnosis"*
+
+### Download Report (PDF)
 
 - `Download Report` button appears in topbar right area after analysis completes
 - Indigo outline pill button — hover fills indigo, white text; disabled while generating
-- Triggers off-screen `ReportTemplate` capture via `html2canvas` at 2× scale
-- Downloads a PNG named `xray-report-{case_id}.png`
+- Triggers off-screen `ReportTemplate` capture via `html2canvas` + `jsPDF` at 2× scale
+- Downloads a PDF named `xray-report-{case_id}.pdf`
 - Report contents:
-  - Navy header: app name, case ID, timestamp, model version, demo disclaimer badge
+  - Navy header: app name, short case ref (`#XXXXXXXX`), report date, `Chest X-Ray AI v1.0`, study type
   - Indigo accent bar
-  - 4 stat cards: Finding, Confidence (color by threshold), Severity (rose/amber/green), Status
-  - Annotated X-ray image (falls back to original preview if no annotated image)
-  - Clinical Summary section
+  - 4 stat cards: Primary Finding, Model Confidence, Clinical Priority, Review Status
+  - Annotated X-ray image (falls back to original preview)
+  - Radiological Impression section
   - Clinical Interpretation section (soft-blue tint)
-  - Findings Overview table (zebra-striped rows)
-  - Recommended Actions list (numbered, indigo counters)
-  - Amber disclaimer footer: AI demo only, not for clinical use
-- Implementation: `components/report-template.tsx` (forwardRef, inline styles for html2canvas compatibility) + `lib/download-report.ts` (lazy import html2canvas, PNG blob download)
+  - Detected Findings table with Priority badge column
+  - Recommended Next Steps list (numbered, indigo counters)
+  - Clinical disclaimer footer + report footer bar with ref and date
+- PDF fix: hidden template uses `opacity:0` (not `visibility:hidden`) + `waitForImages()` before capture
+- Implementation: `components/report-template.tsx` (forwardRef, inline styles) + `lib/download-report.ts`
 
 ### Frontend API mode
 
 The frontend supports:
-- backend mode as the main path
+- backend mode as the main path (streaming SSE)
 - mock mode as optional fallback
 
 Env vars:

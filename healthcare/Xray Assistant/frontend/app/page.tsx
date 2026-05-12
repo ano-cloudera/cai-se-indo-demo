@@ -17,7 +17,7 @@ import { ReportTemplate } from "../components/report-template";
 import { XrayPreview } from "../components/xray-preview";
 import { XrayUpload } from "../components/xray-upload";
 import { PanelCard, PanelHeader, StatCard } from "../components/ui/card";
-import { AppShell, AppSidebar, AppTopHeader, PageCanvas, SidebarNavButton } from "../components/ui/shell";
+import { AppShell, AppSidebar, AppTopHeader, PageCanvas } from "../components/ui/shell";
 import { xrayApi, type AnalysisProgress, type AnalysisStep, type InferenceResponse, type ResponseLanguage, type XrayUiState } from "../lib/api";
 import { AnalysisProgressBar } from "../components/analysis-progress-bar";
 import { downloadReport } from "../lib/download-report";
@@ -201,13 +201,21 @@ export default function Page() {
         <AppSidebar
           brand={<BrandLogo />}
           items={navItems}
-          footer={
-            <SidebarNavButton
-              active={helpOpen}
-              label="Help"
-              icon={<HelpOutlineIcon sx={{ fontSize: 22 }} />}
+          helpButton={
+            <button
+              type="button"
               onClick={() => setHelpOpen((value) => !value)}
-            />
+              className={[
+                "flex h-[52px] w-[52px] items-center justify-center rounded-2xl border transition-all duration-150",
+                helpOpen
+                  ? "border-[#7dcfff] bg-[linear-gradient(180deg,#6970ff_0%,#5c63f2_100%)] text-white shadow-[0_8px_20px_rgba(92,99,242,0.35)]"
+                  : "border-white/15 bg-white/[0.07] text-[#9ea1ff] hover:border-white/25 hover:bg-white/[0.13] hover:text-white",
+              ].join(" ")}
+              aria-label="Help"
+              title="Help"
+            >
+              <HelpOutlineIcon sx={{ fontSize: 24 }} />
+            </button>
           }
         />
       }
