@@ -8,6 +8,20 @@ interface DetectionSummaryCardProps {
   loading?: boolean;
 }
 
+function severityBadgeClass(severity: string | undefined): string {
+  switch ((severity ?? "").toLowerCase()) {
+    case "high":   return "border-[var(--color-soft-rose-border)] bg-[var(--color-soft-rose)] text-red-700";
+    case "medium": return "border-[var(--color-soft-amber-border)] bg-[var(--color-soft-amber)] text-amber-700";
+    case "low":    return "border-[var(--color-soft-green-border)] bg-[var(--color-soft-green)] text-green-700";
+    default:       return "border-[var(--color-border-soft)] bg-[var(--color-surface-muted)] text-[var(--color-ink-subtle)]";
+  }
+}
+
+function capitalize(s: string): string {
+  if (!s) return "—";
+  return s.charAt(0).toUpperCase() + s.slice(1).replace(/_/g, " ");
+}
+
 export function DetectionSummaryCard({ result, loading = false }: DetectionSummaryCardProps) {
   return (
     <PanelCard className="p-6">
@@ -18,34 +32,50 @@ export function DetectionSummaryCard({ result, loading = false }: DetectionSumma
       />
 
       {result ? (
-        <>
-          <div className="mt-5 grid gap-3 sm:grid-cols-2">
-            <div className="rounded-[16px] border border-[var(--color-border-soft)] bg-[var(--color-surface-muted)] px-4 py-3">
-              <span className="text-[11px] font-medium text-[var(--color-ink-subtle)]">Case reference</span>
-              <p className="mt-1 font-mono text-sm font-semibold tracking-wide text-[var(--color-ink-strong)]">
-                #{result.case_id.slice(0, 8).toUpperCase()}
+        <div className="mt-5 space-y-4">
+          {/* FINDING row */}
+          <div>
+            <p className="meta-kicker mb-2">Finding</p>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-base font-bold text-[var(--color-ink-strong)]">
+                {capitalize(result.finding)}
+              </span>
+              <span className="text-[var(--color-ink-subtle)]">·</span>
+              <span className="rounded-full border border-[var(--color-soft-blue-border)] bg-[var(--color-soft-blue)] px-2.5 py-0.5 text-xs font-semibold text-blue-700">
+                {Math.round(result.confidence * 100)}% confidence
+              </span>
+              <span className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold ${severityBadgeClass(result.severity)}`}>
+                {capitalize(result.severity)}
+              </span>
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="h-px bg-[var(--color-border-soft)]" />
+
+          {/* IMPRESSION */}
+          <div>
+            <p className="meta-kicker mb-2">Impression</p>
+            <div className="rounded-[16px] border border-[var(--color-soft-neutral-border)] bg-[linear-gradient(180deg,#ffffff_0%,#f5f7fc_100%)] p-4">
+              <p className="text-sm leading-7 text-[var(--color-ink-muted)]">{result.summary}</p>
+            </div>
+          </div>
+
+          {/* CLINICAL NOTE */}
+          <div>
+            <p className="meta-kicker mb-2">Clinical Note</p>
+            <div className="rounded-[16px] border border-[var(--color-soft-blue-border)] bg-[var(--color-soft-blue)] p-4">
+              <p className="text-sm leading-6 text-blue-800">
+                Findings should be correlated with clinical history and physical examination. Specialist radiologist review is recommended before any clinical action is taken.
               </p>
             </div>
-            <div className="rounded-[16px] border border-[var(--color-border-soft)] bg-[var(--color-surface-muted)] px-4 py-3">
-              <span className="text-[11px] font-medium text-[var(--color-ink-subtle)]">Analysis engine</span>
-              <p className="mt-1 text-sm font-semibold text-[var(--color-ink-strong)]">Chest X-Ray AI v1.0</p>
-            </div>
           </div>
 
-          <div className="mt-4 rounded-[18px] border border-[var(--color-soft-neutral-border)] bg-[linear-gradient(180deg,#ffffff_0%,#f5f7fc_100%)] p-4">
-            <p className="text-xs font-medium text-[var(--color-ink-subtle)]">Impression</p>
-            <p className="mt-2 text-sm leading-7 text-[var(--color-ink-muted)]">{result.summary}</p>
-          </div>
-
-          <div className="mt-4 flex flex-wrap gap-2 text-xs text-[var(--color-ink-subtle)]">
-            <span className="rounded-full border border-[var(--color-soft-blue-border)] bg-[var(--color-soft-blue)] px-3 py-1">
-              {result.finding}
-            </span>
-            <span className="rounded-full border border-[var(--color-soft-amber-border)] bg-[var(--color-soft-amber)] px-3 py-1">
-              {Math.round(result.confidence * 100)}% confidence
-            </span>
-          </div>
-        </>
+          {/* Inline disclaimer */}
+          <p className="text-[10px] italic leading-5 text-[var(--color-ink-subtle)]">
+            AI-generated · For initial review support only · Not a clinical diagnosis
+          </p>
+        </div>
       ) : (
         <div className="mt-5 rounded-[18px] border border-[var(--color-border-soft)] bg-[var(--color-surface-muted)] p-4">
           <p className="text-sm leading-6 text-[var(--color-ink-muted)]">
