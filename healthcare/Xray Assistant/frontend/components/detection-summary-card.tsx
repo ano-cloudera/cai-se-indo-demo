@@ -22,11 +22,13 @@ export function DetectionSummaryCard({ result, loading = false }: DetectionSumma
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
             <div className="rounded-[16px] border border-[var(--color-border-soft)] bg-[var(--color-surface-muted)] px-4 py-3">
               <span className="text-[11px] font-medium text-[var(--color-ink-subtle)]">Case reference</span>
-              <p className="mt-1 break-all text-sm font-semibold text-[var(--color-ink-strong)]">{result.case_id}</p>
+              <p className="mt-1 font-mono text-sm font-semibold tracking-wide text-[var(--color-ink-strong)]">
+                #{result.case_id.slice(0, 8).toUpperCase()}
+              </p>
             </div>
             <div className="rounded-[16px] border border-[var(--color-border-soft)] bg-[var(--color-surface-muted)] px-4 py-3">
-              <span className="text-[11px] font-medium text-[var(--color-ink-subtle)]">Model status</span>
-              <p className="mt-1 text-sm font-semibold text-[var(--color-ink-strong)]">Detection model active</p>
+              <span className="text-[11px] font-medium text-[var(--color-ink-subtle)]">Analysis engine</span>
+              <p className="mt-1 text-sm font-semibold text-[var(--color-ink-strong)]">Chest X-Ray AI v1.0</p>
             </div>
           </div>
 
