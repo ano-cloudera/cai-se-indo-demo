@@ -10,40 +10,78 @@ interface ReportTemplateProps {
   timestamp: string;
 }
 
-function severityColor(severity: string | undefined): string {
+function severityBg(severity: string | undefined): string {
   switch ((severity ?? "").toLowerCase()) {
-    case "high": return "#fff0f0";
+    case "high":   return "#fff0f0";
     case "medium": return "#fffbe6";
-    case "low": return "#f0fdf4";
-    default: return "#f4f6fb";
+    case "low":    return "#f0fdf4";
+    default:       return "#f4f6fb";
   }
 }
 
 function severityBorder(severity: string | undefined): string {
   switch ((severity ?? "").toLowerCase()) {
-    case "high": return "#fca5a5";
+    case "high":   return "#fca5a5";
     case "medium": return "#fcd34d";
-    case "low": return "#86efac";
-    default: return "#e6e9f2";
+    case "low":    return "#86efac";
+    default:       return "#e6e9f2";
   }
 }
 
-function confidenceColor(confidence: number): string {
-  if (confidence >= 0.85) return "#f0fdf4";
-  if (confidence >= 0.6) return "#fffbe6";
+function severityLabel(severity: string | undefined): string {
+  const s = (severity ?? "").toLowerCase();
+  if (s === "high")   return "High Priority";
+  if (s === "medium") return "Moderate";
+  if (s === "low")    return "Low";
+  return "—";
+}
+
+function confidenceBg(c: number): string {
+  if (c >= 0.85) return "#f0fdf4";
+  if (c >= 0.6)  return "#fffbe6";
   return "#fff0f0";
 }
 
-function confidenceBorder(confidence: number): string {
-  if (confidence >= 0.85) return "#86efac";
-  if (confidence >= 0.6) return "#fcd34d";
+function confidenceBorder(c: number): string {
+  if (c >= 0.85) return "#86efac";
+  if (c >= 0.6)  return "#fcd34d";
   return "#fca5a5";
+}
+
+function capitalize(s: string): string {
+  if (!s) return "—";
+  return s.charAt(0).toUpperCase() + s.slice(1).replace(/_/g, " ");
+}
+
+function formatCaseId(id: string): string {
+  return `#${id.slice(0, 8).toUpperCase()}`;
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div style={{ padding: "18px 32px 0" }}>
+      <p style={{
+        fontSize: "9px",
+        fontWeight: "700",
+        textTransform: "uppercase",
+        letterSpacing: "0.16em",
+        color: "#9197a6",
+        margin: "0 0 8px",
+        borderBottom: "1px solid #eaecf2",
+        paddingBottom: "6px",
+      }}>
+        {title}
+      </p>
+      {children}
+    </div>
+  );
 }
 
 export const ReportTemplate = forwardRef<HTMLDivElement, ReportTemplateProps>(
   function ReportTemplate({ result, previewUrl, timestamp }, ref) {
     const imageUrl = result.annotated_image_path ?? previewUrl;
     const confidencePct = Math.round(result.confidence * 100);
+    const shortCaseId = formatCaseId(result.case_id);
 
     return (
       <div
@@ -51,230 +89,248 @@ export const ReportTemplate = forwardRef<HTMLDivElement, ReportTemplateProps>(
         style={{
           width: "900px",
           backgroundColor: "#ffffff",
-          fontFamily: "'Inter', 'Segoe UI', sans-serif",
-          fontSize: "14px",
-          color: "#191c1f",
-          lineHeight: "1.5",
+          fontFamily: "'Inter', 'Segoe UI', Arial, sans-serif",
+          fontSize: "13px",
+          color: "#1a1d23",
+          lineHeight: "1.55",
         }}
       >
-        {/* Header */}
+        {/* ── Header ── */}
         <div style={{
           backgroundColor: "#08004d",
-          padding: "24px 32px",
+          padding: "22px 32px 20px",
           display: "flex",
           justifyContent: "space-between",
           alignItems: "flex-start",
         }}>
+          {/* Left: brand + meta */}
           <div>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
               <span style={{
-                fontFamily: "'Outfit', 'Segoe UI', sans-serif",
-                fontSize: "22px",
+                fontSize: "20px",
                 fontWeight: "800",
                 color: "#ffffff",
                 letterSpacing: "-0.02em",
               }}>
                 Xray Assist
               </span>
-              <span style={{ color: "#8f94ff", fontSize: "13px" }}>·</span>
-              <span style={{ color: "#c5c7ff", fontSize: "13px", fontWeight: "500" }}>
-                Cloudera Healthcare Demo
+              <span style={{ color: "#6e74c8", fontSize: "13px" }}>·</span>
+              <span style={{ color: "#a5a9f0", fontSize: "12px", fontWeight: "500" }}>
+                Cloudera AI Healthcare Demo
               </span>
             </div>
-            <div style={{ display: "flex", gap: "24px" }}>
+            <div style={{ display: "flex", gap: "28px" }}>
               <div>
-                <span style={{ color: "#8f94ff", fontSize: "11px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.1em" }}>Case ID</span>
-                <p style={{ color: "#ffffff", fontSize: "14px", fontWeight: "700", margin: "2px 0 0" }}>{result.case_id}</p>
+                <p style={{ color: "#7a7fc8", fontSize: "10px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.12em", margin: 0 }}>Case Reference</p>
+                <p style={{ color: "#ffffff", fontSize: "14px", fontWeight: "700", margin: "3px 0 0", letterSpacing: "0.04em" }}>{shortCaseId}</p>
               </div>
               <div>
-                <span style={{ color: "#8f94ff", fontSize: "11px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.1em" }}>Generated</span>
-                <p style={{ color: "#ffffff", fontSize: "14px", fontWeight: "700", margin: "2px 0 0" }}>{timestamp}</p>
+                <p style={{ color: "#7a7fc8", fontSize: "10px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.12em", margin: 0 }}>Report Date</p>
+                <p style={{ color: "#ffffff", fontSize: "14px", fontWeight: "700", margin: "3px 0 0" }}>{timestamp}</p>
               </div>
               <div>
-                <span style={{ color: "#8f94ff", fontSize: "11px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.1em" }}>Model</span>
-                <p style={{ color: "#ffffff", fontSize: "14px", fontWeight: "700", margin: "2px 0 0" }}>{result.model_info.name} v{result.model_info.version}</p>
+                <p style={{ color: "#7a7fc8", fontSize: "10px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.12em", margin: 0 }}>Analysis Engine</p>
+                <p style={{ color: "#ffffff", fontSize: "14px", fontWeight: "700", margin: "3px 0 0" }}>Chest X-Ray AI v1.0</p>
+              </div>
+              <div>
+                <p style={{ color: "#7a7fc8", fontSize: "10px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.12em", margin: 0 }}>Study Type</p>
+                <p style={{ color: "#ffffff", fontSize: "14px", fontWeight: "700", margin: "3px 0 0" }}>Chest Radiograph (PA)</p>
               </div>
             </div>
           </div>
+
+          {/* Right: demo badge */}
           <div style={{
-            backgroundColor: "rgba(255,255,255,0.08)",
-            border: "1px solid rgba(255,255,255,0.14)",
+            backgroundColor: "rgba(255,179,71,0.12)",
+            border: "1px solid rgba(255,179,71,0.35)",
             borderRadius: "10px",
-            padding: "8px 14px",
-            textAlign: "right",
+            padding: "10px 16px",
+            textAlign: "center",
+            minWidth: "120px",
           }}>
             <p style={{ color: "#ffb347", fontSize: "10px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.14em", margin: 0 }}>⚠ Demo Only</p>
-            <p style={{ color: "#c5c7ff", fontSize: "11px", margin: "3px 0 0" }}>Not for clinical use</p>
+            <p style={{ color: "#c5c7ff", fontSize: "10px", margin: "4px 0 0", lineHeight: "1.4" }}>Not for clinical<br />decision-making</p>
           </div>
         </div>
 
         {/* Accent line */}
-        <div style={{ height: "3px", background: "linear-gradient(90deg, #6970ff 0%, #5c63f2 100%)" }} />
+        <div style={{ height: "3px", background: "linear-gradient(90deg, #5c63f2 0%, #8f94ff 100%)" }} />
 
-        {/* Stat cards */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: "12px", padding: "20px 32px 0" }}>
-          {/* Finding */}
-          <div style={{
-            border: "1px solid #e6e9f2",
-            borderRadius: "14px",
-            padding: "14px 16px",
-            backgroundColor: "#f8f9fd",
-          }}>
-            <p style={{ fontSize: "10px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.1em", color: "#656774", margin: 0 }}>Finding</p>
-            <p style={{ fontSize: "18px", fontWeight: "700", color: "#191c1f", margin: "6px 0 0", textTransform: "capitalize", fontFamily: "'Outfit', sans-serif" }}>
-              {result.finding || "—"}
+        {/* ── Key Findings Bar ── */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: "12px", padding: "18px 32px 0" }}>
+          {/* Primary Finding */}
+          <div style={{ border: "1px solid #e6e9f2", borderRadius: "14px", padding: "14px 16px", backgroundColor: "#f8f9fd" }}>
+            <p style={{ fontSize: "9px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.12em", color: "#9197a6", margin: 0 }}>Primary Finding</p>
+            <p style={{ fontSize: "17px", fontWeight: "700", color: "#1a1d23", margin: "6px 0 0", textTransform: "capitalize" }}>
+              {capitalize(result.finding)}
             </p>
           </div>
+
           {/* Confidence */}
-          <div style={{
-            border: `1px solid ${confidenceBorder(result.confidence)}`,
-            borderRadius: "14px",
-            padding: "14px 16px",
-            backgroundColor: confidenceColor(result.confidence),
-          }}>
-            <p style={{ fontSize: "10px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.1em", color: "#656774", margin: 0 }}>Confidence</p>
-            <p style={{ fontSize: "18px", fontWeight: "700", color: "#191c1f", margin: "6px 0 0", fontFamily: "'JetBrains Mono', monospace" }}>
+          <div style={{ border: `1px solid ${confidenceBorder(result.confidence)}`, borderRadius: "14px", padding: "14px 16px", backgroundColor: confidenceBg(result.confidence) }}>
+            <p style={{ fontSize: "9px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.12em", color: "#9197a6", margin: 0 }}>Model Confidence</p>
+            <p style={{ fontSize: "17px", fontWeight: "700", color: "#1a1d23", margin: "6px 0 0" }}>
               {confidencePct}%
             </p>
           </div>
+
           {/* Severity */}
-          <div style={{
-            border: `1px solid ${severityBorder(result.severity)}`,
-            borderRadius: "14px",
-            padding: "14px 16px",
-            backgroundColor: severityColor(result.severity),
-          }}>
-            <p style={{ fontSize: "10px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.1em", color: "#656774", margin: 0 }}>Severity</p>
-            <p style={{ fontSize: "18px", fontWeight: "700", color: "#191c1f", margin: "6px 0 0", textTransform: "capitalize", fontFamily: "'Outfit', sans-serif" }}>
-              {result.severity || "—"}
+          <div style={{ border: `1px solid ${severityBorder(result.severity)}`, borderRadius: "14px", padding: "14px 16px", backgroundColor: severityBg(result.severity) }}>
+            <p style={{ fontSize: "9px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.12em", color: "#9197a6", margin: 0 }}>Clinical Priority</p>
+            <p style={{ fontSize: "17px", fontWeight: "700", color: "#1a1d23", margin: "6px 0 0" }}>
+              {severityLabel(result.severity)}
             </p>
           </div>
-          {/* Status */}
-          <div style={{
-            border: "1px solid #86efac",
-            borderRadius: "14px",
-            padding: "14px 16px",
-            backgroundColor: "#f0fdf4",
-          }}>
-            <p style={{ fontSize: "10px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.1em", color: "#656774", margin: 0 }}>Status</p>
-            <p style={{ fontSize: "18px", fontWeight: "700", color: "#191c1f", margin: "6px 0 0", textTransform: "capitalize", fontFamily: "'Outfit', sans-serif" }}>
-              {result.status || "—"}
+
+          {/* Review Status */}
+          <div style={{ border: "1px solid #86efac", borderRadius: "14px", padding: "14px 16px", backgroundColor: "#f0fdf4" }}>
+            <p style={{ fontSize: "9px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.12em", color: "#9197a6", margin: 0 }}>Review Status</p>
+            <p style={{ fontSize: "17px", fontWeight: "700", color: "#1a1d23", margin: "6px 0 0" }}>
+              Pending Review
             </p>
           </div>
         </div>
 
-        {/* Image */}
-        <div style={{ padding: "20px 32px 0" }}>
-          <p style={{ fontSize: "10px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.14em", color: "#656774", marginBottom: "10px" }}>
-            Analysis Result Image
-          </p>
+        {/* ── Annotated Image ── */}
+        <Section title="Radiograph — AI Annotated View">
           {imageUrl ? (
-            <div style={{ borderRadius: "16px", overflow: "hidden", border: "1px solid #e6e9f2", backgroundColor: "#f4f6fb", textAlign: "center" }}>
+            <div style={{ borderRadius: "14px", overflow: "hidden", border: "1px solid #e6e9f2", backgroundColor: "#0a0a0a", textAlign: "center" }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={imageUrl}
-                alt="X-ray analysis result"
+                alt="Annotated chest X-ray"
                 crossOrigin="anonymous"
-                style={{ maxWidth: "100%", maxHeight: "340px", objectFit: "contain", display: "block", margin: "0 auto" }}
+                style={{ maxWidth: "100%", maxHeight: "360px", objectFit: "contain", display: "block", margin: "0 auto" }}
               />
             </div>
           ) : (
-            <div style={{ borderRadius: "16px", border: "1px dashed #cbd1e1", backgroundColor: "#f4f6fb", padding: "40px", textAlign: "center", color: "#9ca3af", fontSize: "13px" }}>
-              No annotated image available for this result.
+            <div style={{ borderRadius: "14px", border: "1px dashed #cbd1e1", backgroundColor: "#f4f6fb", padding: "48px", textAlign: "center", color: "#9ca3af", fontSize: "13px" }}>
+              Annotated image not available for this study.
             </div>
           )}
-        </div>
+        </Section>
 
-        {/* Clinical Summary */}
-        <div style={{ padding: "20px 32px 0" }}>
-          <p style={{ fontSize: "10px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.14em", color: "#656774", marginBottom: "8px" }}>
-            Clinical Summary
-          </p>
-          <div style={{ backgroundColor: "#f8f9fd", border: "1px solid #e6e9f2", borderRadius: "14px", padding: "16px 18px" }}>
-            <p style={{ fontSize: "14px", lineHeight: "1.75", color: "#3f4350", margin: 0 }}>{result.summary}</p>
+        {/* ── Impression / Clinical Summary ── */}
+        <Section title="Radiological Impression">
+          <div style={{ backgroundColor: "#f8f9fd", border: "1px solid #e6e9f2", borderRadius: "12px", padding: "14px 18px" }}>
+            <p style={{ fontSize: "13px", lineHeight: "1.8", color: "#2e3240", margin: 0 }}>{result.summary}</p>
           </div>
-        </div>
+        </Section>
 
-        {/* Clinical Interpretation */}
-        <div style={{ padding: "16px 32px 0" }}>
-          <p style={{ fontSize: "10px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.14em", color: "#656774", marginBottom: "8px" }}>
-            Clinical Interpretation
-          </p>
-          <div style={{ backgroundColor: "#eef7ff", border: "1px solid #bfd6fb", borderRadius: "14px", padding: "16px 18px" }}>
-            <p style={{ fontSize: "14px", lineHeight: "1.75", color: "#3f4350", margin: 0 }}>{result.explanation}</p>
+        {/* ── Clinical Interpretation ── */}
+        <Section title="Clinical Interpretation">
+          <div style={{ backgroundColor: "#f0f4ff", border: "1px solid #c7d4fd", borderRadius: "12px", padding: "14px 18px" }}>
+            <p style={{ fontSize: "13px", lineHeight: "1.8", color: "#2e3240", margin: 0 }}>{result.explanation}</p>
           </div>
-        </div>
+        </Section>
 
-        {/* Findings Table */}
+        {/* ── Findings Table ── */}
         {result.detections.length > 0 && (
-          <div style={{ padding: "16px 32px 0" }}>
-            <p style={{ fontSize: "10px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.14em", color: "#656774", marginBottom: "8px" }}>
-              Findings Overview
-            </p>
-            <div style={{ borderRadius: "14px", overflow: "hidden", border: "1px solid #e6e9f2" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px" }}>
+          <Section title="Detected Findings">
+            <div style={{ borderRadius: "12px", overflow: "hidden", border: "1px solid #e6e9f2" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
                 <thead>
                   <tr style={{ backgroundColor: "#f4f6fb" }}>
-                    <th style={{ padding: "10px 16px", textAlign: "left", fontWeight: "600", color: "#191c1f", borderBottom: "1px solid #e6e9f2" }}>Finding</th>
-                    <th style={{ padding: "10px 16px", textAlign: "left", fontWeight: "600", color: "#191c1f", borderBottom: "1px solid #e6e9f2" }}>Confidence</th>
-                    <th style={{ padding: "10px 16px", textAlign: "left", fontWeight: "600", color: "#191c1f", borderBottom: "1px solid #e6e9f2" }}>Review Note</th>
+                    <th style={{ padding: "10px 16px", textAlign: "left", fontWeight: "600", color: "#3f4350", borderBottom: "1px solid #e6e9f2", width: "22%" }}>Finding</th>
+                    <th style={{ padding: "10px 16px", textAlign: "left", fontWeight: "600", color: "#3f4350", borderBottom: "1px solid #e6e9f2", width: "16%" }}>Confidence</th>
+                    <th style={{ padding: "10px 16px", textAlign: "left", fontWeight: "600", color: "#3f4350", borderBottom: "1px solid #e6e9f2", width: "14%" }}>Priority</th>
+                    <th style={{ padding: "10px 16px", textAlign: "left", fontWeight: "600", color: "#3f4350", borderBottom: "1px solid #e6e9f2" }}>Clinical Note</th>
                   </tr>
                 </thead>
                 <tbody>
                   {result.detections.map((item, index) => (
                     <tr key={`${item.label}-${index}`} style={{ backgroundColor: index % 2 === 0 ? "#ffffff" : "#f8f9fd" }}>
-                      <td style={{ padding: "10px 16px", color: "#191c1f", textTransform: "capitalize", borderBottom: "1px solid #e6e9f2" }}>{item.label}</td>
-                      <td style={{ padding: "10px 16px", color: "#3f4350", fontFamily: "'JetBrains Mono', monospace", borderBottom: "1px solid #e6e9f2" }}>{Math.round(item.confidence * 100)}%</td>
-                      <td style={{ padding: "10px 16px", color: "#3f4350", borderBottom: "1px solid #e6e9f2" }}>
-                        {item.label} flagged for clinical review support at {Math.round(item.confidence * 100)}% confidence.
+                      <td style={{ padding: "10px 16px", color: "#1a1d23", textTransform: "capitalize", fontWeight: "600", borderBottom: "1px solid #eaecf2" }}>{capitalize(item.label)}</td>
+                      <td style={{ padding: "10px 16px", color: "#3f4350", borderBottom: "1px solid #eaecf2" }}>{Math.round(item.confidence * 100)}%</td>
+                      <td style={{ padding: "10px 16px", borderBottom: "1px solid #eaecf2" }}>
+                        <span style={{
+                          display: "inline-block",
+                          padding: "2px 8px",
+                          borderRadius: "6px",
+                          fontSize: "10px",
+                          fontWeight: "700",
+                          backgroundColor: severityBg(item.confidence >= 0.85 ? "high" : item.confidence >= 0.6 ? "medium" : "low"),
+                          color: item.confidence >= 0.85 ? "#b91c1c" : item.confidence >= 0.6 ? "#92400e" : "#166534",
+                        }}>
+                          {item.confidence >= 0.85 ? "High" : item.confidence >= 0.6 ? "Moderate" : "Low"}
+                        </span>
+                      </td>
+                      <td style={{ padding: "10px 16px", color: "#5a5f72", borderBottom: "1px solid #eaecf2" }}>
+                        Requires clinical correlation and specialist review.
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-          </div>
+          </Section>
         )}
 
-        {/* Recommended Actions */}
+        {/* ── Recommended Actions ── */}
         {result.action_items.length > 0 && (
-          <div style={{ padding: "16px 32px 0" }}>
-            <p style={{ fontSize: "10px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.14em", color: "#656774", marginBottom: "8px" }}>
-              Recommended Actions
-            </p>
+          <Section title="Recommended Next Steps">
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
               {result.action_items.map((item, index) => (
                 <div key={index} style={{
-                  display: "flex", alignItems: "flex-start", gap: "12px",
-                  backgroundColor: "#f8f9fd", border: "1px solid #e6e9f2",
-                  borderRadius: "12px", padding: "12px 16px",
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: "12px",
+                  backgroundColor: "#f8f9fd",
+                  border: "1px solid #e6e9f2",
+                  borderRadius: "10px",
+                  padding: "11px 16px",
                 }}>
                   <span style={{
-                    flexShrink: 0, width: "24px", height: "24px",
-                    borderRadius: "50%", backgroundColor: "#e3e4ff",
-                    color: "#5c63f2", fontSize: "12px", fontWeight: "700",
-                    display: "flex", alignItems: "center", justifyContent: "center",
+                    flexShrink: 0,
+                    width: "22px",
+                    height: "22px",
+                    borderRadius: "50%",
+                    backgroundColor: "#e3e4ff",
+                    color: "#4f56d9",
+                    fontSize: "11px",
+                    fontWeight: "700",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                   }}>
                     {index + 1}
                   </span>
-                  <p style={{ fontSize: "13px", lineHeight: "1.6", color: "#3f4350", margin: 0 }}>{item}</p>
+                  <p style={{ fontSize: "12px", lineHeight: "1.65", color: "#3a3f52", margin: 0 }}>{item}</p>
                 </div>
               ))}
             </div>
-          </div>
+          </Section>
         )}
 
-        {/* Footer */}
+        {/* ── Disclaimer Footer ── */}
         <div style={{
-          margin: "24px 32px 0",
-          padding: "14px 18px",
-          backgroundColor: "#fff8f0",
-          border: "1px solid #fed7aa",
-          borderRadius: "12px",
+          margin: "20px 32px 0",
+          padding: "13px 18px",
+          backgroundColor: "#fffbf0",
+          border: "1px solid #f5d87a",
+          borderRadius: "10px",
           marginBottom: "32px",
         }}>
-          <p style={{ fontSize: "11px", color: "#92400e", margin: 0, lineHeight: "1.6" }}>
-            <strong>⚠ Disclaimer:</strong> This report is generated by an AI-assisted demonstration system and is intended for review support only. It does not constitute a medical diagnosis and should not be used as the sole basis for clinical decision-making. Always correlate findings with clinical context and consult a qualified radiologist.
+          <p style={{ fontSize: "10px", color: "#78500a", margin: 0, lineHeight: "1.65" }}>
+            <strong>Clinical Disclaimer:</strong> This report is produced by an AI-assisted demonstration system (Cloudera AI) and is intended solely for educational and review support purposes. It does not constitute a medical diagnosis and must not be used as the basis for clinical decision-making without validation by a qualified radiologist or licensed medical professional. All findings require appropriate clinical correlation.
+          </p>
+        </div>
+
+        {/* ── Report Footer Bar ── */}
+        <div style={{
+          borderTop: "1px solid #e6e9f2",
+          padding: "10px 32px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          backgroundColor: "#f8f9fd",
+          marginBottom: 0,
+        }}>
+          <p style={{ fontSize: "10px", color: "#9197a6", margin: 0 }}>
+            Xray Assist · Cloudera AI Healthcare Demo · AI-generated report for review support
+          </p>
+          <p style={{ fontSize: "10px", color: "#9197a6", margin: 0 }}>
+            Ref: {shortCaseId} · {timestamp}
           </p>
         </div>
       </div>
