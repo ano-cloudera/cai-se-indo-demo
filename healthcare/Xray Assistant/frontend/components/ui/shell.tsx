@@ -53,6 +53,63 @@ export function SidebarNavButton({
   );
 }
 
+function ClouderaGridPattern() {
+  // 5-column staggered grid pattern — each cell is a rounded square block
+  const cols = 5;
+  const rows = 7;
+  const size = 18;
+  const gap = 6;
+  const r = 4;
+  const stride = size + gap;
+
+  // Staggered presence mask — mimics the Cloudera diagonal fade pattern
+  const mask: boolean[][] = [
+    [false, true,  true,  true,  true ],
+    [false, true,  true,  true,  true ],
+    [false, true,  true,  true,  false],
+    [false, true,  true,  false, false],
+    [false, true,  false, false, false],
+    [false, false, false, false, false],
+    [false, false, false, false, false],
+  ];
+
+  const blocks: { x: number; y: number }[] = [];
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < cols; col++) {
+      if (mask[row][col]) {
+        blocks.push({ x: col * stride, y: row * stride });
+      }
+    }
+  }
+
+  const svgW = cols * stride - gap;
+  const svgH = rows * stride - gap;
+
+  return (
+    <svg
+      width={svgW}
+      height={svgH}
+      viewBox={`0 0 ${svgW} ${svgH}`}
+      fill="none"
+      aria-hidden="true"
+      className="pointer-events-none select-none opacity-25"
+    >
+      {blocks.map(({ x, y }) => (
+        <rect
+          key={`${x}-${y}`}
+          x={x}
+          y={y}
+          width={size}
+          height={size}
+          rx={r}
+          ry={r}
+          fill="#7c82ff"
+        />
+      ))}
+    </svg>
+  );
+}
+
 export function AppSidebar({
   brand,
   items,
@@ -76,7 +133,11 @@ export function AppSidebar({
           />
         ))}
       </nav>
-      {footer ? <div className="mt-auto px-2">{footer}</div> : null}
+      {footer ? <div className="mt-auto px-2 pb-4">{footer}</div> : null}
+      {/* Cloudera decorative grid pattern */}
+      <div className="pointer-events-none absolute bottom-0 left-0 overflow-hidden">
+        <ClouderaGridPattern />
+      </div>
     </aside>
   );
 }
